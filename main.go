@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"./mqtt"
 	"time"
+	"./mqtt"
+	"./redis"
 )
 
-func main() {
-	fmt.Println("Start Point.")
 
+func openMqtt() {
 	m := new(mqtt.MQTT)
 
 	m.Connect("zml-server")
@@ -19,7 +19,22 @@ func main() {
 
 
 	time.Sleep(3 * time.Second)
+}
 
-	for {
-	}
+func testRedis() {
+	r := new(redis.Redis)
+	r.Connect("192.168.2.116:6379")
+
+	defer r.Close()
+
+	r.Write("name", "bob")
+
+	name := r.Read("name")
+	fmt.Println(name)
+}
+
+func main() {
+	fmt.Println("Start Point.")
+
+	testRedis()
 }
