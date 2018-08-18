@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 	"./mqtt"
 	"./redis"
 )
@@ -13,12 +12,12 @@ func openMqtt() {
 
 	m.Connect("zml-server")
 
-	m.Subscribe("earth")
+	m.Subscribe("homeconsole")
 	// m.Subscribe("world")
-	m.Publish("earth", "this is another sample")
+	// m.Publish("earth", "this is another sample")
 
 
-	time.Sleep(3 * time.Second)
+	// time.Sleep(3 * time.Second)
 }
 
 func testRedis() {
@@ -27,7 +26,7 @@ func testRedis() {
 
 	defer r.Close()
 
-	r.Write("name", "bob")
+	r.Write("name", "jim")
 
 	name := r.Read("name")
 	fmt.Println(name)
@@ -36,5 +35,8 @@ func testRedis() {
 func main() {
 	fmt.Println("Start Point.")
 
-	testRedis()
+	// testRedis()
+	openMqtt()
+
+	for {}
 }

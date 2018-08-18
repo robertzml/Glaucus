@@ -38,7 +38,7 @@ func (m *MQTT) Disconnect() {
 }
 
 func (m *MQTT) Subscribe(topic string) {
-	if token := m.client.Subscribe(topic, 0, nil); token.Wait() && token.Error() != nil {
+	if token := m.client.Subscribe(topic, 2, nil); token.Wait() && token.Error() != nil {
 		fmt.Println(token.Error())
 	} else {
 		fmt.Printf("subscribe: %s\n", topic)
