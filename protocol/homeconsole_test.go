@@ -18,7 +18,7 @@ func TestTLV_String(t *testing.T) {
 func TestParseHead(t *testing.T) {
 	msg := "Homeconsole02.00000000010003006500010006123456001B00080000003F0007000110004002458783926-533E-484B-9B79-FEE11E5A6832001A00013001C00010"
 
-	seq, _, err := ParseHead(msg)
+	seq, _, err := parseHead(msg)
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -31,12 +31,12 @@ func TestParseHead(t *testing.T) {
 func TestParseMessage(t *testing.T) {
 	msg := "Homeconsole02.00000000010003006500010006123456001B00080000003F0007000110004002458783926-533E-484B-9B79-FEE11E5A6832001A00013001C00010"
 
-	_, payload, err := ParseHead(msg)
+	_, payload, err := parseHead(msg)
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	tlv, err := ParseCell(payload)
+	tlv, err := parseCell(payload)
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -49,7 +49,7 @@ func TestParseMessage(t *testing.T) {
 
 	index := 0
 	for index < tlv.Length {
-		 item, err := ParseTLV(tlv.Value, index);
+		 item, err := parseTLV(tlv.Value, index);
 		 if err != nil {
 		 	t.Error(err.Error())
 		 	return

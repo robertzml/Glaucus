@@ -2,41 +2,57 @@ package protocol
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 )
 
-var version string = "Homeconsole02.00"
-
-type TLV struct {
-	Tag    int
-	Length int
-	Value  string
-}
-
-func (tlv *TLV) String() string {
-	return fmt.Sprintf("%04X%04X%s", tlv.Tag, tlv.Length, tlv.Value)
-}
-
+const (
+	HomeConsoleVersion = "Homeconsole02.00"
+)
 
 type Message interface {
-	Parse(input string, pos int) TLV
+	ParseContent(input string, pos int) TLV
+}
+
+/*
+协议解析
+根据收到的报文，解析出协议内容
+ */
+func Parse(message string) (err error){
+
+	// read header
+	_, payload, err := parseHead(message)
+	if err != nil {
+		return
+	}
+
+	cell, err := parseCell(payload)
+	if err != nil {
+		return
+	}
+
+	switch cell.Tag {
+	case 0x03:
+	default:
+		err = errors.New("TLV not defined")
+	}
+	
+	return
 }
 
 /*
 解析协议头部
 返回seq和协议内容
  */
-func ParseHead(message string) (seq string, payload string, err error) {
-	vlen := len(version)
+func parseHead(message string) (seq string, payload string, err error) {
+	vlen := len(HomeConsoleVersion)
 	v := message[0: vlen]
-	if version != v {
+	if HomeConsoleVersion != v {
 		err = errors.New("version not match")
 		return
 	}
 
 	seq = message[vlen: vlen + 8]
-	payload = message[vlen + 8: len(message)]
+	payload = message[vlen + 8:]
 
 	return
 }
@@ -44,15 +60,15 @@ func ParseHead(message string) (seq string, payload string, err error) {
 /*
 解析信元
  */
-func ParseCell(payload string) (tlv TLV, err error) {
-	tlv, err = ParseTLV(payload, 0)
+func parseCell(payload string) (tlv TLV, err error) {
+	tlv, err = parseTLV(payload, 0)
 	return
 }
 
 /*
 解析TLV
  */
-func ParseTLV(payload string, pos int) (tlv TLV, err error) {
+func parseTLV(payload string, pos int) (tlv TLV, err error) {
 	tag, err := strconv.ParseInt(payload[pos: pos + 4], 16, 0)
 	if err != nil {
 		return
