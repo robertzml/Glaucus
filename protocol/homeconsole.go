@@ -1,11 +1,12 @@
 package protocol
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
+	"strconv"
 )
 
-var version string = "Homeconsole04.00"
+var version string = "Homeconsole02.00"
 
 type TLV struct {
 	Tag    int
@@ -22,15 +23,49 @@ type Message interface {
 	Parse(input string, pos int) TLV
 }
 
-func ParseHead(message string) error{
-	v := message[0: len(version)]
+/*
+解析协议头部
+返回seq和协议内容
+ */
+func ParseHead(message string) (seq string, payload string, err error) {
+	vlen := len(version)
+	v := message[0: vlen]
 	if version != v {
-		return errors.New("version not match")
+		err = errors.New("version not match")
+		return
 	}
 
-	// this.sequence = Convert.ToInt32(message.Substring(this.version.Length, 8), 16);
-	seq := message[len(version): 16]
-	fmt.Println(seq)
+	seq = message[vlen: vlen + 8]
+	payload = message[vlen + 8: len(message)]
 
-	return nil
+	return
+}
+
+/*
+解析信元
+ */
+func ParseCell(payload string) (tlv TLV, err error) {
+	tlv, err = ParseTLV(payload, 0)
+	return
+}
+
+/*
+解析TLV
+ */
+func ParseTLV(payload string, pos int) (tlv TLV, err error) {
+	tag, err := strconv.ParseInt(payload[pos: pos + 4], 16, 0)
+	if err != nil {
+		return
+	}
+	tlv.Tag = int(tag)
+
+	l, err := strconv.ParseInt(payload[pos + 4: pos + 8], 16, 0)
+	if err != nil {
+		return
+	}
+	tlv.Length = int(l)
+
+	tlv.Value = payload[pos + 8: pos + 8 + tlv.Length]
+
+	return
 }
