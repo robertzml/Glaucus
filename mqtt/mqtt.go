@@ -7,9 +7,9 @@ import (
 
 type MQTT struct {
 	ClientId string
-	client paho.Client
+	Address  string
+	client   paho.Client
 }
-
 
 //define a function for the default message handler
 var f paho.MessageHandler = func(client paho.Client, msg paho.Message) {
@@ -18,10 +18,11 @@ var f paho.MessageHandler = func(client paho.Client, msg paho.Message) {
 }
 
 // connect to mqtt server by clientId
-func (m *MQTT) Connect(clientId string) {
+func (m *MQTT) Connect(clientId string, address string) {
 	m.ClientId = clientId
+	m.Address = address
 
-	opts := paho.NewClientOptions().AddBroker("tcp://192.168.2.108:1883")
+	opts := paho.NewClientOptions().AddBroker(address)
 	opts.SetClientID(clientId)
 	opts.SetDefaultPublishHandler(f)
 
@@ -37,22 +38,25 @@ func (m *MQTT) Disconnect() {
 	m.client.Disconnect(250)
 }
 
-func (m *MQTT) Subscribe(topic string) {
-	if token := m.client.Subscribe(topic, 2, nil); token.Wait() && token.Error() != nil {
-		fmt.Println(token.Error())
+func (m *MQTT) Subscribe(topic string, qos byte) (err error) {
+	if token := m.client.Subscribe(topic, qos, nil); token.Wait() && token.Error() != nil {
+		err = token.Error()
 	} else {
 		fmt.Printf("subscribe: %s\n", topic)
+		err = nil
 	}
+	return
 }
 
-func (m *MQTT) Unsubscribe(topic string) {
+func (m *MQTT) Unsubscribe(topic string) (err error){
 	if token := m.client.Unsubscribe(topic); token.Wait() && token.Error() != nil {
-		fmt.Println(token.Error())
+		err = token.Error()
 	}
+
+	return err
 }
 
-func (m *MQTT) Publish(topic string, payload string) {
-	token := m.client.Publish(topic, 0, false, payload)
+func (m *MQTT) Publish(topic string, qos byte, payload string) {
+	token := m.client.Publish(topic, qos, false, payload)
 	token.Wait()
 }
-

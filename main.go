@@ -10,7 +10,7 @@ import (
 func openMqtt() {
 	m := new(mqtt.MQTT)
 
-	m.Connect("zml-server")
+	m.Connect("zml-server", "tcp://192.168.2.108:1883")
 
 	m.Subscribe("homeconsole")
 	// m.Subscribe("world")
