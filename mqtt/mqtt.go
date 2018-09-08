@@ -13,7 +13,7 @@ type MQTT struct {
 
 //define a function for the default message handler
 var f paho.MessageHandler = func(client paho.Client, msg paho.Message) {
-	fmt.Printf("TOPIC: %s\n", msg.Topic())
+	fmt.Printf("TOPIC: %s, Id: %d, QoS: %d\n", msg.Topic(), msg.MessageID(), msg.Qos())
 	fmt.Printf("MSG: %s\n", msg.Payload())
 }
 

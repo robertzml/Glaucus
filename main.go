@@ -3,6 +3,7 @@ package main
 import (
 	"./mqtt"
 	"./redis"
+	"./protocol"
 	"fmt"
 )
 
@@ -12,7 +13,7 @@ func openMqtt() {
 
 	m.Connect("zml-server", "tcp://192.168.2.108:1883")
 
-	m.Subscribe("homeconsole")
+	m.Subscribe("homeconsole", 2)
 	// m.Subscribe("world")
 	// m.Publish("earth", "this is another sample")
 
@@ -33,7 +34,7 @@ func testRedis() {
 }
 
 func testTlv() {
-
+	protocol.Parse("Homeconsole02.010000018700140040000100100110238180717001012b000e100018071700010128000a0005000245")
 }
 
 func main() {
@@ -41,8 +42,7 @@ func main() {
 
 	// testRedis()
 	// openMqtt()
+	testTlv()
 
 	// for {}
-
-	testTlv()
 }
