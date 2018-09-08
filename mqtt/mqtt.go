@@ -11,12 +11,6 @@ type MQTT struct {
 	client   paho.Client
 }
 
-//define a function for the default message handler
-var f paho.MessageHandler = func(client paho.Client, msg paho.Message) {
-	fmt.Printf("TOPIC: %s, Id: %d, QoS: %d\n", msg.Topic(), msg.MessageID(), msg.Qos())
-	fmt.Printf("MSG: %s\n", msg.Payload())
-}
-
 // connect to mqtt server by clientId
 func (m *MQTT) Connect(clientId string, address string) {
 	m.ClientId = clientId
@@ -24,7 +18,7 @@ func (m *MQTT) Connect(clientId string, address string) {
 
 	opts := paho.NewClientOptions().AddBroker(address)
 	opts.SetClientID(clientId)
-	opts.SetDefaultPublishHandler(f)
+	opts.SetDefaultPublishHandler(defaultHandler)
 
 	m.client = paho.NewClient(opts)
 
@@ -34,6 +28,7 @@ func (m *MQTT) Connect(clientId string, address string) {
 	}
 }
 
+// 关闭连接
 func (m *MQTT) Disconnect() {
 	m.client.Disconnect(250)
 }

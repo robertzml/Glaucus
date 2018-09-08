@@ -1,6 +1,9 @@
 package protocol
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 const (
 	HomeConsoleVersion = "Homeconsole02.01"
@@ -8,6 +11,13 @@ const (
 
 type Message interface {
 	ParseContent(payload string)
+}
+
+func Receive(topic string, payload []byte, qos byte) {
+	err := Parse(string(payload[:]))
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }
 
 
