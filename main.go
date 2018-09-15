@@ -8,15 +8,12 @@ import (
 )
 
 
-func openMqtt() {
+func openMqtt(ch chan string) {
 	m := new(mqtt.MQTT)
 
 	m.Connect("zml-server", "tcp://192.168.2.108:1883")
 
 	m.Subscribe("homeconsole", 2)
-	// m.Subscribe("world")
-	// m.Publish("earth", "this is another sample")
-
 
 	// time.Sleep(3 * time.Second)
 }
@@ -40,6 +37,9 @@ func testTlv() {
 func main() {
 	fmt.Println("Start Point.")
 
+	ch := make(chan string)
+
+	go openMqtt(ch)
 	// testRedis()
 	// openMqtt()
 	testTlv()
