@@ -9,8 +9,7 @@ import (
 type StatusMessage struct {
 	SerialNumber    string
 	MainboardNumber string
-	Power byte
-	OutputWaterTemp byte
+	DeviceType	int
 }
 
 // 解析协议内容
@@ -26,12 +25,13 @@ func (msg *StatusMessage) ParseContent(payload string) {
 		}
 
 		switch tlv.Tag {
-		case 0x01:
+		case 0x0127:
 			msg.SerialNumber = tlv.Value
 		case 0x12b:
 			msg.MainboardNumber = tlv.Value
-		case 0x128:
-
+		case 0x125:
+			msg.DeviceType, _ = strconv.Atoi(tlv.Value)
+		default:
 		}
 
 		index += tlv.Length
@@ -49,6 +49,7 @@ func (msg *StatusMessage) parseHotHeater(payload string) {
 			return
 		}
 
+		/*
 		switch tlv.Tag {
 		case 0x01:
 			v, _ := strconv.ParseUint(tlv.Value, 16, 0)
@@ -57,7 +58,7 @@ func (msg *StatusMessage) parseHotHeater(payload string) {
 			v, _ := strconv.ParseUint(tlv.Value, 16, 0)
 			msg.OutputWaterTemp = byte(v)
 		}
-
+		*/
 		index += tlv.Length
 	}
 }

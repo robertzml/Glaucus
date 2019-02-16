@@ -19,13 +19,19 @@ func StartMqtt() {
 
 	m.Connect(clientId, server)
 
-	var statusTopic = fmt.Sprintf("equipment/%d/water_heater/+/status_info", channel)
+	var loginTopic = fmt.Sprintf("equipment/%d/1/+/login_info", channel)
+	if err := m.Subscribe(loginTopic, 0, mqtt.LoginHandler); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	var statusTopic = fmt.Sprintf("equipment/%d/1/+/status_info", channel)
 	if err := m.Subscribe(statusTopic, 0, mqtt.StatusHandler); err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	var answerTopic = fmt.Sprintf("equipment/%d/water_heater/+/answer_info", channel)
+	var answerTopic = fmt.Sprintf("equipment/%d/1/+/answer_info", channel)
 	if err := m.Subscribe(answerTopic, 2, mqtt.AnswerHandler); err != nil {
 		fmt.Println(err)
 		return
