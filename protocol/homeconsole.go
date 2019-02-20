@@ -9,26 +9,34 @@ const (
 	HomeConsoleVersion = "Homeconsole05.00"
 )
 
+/*
+报文消息接口
+
+所有类型的报文均实现改接口
+ */
 type Message interface {
 	ParseContent(payload string)
+	Print(cell TLV)
 }
 
 /*
 处理接收的报文
  */
 func Receive(topic string, payload []byte, qos byte) {
-	cell, _, err := Parse(string(payload[:]))
+	cell, msg, err := Parse(string(payload[:]))
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
-	fmt.Printf("Tag is: %d.\n", cell.Tag)
+	msg.Print(cell)
 }
 
 
 /*
 协议解析
 根据收到的报文，解析出协议内容
+cell 报文头
+msg  报文内容
  */
 func Parse(message string) (cell TLV, msg Message, err error) {
 

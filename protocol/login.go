@@ -38,6 +38,10 @@ func (msg* LoginMessage) ParseContent(payload string) {
 		default:
 		}
 
-		index += tlv.Length
+		index += tlv.Length + 8
 	}
+}
+
+func (msg* LoginMessage) Print(cell TLV) {
+
 }
