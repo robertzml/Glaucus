@@ -1,19 +1,28 @@
 package protocol
 
 import (
+	"../equipment"
 	"fmt"
+	"strconv"
 )
 
 // 设备状态报文
 type StatusMessage struct {
-	SerialNumber    string
-	MainboardNumber string
-	DeviceType		string
-	ControllerType	string
+	SerialNumber    	string
+	MainboardNumber 	string
+	DeviceType			string
+	ControllerType		string
+	WaterHeaterStatus	equipment.WaterHeater
 }
 
 // 解析协议内容
 func (msg *StatusMessage) ParseContent(payload string) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Printf("catch runtime panic: %v\n", err)
+		}
+	}()
+
 	index := 0
 	length := len(payload)
 
@@ -36,6 +45,10 @@ func (msg *StatusMessage) ParseContent(payload string) {
 		default:
 		}
 
+		if tlv.Tag == 0x128 {
+			msg.parseWaterHeater(tlv.Value)
+		}
+
 		index += tlv.Length + 8
 	}
 }
@@ -47,27 +60,42 @@ func (msg* StatusMessage) Print(cell TLV) {
 	fmt.Printf("Tag: %#x, Serial Number:%s\n", cell.Tag, msg.SerialNumber)
 }
 
-func (msg *StatusMessage) parseHotHeater(payload string) {
+/*
+解析热水器状态
+ */
+func (msg *StatusMessage) parseWaterHeater(payload string) {
 	index := 0
 	length := len(payload)
 
-	for index <= length {
+	wh := new(equipment.WaterHeater)
+
+	for index < length {
 		tlv, err := parseTLV(payload, index)
 		if err != nil {
 			fmt.Printf("error occur: %s", err.Error())
 			return
 		}
 
-		/*
 		switch tlv.Tag {
 		case 0x01:
-			v, _ := strconv.ParseUint(tlv.Value, 16, 0)
-			msg.Power = byte(v)
+			wh.Power, _ = strconv.Atoi(tlv.Value)
 		case 0x03:
-			v, _ := strconv.ParseUint(tlv.Value, 16, 0)
-			msg.OutputWaterTemp = byte(v)
+			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
+			wh.OutTemp = int(v)
+		case 0x04:
+			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
+			wh.OutFlow = int(v) * 10
+		case 0x05:
+			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
+			wh.ColdInTemp = int(v)
+		case 0x06:
+			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
+			wh.HotInTemp = int(v)
+		case 0x07:
+			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
+			wh.ErrorCode = int(v)
 		}
-		*/
-		index += tlv.Length
+
+		index += tlv.Length + 8
 	}
 }
