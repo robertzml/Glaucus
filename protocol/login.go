@@ -15,7 +15,7 @@ type LoginMessage struct {
 	ControllerType	string
 }
 
-func (msg* LoginMessage) ParseContent(payload string) {
+func (msg *LoginMessage) ParseContent(payload string) {
 	var index = 0
 	length := len(payload)
 
@@ -42,6 +42,10 @@ func (msg* LoginMessage) ParseContent(payload string) {
 	}
 }
 
-func (msg* LoginMessage) Print(cell TLV) {
+func (msg *LoginMessage) Print(cell TLV) {
+
+}
+
+func (msg *LoginMessage) Save() {
 
 }

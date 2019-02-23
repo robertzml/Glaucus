@@ -2,6 +2,7 @@ package protocol
 
 import (
 	"../equipment"
+	"../redis"
 	"fmt"
 	"strconv"
 )
@@ -56,9 +57,18 @@ func (msg *StatusMessage) ParseContent(payload string) {
 /*
 打印协议信息
 */
-func (msg* StatusMessage) Print(cell TLV) {
+func (msg *StatusMessage) Print(cell TLV) {
 	fmt.Printf("Tag: %#x, Serial Number:%s\n", cell.Tag, msg.SerialNumber)
 }
+
+func (msg *StatusMessage) Save() {
+	r := new(redis.Redis)
+	defer r.Close()
+
+	r.Connect()
+	r.Hmset(msg.SerialNumber, msg.WaterHeaterStatus)
+}
+
 
 /*
 解析热水器状态

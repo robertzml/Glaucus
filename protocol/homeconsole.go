@@ -17,6 +17,7 @@ const (
 type Message interface {
 	ParseContent(payload string)
 	Print(cell TLV)
+	Save()
 }
 
 /*
@@ -29,6 +30,8 @@ func Receive(topic string, payload []byte, qos byte) {
 	}
 
 	msg.Print(cell)
+
+	msg.Save()
 }
 
 
