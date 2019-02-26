@@ -45,6 +45,9 @@ func (r *Redis) Write(key string, val string) bool {
 	}
 }
 
+/*
+整体写入设备实时状态
+ */
 func (r *Redis) Hmset(key string, s interface{}) {
 	if _, err := r.Client.Do("HMSET", redigo.Args{}.Add(key).AddFlat(s)...); err != nil {
 		fmt.Println(err)

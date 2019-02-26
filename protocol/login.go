@@ -15,7 +15,7 @@ type LoginMessage struct {
 	ControllerType	string
 }
 
-func (msg *LoginMessage) ParseContent(payload string) {
+func (msg *LoginMessage) ParseContent(payload string) (err error) {
 	var index = 0
 	length := len(payload)
 
@@ -23,7 +23,7 @@ func (msg *LoginMessage) ParseContent(payload string) {
 		tlv, err := parseTLV(payload, index)
 		if err != nil {
 			fmt.Printf("error occur: %s", err.Error())
-			return
+			return err
 		}
 
 		switch tlv.Tag {
@@ -40,6 +40,8 @@ func (msg *LoginMessage) ParseContent(payload string) {
 
 		index += tlv.Length + 8
 	}
+
+	return
 }
 
 func (msg *LoginMessage) Print(cell TLV) {

@@ -15,7 +15,7 @@ const (
 所有类型的报文均实现改接口
  */
 type Message interface {
-	ParseContent(payload string)
+	ParseContent(payload string) (err error)
 	Print(cell TLV)
 	Save()
 }
@@ -26,7 +26,8 @@ type Message interface {
 func Receive(topic string, payload []byte, qos byte) {
 	cell, msg, err := Parse(string(payload[:]))
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Printf("catch error in parse: ", err.Error())
+		return
 	}
 
 	msg.Print(cell)
@@ -65,7 +66,7 @@ func Parse(message string) (cell TLV, msg Message, err error) {
 		err = errors.New("TLV not defined")
 	}
 
-	msg.ParseContent(payload[8:])
+	err = msg.ParseContent(payload[8:])
 
 	return
 }
