@@ -1,16 +1,19 @@
 package app
 
 import (
+	"../equipment"
 	"../mqtt"
 	"fmt"
 )
 
 func Run() {
 	fmt.Println("app is running")
+
+	startMqtt()
 }
 
 // 启动MQTT 服务订阅
-func StartMqtt() {
+func startMqtt() {
 	var channel = 1
 	var clientId = fmt.Sprintf("server-chanel-%d", channel)
 	var server = "tcp://192.168.0.120:1883"
@@ -35,6 +38,17 @@ func StartMqtt() {
 	if err := m.Subscribe(answerTopic, 2, mqtt.AnswerHandler); err != nil {
 		fmt.Println(err)
 		return
+	}
+}
+
+func startTest() {
+	var w equipment.WaterHeater
+
+	err := w.GetStatus("01100101801100e")
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("%+v\n", w)
 	}
 }
 

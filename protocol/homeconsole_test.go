@@ -36,7 +36,7 @@ func TestParseMessage(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	tlv, err := parseCell(payload)
+	tlv, err := parseTLV(payload, 0)
 	if err != nil {
 		t.Error(err.Error())
 	}

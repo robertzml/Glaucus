@@ -1,6 +1,4 @@
-/*
-实现Homeconsole TLV 解析工作，及内部数据格式转换。
- */
+// 实现Homeconsole TLV 解析工作，及内部数据格式转换。
 
 package protocol
 
@@ -10,6 +8,37 @@ import (
 	"time"
 )
 
+/*
+解析协议
+根据收到的报文，解析出协议头部，确定协议类型
+cell 报文头
+msg  报文内容
+ */
+func parseType(message string) (cell TLV, msg Message, err error) {
+	// read header
+	_, payload, err := parseHead(message)
+	if err != nil {
+		return
+	}
+
+	// parse message cell type
+	cell, err = parseTLV(payload, 0)
+	if err != nil {
+		return
+	}
+
+	switch cell.Tag {
+	case 0x03:
+		msg = new(LoginMessage)
+	case 0x14:
+		msg = new(StatusMessage)
+	default:
+		msg = nil
+		err = errors.New("TLV not defined")
+	}
+
+	return
+}
 
 /*
 解析协议头部
@@ -26,14 +55,6 @@ func parseHead(message string) (seq string, payload string, err error) {
 	seq = message[vlen : vlen+8]
 	payload = message[vlen+8:]
 
-	return
-}
-
-/*
-解析信元
- */
-func parseCell(payload string) (tlv TLV, err error) {
-	tlv, err = parseTLV(payload, 0)
 	return
 }
 
@@ -69,7 +90,6 @@ func ParseTime(payload string) (totalMin int, err error) {
 	}
 
 	hour, err := ParseCumulate(payload[0:6], 6)
-	// hour, err := strconv.ParseInt(payload[0:6], 16, 0)
 	if err != nil {
 		return
 	}
@@ -79,7 +99,7 @@ func ParseTime(payload string) (totalMin int, err error) {
 		return
 	}
 
-	totalMin = hour * 60 + int(min)
+	totalMin = hour*60 + int(min)
 	return
 }
 
@@ -94,11 +114,11 @@ func ParseCumulate(payload string, length int) (total int, err error) {
 	}
 
 	for i := 0; i < length; i += 2 {
-		v, err := strconv.ParseInt(payload[i: i+2], 16, 0)
+		v, err := strconv.ParseInt(payload[i:i+2], 16, 0)
 		if err != nil {
 			break
 		}
-		total = total * 100 + int(v)
+		total = total*100 + int(v)
 	}
 
 	return
@@ -118,9 +138,9 @@ func ParseDateToTimestamp(payload string) (timestamp int64, err error) {
 	year += 2000
 
 	month, _ := strconv.ParseInt(payload[2:4], 16, 0)
-	day, _ :=  strconv.ParseInt(payload[4:6], 16, 0)
-	hour, _ :=  strconv.ParseInt(payload[6:8], 16, 0)
-	minute, _ :=  strconv.ParseInt(payload[8:10], 16, 0)
+	day, _ := strconv.ParseInt(payload[4:6], 16, 0)
+	hour, _ := strconv.ParseInt(payload[6:8], 16, 0)
+	minute, _ := strconv.ParseInt(payload[8:10], 16, 0)
 
 	date := time.Date(int(year), time.Month(month), int(day), int(hour), int(minute), 0, 0, time.Local)
 

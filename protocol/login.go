@@ -15,7 +15,7 @@ type LoginMessage struct {
 	ControllerType	string
 }
 
-func (msg *LoginMessage) ParseContent(payload string) (err error) {
+func (msg *LoginMessage) Parse(payload string) (err error) {
 	var index = 0
 	length := len(payload)
 

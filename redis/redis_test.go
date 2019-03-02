@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"fmt"
 	"testing"
 	"../equipment"
 )
@@ -17,5 +18,15 @@ func TestSaveStruct(t *testing.T) {
 
 	r.Hmset("1234567", &w)
 
+	r.Close()
+}
+
+func TestDoGet(t *testing.T) {
+	r := new(Redis)
+	r.Connect()
+
+	val := r.Read("abc")
+
+	fmt.Println(val)
 	r.Close()
 }

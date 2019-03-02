@@ -13,12 +13,16 @@ type StatusMessage struct {
 	MainboardNumber 	string
 	DeviceType			string
 	ControllerType		string
+
+	// 表示是否更新所有状态
 	FullStatus			bool
+
+	// 热水器实时状态
 	WaterHeaterStatus	equipment.WaterHeater
 }
 
 // 解析协议内容
-func (msg *StatusMessage) ParseContent(payload string) (err error) {
+func (msg *StatusMessage) Parse(payload string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("catch runtime panic: %v\n", r)
@@ -61,6 +65,7 @@ func (msg *StatusMessage) ParseContent(payload string) (err error) {
 
 	return
 }
+
 
 /*
 打印协议信息

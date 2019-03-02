@@ -8,7 +8,7 @@ import (
 func main() {
 	fmt.Println("Start Point.")
 
-	app.StartMqtt()
+	app.Run()
 
 	for {}
 }
