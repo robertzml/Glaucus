@@ -24,7 +24,7 @@ type Message interface {
 处理接收的报文
  */
 func Receive(topic string, payload []byte, qos byte) {
-	cell, msg, err := Parse(string(payload[:]))
+	cell, msg, err := parse(string(payload[:]))
 	if err != nil {
 		fmt.Printf("catch error in parse: ", err.Error())
 		return
@@ -42,7 +42,7 @@ func Receive(topic string, payload []byte, qos byte) {
 cell 报文头
 msg  报文内容
  */
-func Parse(message string) (cell TLV, msg Message, err error) {
+func parse(message string) (cell TLV, msg Message, err error) {
 
 	// read header
 	_, payload, err := parseHead(message)

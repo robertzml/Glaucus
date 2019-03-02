@@ -4,6 +4,7 @@ package equipment
 热水器上报状态
  */
 type WaterHeater struct {
+	SerialNumber      string
 	MainboardNumber   string
 	Power             int8
 	OutTemp           int

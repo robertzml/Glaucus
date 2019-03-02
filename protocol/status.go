@@ -79,7 +79,7 @@ func (msg *StatusMessage) Save() {
 	r.Connect()
 
 	if msg.FullStatus {
-		r.Hmset(msg.SerialNumber, msg.WaterHeaterStatus)
+		r.Hmset("real_" + msg.SerialNumber, msg.WaterHeaterStatus)
 	}
 }
 
@@ -91,6 +91,7 @@ func (msg *StatusMessage) parseWaterHeater(payload string) {
 	index := 0
 	length := len(payload)
 
+	msg.WaterHeaterStatus.SerialNumber = msg.SerialNumber
 	msg.WaterHeaterStatus.MainboardNumber = msg.MainboardNumber
 
 	for index < length {

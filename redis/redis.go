@@ -52,6 +52,7 @@ func (r *Redis) Hmset(key string, s interface{}) {
 	if _, err := r.Client.Do("HMSET", redigo.Args{}.Add(key).AddFlat(s)...); err != nil {
 		fmt.Println(err)
 	}
+	fmt.Printf("redis update key:%s\n", key)
 }
 
 // 读取数据
