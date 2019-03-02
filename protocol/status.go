@@ -102,7 +102,8 @@ func (msg *StatusMessage) parseWaterHeater(payload string) {
 
 		switch tlv.Tag {
 		case 0x01:
-			msg.WaterHeaterStatus.Power, _ = strconv.Atoi(tlv.Value)
+			v, _ := strconv.Atoi(tlv.Value)
+			msg.WaterHeaterStatus.Power = int8(v)
 		case 0x03:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
 			msg.WaterHeaterStatus.OutTemp = int(v)
@@ -118,6 +119,48 @@ func (msg *StatusMessage) parseWaterHeater(payload string) {
 		case 0x07:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
 			msg.WaterHeaterStatus.ErrorCode = int(v)
+		case 0x08:
+			msg.WaterHeaterStatus.WifiVersion = tlv.Value
+		case 0x09:
+			v, _ := ParseTime(tlv.Value)
+			msg.WaterHeaterStatus.CumulateHeatTime = v
+		case 0x0a:
+			v, _ := ParseCumulate(tlv.Value, 8)
+			msg.WaterHeaterStatus.CumulateHotWater = v
+		case 0x0b:
+			v, _ := ParseTime(tlv.Value)
+			msg.WaterHeaterStatus.CumulateWorkTime = v
+		case 0x0c:
+			v, _ := ParseCumulate(tlv.Value, 8)
+			msg.WaterHeaterStatus.CumulateUsedPower = v
+		case 0x0d:
+			v, _ := ParseCumulate(tlv.Value, 8)
+			msg.WaterHeaterStatus.CumualteSavePower = v
+		case 0x1a:
+			v, _ := strconv.Atoi(tlv.Value)
+			msg.WaterHeaterStatus.Lock = int8(v)
+		case 0x1b:
+			v, _ := strconv.Atoi(tlv.Value)
+			msg.WaterHeaterStatus.Activate = int8(v)
+		case 0x1c:
+			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
+			msg.WaterHeaterStatus.SetTemp = int(v)
+		case 0x1d:
+			msg.WaterHeaterStatus.SoftwareFunction = tlv.Value
+		case 0x1e:
+			v, _ := ParseCumulate(tlv.Value, 4)
+			msg.WaterHeaterStatus.OutputPower = v
+		case 0x1f:
+			v, _ := strconv.Atoi(tlv.Value)
+			msg.WaterHeaterStatus.ManualClean = int8(v)
+		case 0x20:
+			v, _ := ParseDateToTimestamp(tlv.Value)
+			msg.WaterHeaterStatus.DeadlineTime = v
+		case 0x21:
+			v, _ := ParseDateToTimestamp(tlv.Value)
+			msg.WaterHeaterStatus.ActivationTime = v
+		case 0x22:
+			msg.WaterHeaterStatus.SpecialParameter = tlv.Value
 		}
 
 		index += tlv.Length + 8
