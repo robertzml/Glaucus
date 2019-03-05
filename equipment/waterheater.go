@@ -52,11 +52,22 @@ func (equipment *WaterHeater) GetStatus(serialNumber string) (exists bool, err e
 	return true,nil
 }
 
+// 整体更新设备实时状态
 func (equipment *WaterHeater) SaveStatus() {
 	r := new(redis.Redis)
 	defer r.Close()
 
 	r.Connect()
-	
+
 	r.Hmset("real_" + equipment.SerialNumber, equipment)
+}
+
+// 部分更新设备实时状态
+func (equipment *WaterHeater) SaveField(field string, val interface{}) {
+	r := new(redis.Redis)
+	defer r.Close()
+
+	r.Connect()
+
+	r.Hset(equipment.SerialNumber, field, val)
 }

@@ -3,10 +3,9 @@ package redis
 import (
 	"fmt"
 	"testing"
-	"../equipment"
 )
 
-
+/*
 func TestSaveStruct(t *testing.T) {
 	var w equipment.WaterHeater
 	w.Power = 1
@@ -19,7 +18,7 @@ func TestSaveStruct(t *testing.T) {
 	r.Hmset("1234567", &w)
 
 	r.Close()
-}
+}*/
 
 func TestDoGet(t *testing.T) {
 	r := new(Redis)
@@ -28,5 +27,15 @@ func TestDoGet(t *testing.T) {
 	val := r.Read("abc")
 
 	fmt.Println(val)
+	r.Close()
+}
+
+func TestHset(t *testing.T) {
+	r := new(Redis)
+	r.Connect()
+
+	r.Hset("real_01100101801100e2", "WifiVersion", "dse")
+
+
 	r.Close()
 }

@@ -78,6 +78,14 @@ func (r *Redis) Hmset(key string, s interface{}) {
 	fmt.Printf("redis update key:%s\n", key)
 }
 
+// 写入hash 中 某一项数据
+func (r *Redis) Hset(key string, field string, val interface{}) {
+	if _, err := r.Client.Do("HSET", key, field, val); err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("redis update key:%s, field:%s, val: %v\n", key, field, val)
+}
+
 // 获取hash数据
 // key: 键值
 func (r *Redis) Hgetall(key string, dest interface{}) (err error) {

@@ -195,6 +195,18 @@ func (msg *StatusMessage) parseWaterHeater(payload string) (waterHeaterStatus eq
 
 
 // 处理热水器变化状态
-func (msg *StatusMessage) handleWaterHeaterChange(payload string) {
+func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
+	equip := new(equipment.WaterHeater)
+
+	exists, err := equip.GetStatus(msg.SerialNumber)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return nil
+	}
+
+
 
 }
