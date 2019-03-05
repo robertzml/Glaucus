@@ -28,8 +28,6 @@ func parseType(message string) (cell TLV, msg Message, err error) {
 	}
 
 	switch cell.Tag {
-	case 0x03:
-		msg = new(LoginMessage)
 	case 0x14:
 		msg = new(StatusMessage)
 	default:

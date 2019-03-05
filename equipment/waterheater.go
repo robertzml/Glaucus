@@ -2,7 +2,6 @@ package equipment
 
 import (
 	"../redis"
-	"errors"
 )
 
 /*
@@ -35,24 +34,29 @@ type WaterHeater struct {
 }
 
 // 获取redis中设备实时状态
-func (equipment *WaterHeater) GetStatus(serialNumber string) (err error) {
+func (equipment *WaterHeater) GetStatus(serialNumber string) (exists bool, err error) {
 	r := new(redis.Redis)
 	defer r.Close()
 
 	r.Connect()
 
 	if r.Exists(RealStatusPrefix + serialNumber) == 0 {
-		return errors.New("equipment not in redis.")
+		return false, nil
 	}
 
 	err = r.Hgetall(RealStatusPrefix + serialNumber, equipment)
 	if err != nil {
-		return
+		return true, err
 	}
 
-	return nil
+	return true,nil
 }
 
 func (equipment *WaterHeater) SaveStatus() {
+	r := new(redis.Redis)
+	defer r.Close()
 
+	r.Connect()
+	
+	r.Hmset("real_" + equipment.SerialNumber, equipment)
 }

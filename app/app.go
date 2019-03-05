@@ -44,7 +44,7 @@ func startMqtt() {
 func startTest() {
 	var w equipment.WaterHeater
 
-	err := w.GetStatus("01100101801100e")
+	_, err := w.GetStatus("01100101801100e")
 	if err != nil {
 		fmt.Println(err)
 	} else {
