@@ -3,13 +3,20 @@ package app
 import (
 	"../equipment"
 	"../mqtt"
+	"../redis"
 	"fmt"
 )
 
 func Run() {
 	fmt.Println("app is running")
 
+	startRedis()
 	startMqtt()
+}
+
+// 启动redis 线程池
+func startRedis() {
+	redis.InitPool()
 }
 
 // 启动MQTT 服务订阅

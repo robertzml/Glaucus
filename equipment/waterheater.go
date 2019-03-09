@@ -39,16 +39,15 @@ type WaterHeater struct {
 // serialNumber: 设备序列号
 // 返回 exists: 设备是否存在redis中
 func (equipment *WaterHeater) GetStatus(serialNumber string) (exists bool, err error) {
-	r := new(redis.Redis)
-	defer r.Close()
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
 
-	r.Connect()
-
-	if r.Exists(RealStatusPrefix + serialNumber) == 0 {
+	if rc.Exists(RealStatusPrefix + serialNumber) == 0 {
 		return false, nil
 	}
 
-	err = r.Hgetall(RealStatusPrefix + serialNumber, equipment)
+	err = rc.Hgetall(RealStatusPrefix + serialNumber, equipment)
 	if err != nil {
 		return true, err
 	}
@@ -58,22 +57,20 @@ func (equipment *WaterHeater) GetStatus(serialNumber string) (exists bool, err e
 
 // 整体更新设备实时状态
 func (equipment *WaterHeater) SaveStatus() {
-	r := new(redis.Redis)
-	defer r.Close()
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
 
-	r.Connect()
-
-	r.Hmset("real_" + equipment.SerialNumber, equipment)
+	rc.Hmset("real_" + equipment.SerialNumber, equipment)
 }
 
 // 部分更新设备实时状态
 func (equipment *WaterHeater) UpdateField(field string, val interface{}) {
-	r := new(redis.Redis)
-	defer r.Close()
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
 
-	r.Connect()
-
-	r.Hset(equipment.SerialNumber, field, val)
+	rc.Hset(equipment.SerialNumber, field, val)
 }
 
 // 序列化设备属性

@@ -1,7 +1,6 @@
 package redis
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -20,22 +19,40 @@ func TestSaveStruct(t *testing.T) {
 	r.Close()
 }*/
 
-func TestDoGet(t *testing.T) {
-	r := new(Redis)
-	r.Connect()
+func TestPool(t *testing.T) {
+	InitPool()
 
-	val := r.Read("abc")
+	r0 := new(RedisClient)
+	r0.Get()
+	r0.Write("abc", "sdfds")
+
+	for i := 0; i < 100; i++ {
+		rc := new(RedisClient)
+		rc.Get()
+
+		_ = rc.Read("abc")
+		defer rc.Close()
+	}
+}
+
+/*
+func TestDoGet(t *testing.T) {
+	rc := new(RedisClient)
+	rc.Get()
+	defer rc.Close()
+
+	val := rc.Read("abc")
 
 	fmt.Println(val)
-	r.Close()
-}
+}*/
 
+/*
 func TestHset(t *testing.T) {
-	r := new(Redis)
-	r.Connect()
+	rc := new(RedisClient)
+	rc.Get()
 
-	r.Hset("real_01100101801100e2", "WifiVersion", "dse")
+	rc.Hset("real_01100101801100e2", "WifiVersion", "dse")
 
 
-	r.Close()
-}
+	rc.Close()
+}*/
