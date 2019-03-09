@@ -2,6 +2,8 @@ package equipment
 
 import (
 	"../redis"
+	"encoding/json"
+	"fmt"
 )
 
 /*
@@ -34,6 +36,8 @@ type WaterHeater struct {
 }
 
 // 获取redis中设备实时状态
+// serialNumber: 设备序列号
+// 返回 exists: 设备是否存在redis中
 func (equipment *WaterHeater) GetStatus(serialNumber string) (exists bool, err error) {
 	r := new(redis.Redis)
 	defer r.Close()
@@ -63,11 +67,22 @@ func (equipment *WaterHeater) SaveStatus() {
 }
 
 // 部分更新设备实时状态
-func (equipment *WaterHeater) SaveField(field string, val interface{}) {
+func (equipment *WaterHeater) UpdateField(field string, val interface{}) {
 	r := new(redis.Redis)
 	defer r.Close()
 
 	r.Connect()
 
 	r.Hset(equipment.SerialNumber, field, val)
+}
+
+// 序列化设备属性
+func (equipment *WaterHeater) Serialize() string {
+
+	data, err := json.Marshal(equipment)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return string(data)
 }

@@ -91,8 +91,14 @@ func (msg *StatusMessage) Handle(data interface{}) (err error) {
 	case TLV:
 		tlv := data.(TLV)
 		if tlv.Tag == 0x128 {
-
+			// 局部更新
+			err = msg.handleWaterHeaterChange(tlv.Value)
+			fmt.Println("partial update.")
+			if err != nil {
+				return err
+			}
 		} else if tlv.Tag == 0x12e {
+			// 整体更新
 			waterHeaterStatus, err := msg.parseWaterHeater(tlv.Value)
 
 			if err != nil {
@@ -100,6 +106,7 @@ func (msg *StatusMessage) Handle(data interface{}) (err error) {
 			}
 
 			waterHeaterStatus.SaveStatus()
+			fmt.Println("total update.")
 		}
 	}
 
@@ -194,19 +201,97 @@ func (msg *StatusMessage) parseWaterHeater(payload string) (waterHeaterStatus eq
 }
 
 
-// 处理热水器变化状态
+// 处理热水器变化状态，并局部更新
 func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
-	equip := new(equipment.WaterHeater)
+	var whs equipment.WaterHeater
 
-	exists, err := equip.GetStatus(msg.SerialNumber)
+	exists, err := whs.GetStatus(msg.SerialNumber)
 	if err != nil {
 		return err
 	}
 
 	if !exists {
+		fmt.Println("cannot update partial for new equipment.")
 		return nil
 	}
 
+	index := 0
+	length := len(payload)
 
+	for index < length {
+		tlv, err := parseTLV(payload, index)
+		if err != nil {
+			fmt.Printf("error occur: %s", err.Error())
+			return err
+		}
 
+		switch tlv.Tag {
+		case 0x01:
+			v, _ := strconv.Atoi(tlv.Value)
+			whs.Power = int8(v)
+		case 0x03:
+			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
+			whs.OutTemp = int(v)
+		case 0x04:
+			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
+			whs.OutFlow = int(v) * 10
+		case 0x05:
+			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
+			whs.ColdInTemp = int(v)
+		case 0x06:
+			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
+			whs.HotInTemp = int(v)
+		case 0x07:
+			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
+			whs.ErrorCode = int(v)
+		case 0x08:
+			whs.WifiVersion = tlv.Value
+		case 0x09:
+			v, _ := ParseTime(tlv.Value)
+			whs.CumulateHeatTime = v
+		case 0x0a:
+			v, _ := ParseCumulate(tlv.Value, 8)
+			whs.CumulateHotWater = v
+		case 0x0b:
+			v, _ := ParseTime(tlv.Value)
+			whs.CumulateWorkTime = v
+		case 0x0c:
+			v, _ := ParseCumulate(tlv.Value, 8)
+			whs.CumulateUsedPower = v
+		case 0x0d:
+			v, _ := ParseCumulate(tlv.Value, 8)
+			whs.CumualteSavePower = v
+		case 0x1a:
+			v, _ := strconv.Atoi(tlv.Value)
+			whs.Lock = int8(v)
+		case 0x1b:
+			v, _ := strconv.Atoi(tlv.Value)
+			whs.Activate = int8(v)
+		case 0x1c:
+			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
+			whs.SetTemp = int(v)
+		case 0x1d:
+			whs.SoftwareFunction = tlv.Value
+		case 0x1e:
+			v, _ := ParseCumulate(tlv.Value, 4)
+			whs.OutputPower = v
+		case 0x1f:
+			v, _ := strconv.Atoi(tlv.Value)
+			whs.ManualClean = int8(v)
+		case 0x20:
+			v, _ := ParseDateToTimestamp(tlv.Value)
+			whs.DeadlineTime = v
+		case 0x21:
+			v, _ := ParseDateToTimestamp(tlv.Value)
+			whs.ActivationTime = v
+		case 0x22:
+			whs.SpecialParameter = tlv.Value
+		}
+
+		index += tlv.Length + 8
+	}
+
+	whs.SaveStatus()
+
+	return nil
 }

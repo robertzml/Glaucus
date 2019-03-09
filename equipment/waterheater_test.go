@@ -5,13 +5,28 @@ import (
 	"testing"
 )
 
+/*
 func TestReadWaterHeater(t *testing.T) {
 	var w WaterHeater
 
-	err := w.GetStatus("01100101801100e2")
+	exists, err := w.GetStatus("01100101801100e2")
 	if err != nil {
 		fmt.Println(err)
 	}
 
+	fmt.Printf("exists in redis: %v\n", exists)
+
 	fmt.Printf("%+v\n", w)
+}
+*/
+
+func TestSerialize(t *testing.T) {
+	var w WaterHeater
+
+	_, err := w.GetStatus("01100101801100e2")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	w.Serialize()
 }
