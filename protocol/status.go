@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 )
 
 // 设备状态报文
@@ -114,15 +115,16 @@ func (msg *StatusMessage) Handle(data interface{}) (err error) {
 }
 
 
-/*
-解析热水器状态
- */
+// 整体解析热水器状态
 func (msg *StatusMessage) parseWaterHeater(payload string) (waterHeaterStatus equipment.WaterHeater, err error) {
 	index := 0
 	length := len(payload)
 
 	waterHeaterStatus.SerialNumber = msg.SerialNumber
 	waterHeaterStatus.MainboardNumber = msg.MainboardNumber
+	waterHeaterStatus.Logtime = time.Now().Unix()
+	waterHeaterStatus.DeviceType = msg.DeviceType
+	waterHeaterStatus.ControllerType = msg.ControllerType
 
 	for index < length {
 		tlv, err := parseTLV(payload, index)

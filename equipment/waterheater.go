@@ -12,6 +12,9 @@ import (
 type WaterHeater struct {
 	SerialNumber      string
 	MainboardNumber   string
+	Logtime           int64
+	DeviceType        string
+	ControllerType    string
 	Power             int8
 	OutTemp           int
 	OutFlow           int
@@ -33,6 +36,8 @@ type WaterHeater struct {
 	DeadlineTime      int64
 	ActivationTime    int64
 	SpecialParameter  string
+	Online            int8
+	LineTime          int64
 }
 
 // 获取redis中设备实时状态
@@ -43,16 +48,16 @@ func (equipment *WaterHeater) GetStatus(serialNumber string) (exists bool, err e
 	rc.Get()
 	defer rc.Close()
 
-	if rc.Exists(RealStatusPrefix + serialNumber) == 0 {
+	if rc.Exists(RealStatusPrefix+serialNumber) == 0 {
 		return false, nil
 	}
 
-	err = rc.Hgetall(RealStatusPrefix + serialNumber, equipment)
+	err = rc.Hgetall(RealStatusPrefix+serialNumber, equipment)
 	if err != nil {
 		return true, err
 	}
 
-	return true,nil
+	return true, nil
 }
 
 // 整体更新设备实时状态
@@ -61,7 +66,7 @@ func (equipment *WaterHeater) SaveStatus() {
 	rc.Get()
 	defer rc.Close()
 
-	rc.Hmset("real_" + equipment.SerialNumber, equipment)
+	rc.Hmset("real_"+equipment.SerialNumber, equipment)
 }
 
 // 部分更新设备实时状态
