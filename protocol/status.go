@@ -94,19 +94,18 @@ func (msg *StatusMessage) Handle(data interface{}) (err error) {
 		if tlv.Tag == 0x128 {
 			// 局部更新
 			err = msg.handleWaterHeaterChange(tlv.Value)
-			fmt.Println("partial update.")
 			if err != nil {
 				return err
 			}
+			fmt.Println("partial update.")
+
 		} else if tlv.Tag == 0x12e {
 			// 整体更新
-			waterHeaterStatus, err := msg.parseWaterHeater(tlv.Value)
-
+			err := msg.handleWaterHeaterTotal(tlv.Value)
 			if err != nil {
 				return err
 			}
 
-			waterHeaterStatus.SaveStatus()
 			fmt.Println("total update.")
 		}
 	}
@@ -116,9 +115,20 @@ func (msg *StatusMessage) Handle(data interface{}) (err error) {
 
 
 // 整体解析热水器状态
-func (msg *StatusMessage) parseWaterHeater(payload string) (waterHeaterStatus equipment.WaterHeater, err error) {
+func (msg *StatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 	index := 0
 	length := len(payload)
+
+	waterHeaterStatus := new(equipment.WaterHeater)
+	exists, err := waterHeaterStatus.GetStatus(msg.SerialNumber)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		waterHeaterStatus.Online = 1
+		waterHeaterStatus.LineTime = time.Now().Unix()
+	}
 
 	waterHeaterStatus.SerialNumber = msg.SerialNumber
 	waterHeaterStatus.MainboardNumber = msg.MainboardNumber
@@ -130,7 +140,7 @@ func (msg *StatusMessage) parseWaterHeater(payload string) (waterHeaterStatus eq
 		tlv, err := parseTLV(payload, index)
 		if err != nil {
 			fmt.Printf("error occur: %s", err.Error())
-			return waterHeaterStatus, err
+			return err
 		}
 
 		switch tlv.Tag {
@@ -199,13 +209,14 @@ func (msg *StatusMessage) parseWaterHeater(payload string) (waterHeaterStatus eq
 		index += tlv.Length + 8
 	}
 
+	waterHeaterStatus.SaveStatus()
 	return
 }
 
 
 // 处理热水器变化状态，并局部更新
 func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
-	var whs equipment.WaterHeater
+	whs := new(equipment.WaterHeater)
 
 	exists, err := whs.GetStatus(msg.SerialNumber)
 	if err != nil {
@@ -216,6 +227,21 @@ func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 		fmt.Println("cannot update partial for new equipment.")
 		return nil
 	}
+
+	whRunning := new(equipment.WaterHeaterRunning)
+	whRunning.SerialNumber = msg.SerialNumber
+	whRunning.MainboardNumber = msg.MainboardNumber
+	whRunning.Logtime = whs.Logtime
+	whRunning.Power = whs.Power
+	whRunning.OutTemp = whs.OutTemp
+	whRunning.OutFlow = whs.OutFlow
+	whRunning.ColdInTemp = whs.ColdInTemp
+	whRunning.HotInTemp = whs.HotInTemp
+	whRunning.SetTemp = whs.SetTemp
+	whRunning.OutputPower = whs.OutputPower
+	whRunning.ManualClean = whs.ManualClean
+
+	runningChange := false
 
 	index := 0
 	length := len(payload)
@@ -231,18 +257,28 @@ func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 		case 0x01:
 			v, _ := strconv.Atoi(tlv.Value)
 			whs.Power = int8(v)
+			whRunning.Power = whs.Power
+			runningChange = true
 		case 0x03:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
 			whs.OutTemp = int(v)
+			whRunning.OutTemp = whs.OutTemp
+			runningChange = true
 		case 0x04:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
 			whs.OutFlow = int(v) * 10
+			whRunning.OutFlow = whs.OutFlow
+			runningChange = true
 		case 0x05:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
 			whs.ColdInTemp = int(v)
+			whRunning.ColdInTemp = whs.ColdInTemp
+			runningChange = true
 		case 0x06:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
 			whs.HotInTemp = int(v)
+			whRunning.HotInTemp = whs.HotInTemp
+			runningChange = true
 		case 0x07:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
 			whs.ErrorCode = int(v)
@@ -272,14 +308,20 @@ func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 		case 0x1c:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
 			whs.SetTemp = int(v)
+			whRunning.SetTemp = whs.SetTemp
+			runningChange = true
 		case 0x1d:
 			whs.SoftwareFunction = tlv.Value
 		case 0x1e:
 			v, _ := ParseCumulate(tlv.Value, 4)
 			whs.OutputPower = v
+			whRunning.OutputPower = whs.OutputPower
+			runningChange = true
 		case 0x1f:
 			v, _ := strconv.Atoi(tlv.Value)
 			whs.ManualClean = int8(v)
+			whRunning.ManualClean = whs.ManualClean
+			runningChange = true
 		case 0x20:
 			v, _ := ParseDateToTimestamp(tlv.Value)
 			whs.DeadlineTime = v

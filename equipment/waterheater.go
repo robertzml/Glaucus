@@ -40,6 +40,21 @@ type WaterHeater struct {
 	LineTime          int64
 }
 
+// 热水器运行数据
+type WaterHeaterRunning struct {
+	SerialNumber      string
+	MainboardNumber   string
+	Logtime           int64
+	Power             int8
+	OutTemp           int
+	OutFlow           int
+	ColdInTemp        int
+	HotInTemp         int
+	SetTemp           int
+	OutputPower       int
+	ManualClean       int8
+}
+
 // 获取redis中设备实时状态
 // serialNumber: 设备序列号
 // 返回 exists: 设备是否存在redis中

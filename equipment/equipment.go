@@ -2,7 +2,7 @@ package equipment
 
 const (
 	// 实时状态前缀
-	RealStatusPrefix = "real_"
+	RealStatusPrefix = "wh_"
 )
 
 type Equipment interface {
