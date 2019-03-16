@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -22,16 +23,15 @@ func TestSaveStruct(t *testing.T) {
 func TestPool(t *testing.T) {
 	InitPool()
 
-	r0 := new(RedisClient)
-	r0.Get()
-	r0.Write("abc", "sdfds")
+	rc := new(RedisClient)
+	rc.Get()
+	defer rc.Close()
 
-	for i := 0; i < 100; i++ {
-		rc := new(RedisClient)
-		rc.Get()
+	v := rc.Hget("wh_01100101801100e1", "MainboardN55umber")
+	fmt.Println(v)
 
-		_ = rc.Read("abc")
-		defer rc.Close()
+	if r := recover(); r != nil {
+		fmt.Printf("%v", r)
 	}
 }
 

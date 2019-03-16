@@ -123,7 +123,11 @@ func (r *RedisClient) Hget(key string, field string) (result string) {
 		panic(err)
 	}
 
-	result = string(reply.([]byte))
+	if reply == nil {
+		return ""
+	} else {
+		result = string(reply.([]byte))
+	}
 	return
 }
 

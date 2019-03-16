@@ -16,21 +16,6 @@ func defaultHandler(client paho.Client, msg paho.Message) {
 	fmt.Printf("MSG: %s\n", msg.Payload())
 }
 
-var protocolHandler paho.MessageHandler = func(client paho.Client, msg paho.Message) {
-	fmt.Printf("TOPIC: %s, Id: %d, QoS: %d\n", msg.Topic(), msg.MessageID(), msg.Qos())
-	fmt.Printf("MSG: %s\n", msg.Payload())
-
-	protocol.Receive(msg.Topic(), msg.Payload(), msg.Qos())
-}
-
-// 登录消息订阅处理方法
-var LoginHandler paho.MessageHandler = func(client paho.Client, msg paho.Message) {
-	fmt.Printf("Login TOPIC: %s, Id: %d, QoS: %d\n", msg.Topic(), msg.MessageID(), msg.Qos())
-	fmt.Printf("Login MSG: %s\n", msg.Payload())
-
-	protocol.Receive(msg.Topic(), msg.Payload(), msg.Qos())
-}
-
 
 // 状态消息订阅处理方法
 var StatusHandler paho.MessageHandler = func(client paho.Client, msg paho.Message) {
