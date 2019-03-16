@@ -4,6 +4,7 @@ import (
 	"../mqtt"
 	"../redis"
 	"../protocol"
+	"../rest"
 	"fmt"
 )
 
@@ -12,7 +13,8 @@ func Run() {
 
 	//startRedis()
 	//startMqtt()
-	startTest()
+	//startTest()
+	startRest()
 }
 
 // 启动redis 线程池
@@ -41,6 +43,10 @@ func startMqtt() {
 		fmt.Println(err)
 		return
 	}
+}
+
+func startRest() {
+	rest.StartHttpServer()
 }
 
 func startTest() {
