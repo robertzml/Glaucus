@@ -2,8 +2,6 @@ package equipment
 
 import (
 	"../redis"
-	"encoding/json"
-	"fmt"
 )
 
 /*
@@ -15,8 +13,11 @@ type WaterHeater struct {
 	Logtime           int64
 	DeviceType        string
 	ControllerType    string
+	// 开关状态
 	Power             int8
+	// 出水温度
 	OutTemp           int
+	// 出水流量
 	OutFlow           int
 	ColdInTemp        int
 	HotInTemp         int
@@ -26,7 +27,7 @@ type WaterHeater struct {
 	CumulateHotWater  int
 	CumulateWorkTime  int
 	CumulateUsedPower int
-	CumualteSavePower int
+	CumulateSavePower int
 	Lock              int8
 	Activate          int8
 	SetTemp           int
@@ -55,6 +56,41 @@ type WaterHeaterRunning struct {
 	ManualClean       int8
 }
 
+// 热水器报警数据
+type WaterHeaterAlarm struct {
+	SerialNumber      string
+	MainboardNumber   string
+	Logtime           int64
+	ErrorCode         int
+}
+
+// 热水器关键数据
+type WaterHeaterKey struct {
+	SerialNumber      string
+	MainboardNumber   string
+	Logtime           int64
+	Activate          int8
+	ActivationTime    int64
+	Lock              int8
+	DeadlineTime      int64
+	Online            int8
+	LineTime          int64
+}
+
+// 热水器累计数据
+type WaterHeaterCumulate struct {
+	SerialNumber      string
+	MainboardNumber   string
+	Logtime           int64
+	CumulateHeatTime  int
+	CumulateHotWater  int
+	CumulateWorkTime  int
+	CumulateUsedPower int
+	CumulateSavePower int
+	ColdInTemp        int
+	SetTemp           int
+}
+
 // 获取redis中设备实时状态
 // serialNumber: 设备序列号
 // 返回 exists: 设备是否存在redis中
@@ -81,7 +117,7 @@ func (equipment *WaterHeater) SaveStatus() {
 	rc.Get()
 	defer rc.Close()
 
-	rc.Hmset("real_"+equipment.SerialNumber, equipment)
+	rc.Hmset(RealStatusPrefix+equipment.SerialNumber, equipment)
 }
 
 // 部分更新设备实时状态
@@ -93,13 +129,47 @@ func (equipment *WaterHeater) UpdateField(field string, val interface{}) {
 	rc.Hset(equipment.SerialNumber, field, val)
 }
 
-// 序列化设备属性
-func (equipment *WaterHeater) Serialize() string {
 
-	data, err := json.Marshal(equipment)
-	if err != nil {
-		fmt.Println(err)
-	}
+// 推送运行数据
+func (equipment *WaterHeater) PushRunning(running *WaterHeaterRunning) {
+	val := serialize(running)
 
-	return string(data)
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
+
+	rc.Rpush("wh_running", val)
+}
+
+// 推送报警数据
+func (equipment *WaterHeater) PushAlarm(alarm *WaterHeaterAlarm) {
+	val := serialize(alarm)
+
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
+
+	rc.Rpush("wh_alarm", val)
+}
+
+// 推送关键数据
+func (equipment *WaterHeater) PushKey(key *WaterHeaterKey) {
+	val := serialize(key)
+
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
+
+	rc.Rpush("wh_key", val)
+}
+
+// 推送累计数据
+func (equipment *WaterHeater) PushCumulate(cumulate *WaterHeaterCumulate) {
+	val := serialize(cumulate)
+
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
+
+	rc.Rpush("wh_cumulate", val)
 }

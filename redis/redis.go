@@ -47,8 +47,6 @@ func (r *RedisClient) Get() {
 	r.client = RedisPool.Get()
 	if r.client.Err() != nil {
 		panic(r.client.Err())
-	} else {
-		fmt.Println("redis connect allocate.")
 	}
 	return
 }
@@ -59,8 +57,6 @@ func (r *RedisClient) Close() {
 	err := r.client.Close()
 	if err != nil {
 		panic(err.Error())
-	} else {
-		fmt.Println("redis connect release.")
 	}
 }
 
@@ -90,8 +86,7 @@ func (r *RedisClient) Read(key string) string {
 func (r *RedisClient) Exists(key string) int {
 	result, err := r.client.Do("EXISTS", key)
 	if err != nil {
-		fmt.Println("exist error: ", err.Error())
-		return 0
+		panic(err)
 	}
 
 	return int(result.(int64))
@@ -105,7 +100,7 @@ func (r *RedisClient) Hmset(key string, s interface{}) {
 	if _, err := r.client.Do("HMSET", redigo.Args{}.Add(key).AddFlat(s)...); err != nil {
 		fmt.Println(err)
 	}
-	fmt.Printf("redis update key:%s\n", key)
+	fmt.Printf("redis update hash key:%s\n", key)
 }
 
 // 写入hash 中 某一项数据
@@ -139,10 +134,20 @@ func (r *RedisClient) Hgetall(key string, dest interface{}) (err error) {
  */
 func (r *RedisClient) Hget(key string, field string) (result string) {
 	reply, err := r.client.Do("HGET", key, field)
-	if (err != nil) {
+	if err != nil {
 		return ""
 	}
 
 	result = string(reply.([]byte))
 	return
+}
+
+// 从右边推入队列
+func (r *RedisClient) Rpush(key string, val string) {
+	_, err := r.client.Do("RPUSH", key, val)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("rpush key: %s\n", key)
 }

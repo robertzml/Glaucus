@@ -45,7 +45,7 @@ func Receive(topic string, payload []byte, qos byte) {
 		return
 	}
 
-	msg.Print(cell)
+	// msg.Print(cell)
 
 	pass, err := msg.Authorize()
 	if !pass || err != nil {

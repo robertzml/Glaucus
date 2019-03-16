@@ -178,7 +178,7 @@ func (msg *StatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 			waterHeaterStatus.CumulateUsedPower = v
 		case 0x0d:
 			v, _ := ParseCumulate(tlv.Value, 8)
-			waterHeaterStatus.CumualteSavePower = v
+			waterHeaterStatus.CumulateSavePower = v
 		case 0x1a:
 			v, _ := strconv.Atoi(tlv.Value)
 			waterHeaterStatus.Lock = int8(v)
@@ -228,6 +228,9 @@ func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 		return nil
 	}
 
+	whs.Logtime = time.Now().Unix()
+
+	// 运行数据
 	whRunning := new(equipment.WaterHeaterRunning)
 	whRunning.SerialNumber = msg.SerialNumber
 	whRunning.MainboardNumber = msg.MainboardNumber
@@ -242,6 +245,43 @@ func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 	whRunning.ManualClean = whs.ManualClean
 
 	runningChange := false
+
+	// 报警数据
+	whAlarm := new(equipment.WaterHeaterAlarm)
+	whAlarm.SerialNumber = msg.SerialNumber
+	whAlarm.MainboardNumber = msg.MainboardNumber
+	whAlarm.Logtime = whs.Logtime
+
+	alarmChange := false
+
+	// 关键数据
+	whKey := new(equipment.WaterHeaterKey)
+	whKey.SerialNumber = msg.SerialNumber
+	whKey.MainboardNumber = msg.MainboardNumber
+	whKey.Logtime = whs.Logtime
+	whKey.Activate = whs.Activate
+	whKey.ActivationTime = whs.ActivationTime
+	whKey.Lock = whs.Lock
+	whKey.DeadlineTime = whs.DeadlineTime
+	whKey.Online = whs.Online
+	whKey.LineTime = whs.LineTime
+
+	keyChange := false
+
+	// 累计数据
+	whCumulate := new(equipment.WaterHeaterCumulate)
+	whCumulate.SerialNumber = msg.SerialNumber
+	whCumulate.MainboardNumber = msg.MainboardNumber
+	whCumulate.Logtime = whs.Logtime
+	whCumulate.CumulateHeatTime = whs.CumulateHeatTime
+	whCumulate.CumulateHotWater = whs.CumulateHotWater
+	whCumulate.CumulateWorkTime = whs.CumulateWorkTime
+	whCumulate.CumulateUsedPower = whs.CumulateUsedPower
+	whCumulate.CumulateSavePower = whs.CumulateSavePower
+	whCumulate.ColdInTemp = whs.ColdInTemp
+	whCumulate.SetTemp = whs.SetTemp
+
+	cumulateChange := false
 
 	index := 0
 	length := len(payload)
@@ -274,6 +314,8 @@ func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 			whs.ColdInTemp = int(v)
 			whRunning.ColdInTemp = whs.ColdInTemp
 			runningChange = true
+			whCumulate.ColdInTemp = whs.ColdInTemp
+			cumulateChange = true
 		case 0x06:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
 			whs.HotInTemp = int(v)
@@ -282,34 +324,52 @@ func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 		case 0x07:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
 			whs.ErrorCode = int(v)
+			whAlarm.ErrorCode = whs.ErrorCode
+			alarmChange = true
 		case 0x08:
 			whs.WifiVersion = tlv.Value
 		case 0x09:
 			v, _ := ParseTime(tlv.Value)
 			whs.CumulateHeatTime = v
+			whCumulate.CumulateHeatTime = whs.CumulateHeatTime
+			cumulateChange = true
 		case 0x0a:
 			v, _ := ParseCumulate(tlv.Value, 8)
 			whs.CumulateHotWater = v
+			whCumulate.CumulateHotWater = whs.CumulateHotWater
+			cumulateChange = true
 		case 0x0b:
 			v, _ := ParseTime(tlv.Value)
 			whs.CumulateWorkTime = v
+			whCumulate.CumulateWorkTime = whs.CumulateWorkTime
+			cumulateChange = true
 		case 0x0c:
 			v, _ := ParseCumulate(tlv.Value, 8)
 			whs.CumulateUsedPower = v
+			whCumulate.CumulateUsedPower = whs.CumulateUsedPower
+			cumulateChange = true
 		case 0x0d:
 			v, _ := ParseCumulate(tlv.Value, 8)
-			whs.CumualteSavePower = v
+			whs.CumulateSavePower = v
+			whCumulate.CumulateSavePower = whs.CumulateSavePower
+			cumulateChange = true
 		case 0x1a:
 			v, _ := strconv.Atoi(tlv.Value)
 			whs.Lock = int8(v)
+			whKey.Lock = whs.Lock
+			keyChange = true
 		case 0x1b:
 			v, _ := strconv.Atoi(tlv.Value)
 			whs.Activate = int8(v)
+			whKey.Activate = whs.Activate
+			keyChange = true
 		case 0x1c:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
 			whs.SetTemp = int(v)
 			whRunning.SetTemp = whs.SetTemp
 			runningChange = true
+			whCumulate.SetTemp = whs.SetTemp
+			cumulateChange = true
 		case 0x1d:
 			whs.SoftwareFunction = tlv.Value
 		case 0x1e:
@@ -325,9 +385,13 @@ func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 		case 0x20:
 			v, _ := ParseDateToTimestamp(tlv.Value)
 			whs.DeadlineTime = v
+			whKey.DeadlineTime = whs.DeadlineTime
+			keyChange = true
 		case 0x21:
 			v, _ := ParseDateToTimestamp(tlv.Value)
 			whs.ActivationTime = v
+			whKey.ActivationTime = whs.ActivationTime
+			keyChange = true
 		case 0x22:
 			whs.SpecialParameter = tlv.Value
 		}
@@ -336,6 +400,22 @@ func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 	}
 
 	whs.SaveStatus()
+
+	if runningChange {
+		whs.PushRunning(whRunning)
+	}
+
+	if alarmChange {
+		whs.PushAlarm(whAlarm)
+	}
+
+	if keyChange {
+		whs.PushKey(whKey)
+	}
+
+	if cumulateChange {
+		whs.PushCumulate(whCumulate)
+	}
 
 	return nil
 }
