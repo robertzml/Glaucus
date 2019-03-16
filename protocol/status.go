@@ -65,24 +65,20 @@ func (msg *StatusMessage) Print(cell TLV) {
 }
 
 // 安全检查
+// 返回: pass 是否通过
 func (msg *StatusMessage) Authorize() (pass bool, err error) {
-	equip := new(equipment.WaterHeater)
+	whs := new(equipment.WaterHeater)
 
-	exists, err := equip.GetStatus(msg.SerialNumber)
-	if err != nil {
-		return false, err
-	}
-
-	if !exists {
-		fmt.Println("new equipment found.")
-		return true, nil
-	} else {
-		if equip.MainboardNumber != msg.MainboardNumber {
+	if exists := whs.LoadStatus(msg.SerialNumber); exists {
+		if whs.MainboardNumber != msg.MainboardNumber {
 			return false, errors.New("Mainboard Number not equal.")
 		}
+	} else {
+		fmt.Println("authorize: new equipment found.")
+		return true, nil
 	}
 
-	fmt.Println("authorize pass.")
+	fmt.Println("authorize: pass.")
 	return true, nil
 }
 
@@ -93,16 +89,14 @@ func (msg *StatusMessage) Handle(data interface{}) (err error) {
 		tlv := data.(TLV)
 		if tlv.Tag == 0x128 {
 			// 局部更新
-			err = msg.handleWaterHeaterChange(tlv.Value)
-			if err != nil {
+			if err = msg.handleWaterHeaterChange(tlv.Value); err != nil {
 				return err
 			}
 			fmt.Println("partial update.")
 
 		} else if tlv.Tag == 0x12e {
 			// 整体更新
-			err := msg.handleWaterHeaterTotal(tlv.Value)
-			if err != nil {
+			if err := msg.handleWaterHeaterTotal(tlv.Value); err != nil {
 				return err
 			}
 
@@ -116,15 +110,9 @@ func (msg *StatusMessage) Handle(data interface{}) (err error) {
 
 // 整体解析热水器状态
 func (msg *StatusMessage) handleWaterHeaterTotal(payload string) (err error) {
-	index := 0
-	length := len(payload)
-
 	waterHeaterStatus := new(equipment.WaterHeater)
-	exists, err := waterHeaterStatus.GetStatus(msg.SerialNumber)
-	if err != nil {
-		return err
-	}
 
+	exists := waterHeaterStatus.LoadStatus(msg.SerialNumber)
 	if !exists {
 		waterHeaterStatus.Online = 1
 		waterHeaterStatus.LineTime = time.Now().Unix()
@@ -135,6 +123,9 @@ func (msg *StatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 	waterHeaterStatus.Logtime = time.Now().Unix()
 	waterHeaterStatus.DeviceType = msg.DeviceType
 	waterHeaterStatus.ControllerType = msg.ControllerType
+
+	index := 0
+	length := len(payload)
 
 	for index < length {
 		tlv, err := parseTLV(payload, index)
@@ -218,11 +209,7 @@ func (msg *StatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 	whs := new(equipment.WaterHeater)
 
-	exists, err := whs.GetStatus(msg.SerialNumber)
-	if err != nil {
-		return err
-	}
-
+	exists := whs.LoadStatus(msg.SerialNumber)
 	if !exists {
 		fmt.Println("cannot update partial for new equipment.")
 		return nil
@@ -232,8 +219,8 @@ func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 
 	// 运行数据
 	whRunning := new(equipment.WaterHeaterRunning)
-	whRunning.SerialNumber = msg.SerialNumber
-	whRunning.MainboardNumber = msg.MainboardNumber
+	whRunning.SerialNumber = whs.SerialNumber
+	whRunning.MainboardNumber = whs.MainboardNumber
 	whRunning.Logtime = whs.Logtime
 	whRunning.Power = whs.Power
 	whRunning.OutTemp = whs.OutTemp
@@ -248,16 +235,16 @@ func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 
 	// 报警数据
 	whAlarm := new(equipment.WaterHeaterAlarm)
-	whAlarm.SerialNumber = msg.SerialNumber
-	whAlarm.MainboardNumber = msg.MainboardNumber
+	whAlarm.SerialNumber = whs.SerialNumber
+	whAlarm.MainboardNumber = whs.MainboardNumber
 	whAlarm.Logtime = whs.Logtime
 
 	alarmChange := false
 
 	// 关键数据
 	whKey := new(equipment.WaterHeaterKey)
-	whKey.SerialNumber = msg.SerialNumber
-	whKey.MainboardNumber = msg.MainboardNumber
+	whKey.SerialNumber = whs.SerialNumber
+	whKey.MainboardNumber = whs.MainboardNumber
 	whKey.Logtime = whs.Logtime
 	whKey.Activate = whs.Activate
 	whKey.ActivationTime = whs.ActivationTime
@@ -270,8 +257,8 @@ func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 
 	// 累计数据
 	whCumulate := new(equipment.WaterHeaterCumulate)
-	whCumulate.SerialNumber = msg.SerialNumber
-	whCumulate.MainboardNumber = msg.MainboardNumber
+	whCumulate.SerialNumber = whs.SerialNumber
+	whCumulate.MainboardNumber = whs.MainboardNumber
 	whCumulate.Logtime = whs.Logtime
 	whCumulate.CumulateHeatTime = whs.CumulateHeatTime
 	whCumulate.CumulateHotWater = whs.CumulateHotWater

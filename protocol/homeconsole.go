@@ -33,6 +33,12 @@ type Message interface {
 // payload: 接收内容
 // qos: QoS
 func Receive(topic string, payload []byte, qos byte) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("catch runtime panic in mqtt receive: %v\n", r)
+		}
+	}()
+
 	cell, msg, err := parseType(string(payload[:]))
 	if err != nil {
 		fmt.Println("catch error in parseType: ", err.Error())

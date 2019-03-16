@@ -1,7 +1,6 @@
 package app
 
 import (
-	"../equipment"
 	"../mqtt"
 	"../redis"
 	"fmt"
@@ -49,13 +48,6 @@ func startMqtt() {
 }
 
 func startTest() {
-	var w equipment.WaterHeater
 
-	_, err := w.GetStatus("01100101801100e")
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Printf("%+v\n", w)
-	}
 }
 

@@ -11,9 +11,9 @@ const (
 
 type Equipment interface {
 	// 从redis中获取设备状态
-	GetStatus(serialnumber string) (exists bool, err error)
+	LoadStatus(serialnumber string) (exists bool)
 
-	// 保持实时状态到redis中
+	// 保存实时状态到redis中
 	SaveStatus()
 }
 
