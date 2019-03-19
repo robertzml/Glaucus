@@ -12,24 +12,27 @@ type ControlMessage struct {
 	ControlAction		string
 }
 
-func (msg *ControlMessage) Splice() string {
+// 拼接设备控制报文
+func (msg *ControlMessage) splice() string {
 	head := spliceHead()
 
-	sn := TLV{ Tag: 0x127, Length: len(msg.SerialNumber), Value:msg.SerialNumber }
-	mn := TLV{ Tag: 0x12b, Length: len(msg.MainboardNumber), Value:msg.MainboardNumber }
-	ca := TLV{ Tag: 0x12, Length: len(msg.ControlAction), Value:msg.ControlAction }
+	sn := spliceTLV(0x127, msg.SerialNumber)
+	mn := spliceTLV(0x12b, msg.MainboardNumber)
+	ca := spliceTLV(0x012, msg.ControlAction)
 
-	v := spliceTLV(0x0010, sn.String() + mn.String() + ca.String())
+	body := spliceTLV(0x0010, sn + mn + ca)
 
-	return head + v
+	return head + body
 }
 
 // 从缓存中读取设备主板序列号
-func (msg *ControlMessage) loadEquipment() bool {
+// serialNumber: 设备序列号
+func (msg *ControlMessage) LoadEquipment(serialNumber string) bool {
 	rc := new(redis.RedisClient)
 	rc.Get()
 	defer rc.Close()
 
+	msg.SerialNumber = serialNumber
 	mn := rc.Hget("wh_" + msg.SerialNumber, "MainboardNumber")
 	if len(mn) == 0 {
 		return false
@@ -39,14 +42,15 @@ func (msg *ControlMessage) loadEquipment() bool {
 	}
 }
 
+// 开关机报文
 func (msg *ControlMessage) Power(power int) string {
 	msg.ControlAction = spliceTLV(0x01, strconv.Itoa(power))
 
-	return msg.Splice()
+	return msg.splice()
 }
 
 func (msg *ControlMessage) Lock(isLock int) string {
 	msg.ControlAction = spliceTLV(0x1a, strconv.Itoa(isLock))
 
-	return msg.Splice()
+	return msg.splice()
 }

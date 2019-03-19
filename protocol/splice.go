@@ -10,6 +10,10 @@ func spliceHead() string {
 	return s
 }
 
+// 拼接TLV
+// tag: 信元编码
+// val: 数据
+// 返回：编码后的字符串
 func spliceTLV(tag int, val string) string {
 	return fmt.Sprintf("%04X%04X%s", tag, len(val), val)
 }
