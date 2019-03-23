@@ -8,9 +8,9 @@ import (
 // 启动MQTT发送服务
 // 通过ch 获取发送请求
 func StartSend(ch chan *base.SendPacket) {
-	var clientId = fmt.Sprintf("send-channel-%d", base.DefaultConfig.MqttChannel)
-
 	m := new(MQTT)
+
+	clientId := fmt.Sprintf("send-channel-%d", base.DefaultConfig.MqttChannel)
 	m.Connect(clientId, base.DefaultConfig.MqttServerAddress)
 
 	defer func() {
@@ -24,6 +24,6 @@ func StartSend(ch chan *base.SendPacket) {
 		var controlTopic = fmt.Sprintf("server/%d/1/%s/control_info", base.DefaultConfig.MqttChannel, input.SerialNumber)
 		m.Publish(controlTopic, 2, input.Payload)
 
-		fmt.Printf("PUBLISH  Topic:%s, Payload: %s\n", controlTopic, input.Payload)
+		fmt.Printf("PUBLISH Topic:%s, Payload: %s\n", controlTopic, input.Payload)
 	}
 }

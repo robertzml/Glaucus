@@ -21,11 +21,12 @@ type ResponseMessage struct {
 	Message		string
 }
 
+// 启动HTTP服务
 func StartHttpServer(ch chan *base.SendPacket) {
 	mux := http.NewServeMux()
 
 	server := &http.Server{
-		Addr:         ":2450",
+		Addr:         base.DefaultConfig.HttpListenAddress,
 		WriteTimeout: 10 * time.Second,            //设置3秒的写超时
 		Handler:      mux,
 	}
@@ -35,7 +36,7 @@ func StartHttpServer(ch chan *base.SendPacket) {
 
 	mux.Handle("/", restHandler)
 	mux.HandleFunc("/power", restHandler.power)
-	mux.HandleFunc("/bye", sayBye)
+	mux.HandleFunc("/clear", restHandler.clear)
 
 	if err := server.ListenAndServe(); err != nil {
 		fmt.Println("start server failed.")
@@ -56,20 +57,20 @@ func (handler *RestHandler) power(w http.ResponseWriter, r *http.Request) {
 			 _ = r.Body.Close()
 		}()
 
-		result := make(map[string]interface{})
+		parameter := make(map[string]interface{})
 
-		if err := json.Unmarshal(body, &result); err != nil {
+		if err := json.Unmarshal(body, &parameter); err != nil {
 			fmt.Println(err)
 			w.WriteHeader(400)
 			return
 		}
 
-		serialNumber, ok := result["serialNumber"].(string)
+		serialNumber, ok := parameter["serialNumber"].(string)
 		if !ok {
 			w.WriteHeader(400)
 			return
 		}
-		status, ok := result["status"].(float64)
+		status, ok := parameter["status"].(float64)
 		if !ok {
 			w.WriteHeader(400)
 			return
@@ -85,13 +86,9 @@ func (handler *RestHandler) power(w http.ResponseWriter, r *http.Request) {
 
 			handler.ch <- pak
 
-			rm := ResponseMessage{ Status: 0, Message: "" }
-			ret, _ := json.Marshal(rm)
-			_, _ = io.WriteString(w, string(ret))
+			response(w, 0, "ok")
 		} else {
-			rm := ResponseMessage{ Status: 1, Message: "Equipment not found." }
-			ret, _ := json.Marshal(rm)
-			_, _ = io.WriteString(w, string(ret))
+			response(w, 1, "Equipment not found.")
 		}
 
 	} else {
@@ -99,8 +96,108 @@ func (handler *RestHandler) power(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func sayBye(w http.ResponseWriter, r *http.Request) {
+// 设定温度
+func (handler *RestHandler) setTemp(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		body, _ := ioutil.ReadAll(r.Body)
 
-	//w.Write([]byte("bye bye ,this is v3 httpServer"))
-	_, _ = io.WriteString(w, "say hi")
+		defer func () {
+			_ = r.Body.Close()
+		}()
+
+		parameter := make(map[string]interface{})
+		if err := json.Unmarshal(body, &parameter); err != nil {
+			fmt.Println(err)
+			w.WriteHeader(400)
+			return
+		}
+
+		serialNumber, ok := parameter["serialNumber"].(string)
+		if !ok {
+			w.WriteHeader(400)
+			return
+		}
+		temp, ok := parameter["temp"].(float64)
+		if !ok {
+			w.WriteHeader(400)
+			return
+		}
+
+		control := new(protocol.ControlMessage)
+		if ok = control.LoadEquipment(serialNumber); ok {
+			pak := new(base.SendPacket)
+			pak.SerialNumber = serialNumber
+			pak.Payload = control.SetTemp(int(temp))
+
+			fmt.Println("control producer.")
+
+			handler.ch <- pak
+
+			response(w, 0, "ok")
+		} else {
+			response(w, 1, "Equipment not found.")
+		}
+
+	} else {
+		w.WriteHeader(404)
+	}
 }
+
+// 设备数据清零接口
+// 参数status 使用位表示清零项目
+func (handler *RestHandler) clear(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		body, _ := ioutil.ReadAll(r.Body)
+
+		defer func () {
+			_ = r.Body.Close()
+		}()
+
+		parameter := make(map[string]interface{})
+		if err := json.Unmarshal(body, &parameter); err != nil {
+			fmt.Println(err)
+			w.WriteHeader(400)
+			return
+		}
+
+		serialNumber, ok := parameter["serialNumber"].(string)
+		if !ok {
+			w.WriteHeader(400)
+			return
+		}
+		status, ok := parameter["status"].(float64)
+		if !ok {
+			w.WriteHeader(400)
+			return
+		}
+
+		control := new(protocol.ControlMessage)
+		if ok = control.LoadEquipment(serialNumber); ok {
+			pak := new(base.SendPacket)
+			pak.SerialNumber = serialNumber
+			pak.Payload = control.Clear(int8(status))
+
+			fmt.Println("control producer.")
+
+			handler.ch <- pak
+
+			response(w, 0, "ok")
+		} else {
+			response(w, 1, "Equipment not found.")
+		}
+
+	} else {
+		w.WriteHeader(404)
+	}
+}
+
+
+// 返回消息
+// status: 状态码
+// message: 错误内容
+func response(w http.ResponseWriter, status int, message string) {
+	rm := ResponseMessage{ Status: status, Message: message }
+	ret, _ := json.Marshal(&rm)
+	_, _ = io.WriteString(w, string(ret))
+}
+

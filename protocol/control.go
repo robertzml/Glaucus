@@ -12,18 +12,6 @@ type ControlMessage struct {
 	ControlAction		string
 }
 
-// 拼接设备控制报文
-func (msg *ControlMessage) splice() string {
-	head := spliceHead()
-
-	sn := spliceTLV(0x127, msg.SerialNumber)
-	mn := spliceTLV(0x12b, msg.MainboardNumber)
-	ca := spliceTLV(0x012, msg.ControlAction)
-
-	body := spliceTLV(0x0010, sn + mn + ca)
-
-	return head + body
-}
 
 // 从缓存中读取设备主板序列号
 // serialNumber: 设备序列号
@@ -45,12 +33,34 @@ func (msg *ControlMessage) LoadEquipment(serialNumber string) bool {
 // 开关机报文
 func (msg *ControlMessage) Power(power int) string {
 	msg.ControlAction = spliceTLV(0x01, strconv.Itoa(power))
-
 	return msg.splice()
 }
 
 func (msg *ControlMessage) Lock(isLock int) string {
 	msg.ControlAction = spliceTLV(0x1a, strconv.Itoa(isLock))
+
+	return msg.splice()
+}
+
+// 设定温度报文
+func (msg *ControlMessage) SetTemp(temp int) string {
+	msg.ControlAction = spliceTLV(0x1c, strconv.FormatInt(int64(temp),16))
+	return msg.splice()
+}
+
+// 清零报文
+func (msg *ControlMessage) Clear(status int8) string {
+	if status & 0x01 == 0x01 {
+		msg.ControlAction = spliceTLV(0x39, strconv.Itoa(0))
+	} else if status & 0x02 == 0x02 {
+		msg.ControlAction = spliceTLV(0x38, strconv.Itoa(0))
+	} else if status & 0x04 == 0x04 {
+		msg.ControlAction = spliceTLV(0x37, strconv.Itoa(0))
+	} else if status & 0x08 == 0x08 {
+		msg.ControlAction = spliceTLV(0x36, strconv.Itoa(0))
+	} else if status & 0x10 == 0x10 {
+		msg.ControlAction = spliceTLV(0x35, strconv.Itoa(0))
+	}
 
 	return msg.splice()
 }

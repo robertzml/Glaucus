@@ -7,9 +7,9 @@ import (
 
 // 启动MQTT接收服务
 func StartReceive() {
-	var clientId = fmt.Sprintf("server-channel-%d", base.DefaultConfig.MqttChannel)
-
 	m := new(MQTT)
+
+	clientId := fmt.Sprintf("server-channel-%d", base.DefaultConfig.MqttChannel)
 	m.Connect(clientId, base.DefaultConfig.MqttServerAddress)
 
 	var statusTopic = fmt.Sprintf("equipment/%d/1/+/status_info", base.DefaultConfig.MqttChannel)

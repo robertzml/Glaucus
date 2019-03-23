@@ -6,6 +6,7 @@ import (
 	"../redis"
 	"../rest"
 	"fmt"
+	"log"
 )
 
 func Run() {
@@ -47,5 +48,5 @@ func startControl(ch chan *base.SendPacket) {
 }
 
 func startTest() {
-
+	log.Fatal("abc")
 }
