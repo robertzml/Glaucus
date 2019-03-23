@@ -1,6 +1,7 @@
 package app
 
 import (
+	"../base"
 	"../mqtt"
 	"../redis"
 	"../rest"
@@ -13,8 +14,10 @@ func Run() {
 	startRedis()
 	//startMqtt()
 	//startTest()
-	go startRest()
 
+	ch := make(chan *base.SendPacket)
+	go startRest(ch)
+	go startControl(ch)
 }
 
 // 启动redis 线程池
@@ -27,7 +30,7 @@ func startRedis() {
 func startMqtt() {
 	fmt.Println("start mqtt listen.")
 	var channel = 1
-	var clientId = fmt.Sprintf("server-chanel-%d", channel)
+	var clientId = fmt.Sprintf("server-channel-%d", channel)
 	var server = "tcp://192.168.0.120:1883"
 
 	m := new(mqtt.MQTT)
@@ -47,32 +50,17 @@ func startMqtt() {
 	}
 }
 
-func startRest() {
+func startRest(ch chan *base.SendPacket) {
 	fmt.Println("start rest server.")
-	rest.StartHttpServer()
+	rest.StartHttpServer(ch)
+}
+
+// 启动控制服务
+func startControl(ch chan *base.SendPacket) {
+	mqtt.StartSend(ch)
 }
 
 func startTest() {
 
-	//var channel = 1
-	//var clientId = fmt.Sprintf("server-control-%d", channel)
-	//var server = "tcp://192.168.0.120:1883"
-	//
-	//m := new(mqtt.MQTT)
-	//
-	//m.Connect(clientId, server)
-	//
-	//serialNumber := "01100101801100e3"
-	//
-	//cm := new(protocol.ControlMessage)
-	//cm.SerialNumber = serialNumber
-	//cm.MainboardNumber = "10000000000063"
-	//
-	//payload := cm.Power(1)
-	//
-	//var controlTopic = fmt.Sprintf("server/%d/1/%s/control_info", channel, serialNumber)
-	//m.Publish(controlTopic, 2, payload)
-	//
-	//fmt.Printf("publish: %s", payload)
 }
 

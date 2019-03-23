@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"../base"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,7 +11,11 @@ import (
 	"../protocol"
 )
 
-func StartHttpServer() {
+type RestHandler struct {
+	ch  chan *base.SendPacket
+}
+
+func StartHttpServer(ch chan *base.SendPacket) {
 	mux := http.NewServeMux()
 
 	server := &http.Server{
@@ -19,8 +24,11 @@ func StartHttpServer() {
 		Handler:      mux,
 	}
 
-	mux.Handle("/", &myHandler{})
-	mux.HandleFunc("/power", power)
+	restHandler := new(RestHandler)
+	restHandler.ch = ch
+
+	mux.Handle("/", restHandler)
+	mux.HandleFunc("/power", restHandler.power)
 	mux.HandleFunc("/bye", sayBye)
 
 	if err := server.ListenAndServe(); err != nil {
@@ -28,16 +36,13 @@ func StartHttpServer() {
 	}
 }
 
-type myHandler struct{}
-
-
-func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (*RestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, _ = io.WriteString(w, "hello")
 }
 
 
 // 设备开关机接口
-func power(w http.ResponseWriter, r *http.Request) {
+func (handler *RestHandler) power(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		body, _ := ioutil.ReadAll(r.Body)
 
@@ -64,10 +69,20 @@ func power(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Println(status)
 		control := new(protocol.ControlMessage)
-		ok = control.LoadEquipment(serialNumber)
-		fmt.Println(ok)
+		if ok = control.LoadEquipment(serialNumber); ok {
+			pak := new(base.SendPacket)
+			pak.SerialNumber = serialNumber
+			pak.Payload = control.Power(int(status))
+
+			fmt.Println("control producer.")
+
+			handler.ch <- pak
+
+			_, _ = io.WriteString(w, "control send")
+		} else {
+			_, _ = io.WriteString(w, "not found equipment")
+		}
 
 	} else {
 		w.WriteHeader(404)
