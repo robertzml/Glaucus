@@ -4,9 +4,8 @@ import (
 	"../redis"
 )
 
-/*
-热水器实时状态
- */
+
+//热水器实时状态
 type WaterHeater struct {
 	SerialNumber      string
 	MainboardNumber   string

@@ -15,6 +15,12 @@ type RestHandler struct {
 	ch  chan *base.SendPacket
 }
 
+// HTTP返回消息
+type ResponseMessage struct {
+	Status		int
+	Message		string
+}
+
 func StartHttpServer(ch chan *base.SendPacket) {
 	mux := http.NewServeMux()
 
@@ -79,9 +85,13 @@ func (handler *RestHandler) power(w http.ResponseWriter, r *http.Request) {
 
 			handler.ch <- pak
 
-			_, _ = io.WriteString(w, "control send")
+			rm := ResponseMessage{ Status: 0, Message: "" }
+			ret, _ := json.Marshal(rm)
+			_, _ = io.WriteString(w, string(ret))
 		} else {
-			_, _ = io.WriteString(w, "not found equipment")
+			rm := ResponseMessage{ Status: 1, Message: "Equipment not found." }
+			ret, _ := json.Marshal(rm)
+			_, _ = io.WriteString(w, string(ret))
 		}
 
 	} else {

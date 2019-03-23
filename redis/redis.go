@@ -1,13 +1,10 @@
 package redis
 
 import (
+	"../base"
 	"fmt"
 	redigo "github.com/gomodule/redigo/redis"
 	"time"
-)
-
-const (
-	RedisServer = "192.168.0.120:6379"
 )
 
 // redis 连接池
@@ -29,7 +26,7 @@ func InitPool() {
 		IdleTimeout: 30 * time.Second,
 		Wait:        true,
 		Dial: func() (redigo.Conn, error) {
-			con, err := redigo.Dial("tcp", RedisServer,
+			con, err := redigo.Dial("tcp", base.DefaultConfig.RedisServerAddress,
 				redigo.DialConnectTimeout(timeout*time.Second),
 				redigo.DialReadTimeout(timeout*time.Second),
 				redigo.DialWriteTimeout(timeout*time.Second))
