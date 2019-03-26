@@ -8,12 +8,10 @@ import (
 	"time"
 )
 
-/*
-解析协议
-根据收到的报文，解析出协议头部，确定协议类型
-cell 报文头
-msg  报文内容
- */
+// 解析协议
+// 根据收到的报文，解析出协议头部，确定协议类型
+// cell 报文头
+// msg  报文内容
 func parseType(message string) (cell TLV, msg Message, err error) {
 	// read header
 	_, payload, err := parseHead(message)
@@ -144,4 +142,15 @@ func ParseDateToTimestamp(payload string) (timestamp int64, err error) {
 
 	timestamp = date.Unix()
 	return
+}
+
+// 编码日期到TLV FFFFFFFFFF 格式
+func ParseDateTimeToString(date time.Time) (string) {
+	year := strconv.FormatInt(int64(date.Year() - 2000), 16)
+	month := strconv.FormatInt(int64(date.Month()), 16)
+	day := strconv.FormatInt(int64(date.Day()), 16)
+	hour := strconv.FormatInt(int64(date.Hour()), 16)
+	minute := strconv.FormatInt(int64(date.Minute()), 16)
+
+	return year + month + day + hour + minute
 }

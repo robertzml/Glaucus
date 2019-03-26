@@ -5,20 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
-	"../protocol"
 )
 
+// HTTP接口处理结构体
 type RestHandler struct {
+	// 用于MQTT消息下发
 	ch  chan *base.SendPacket
 }
 
 // HTTP返回消息
 type ResponseMessage struct {
-	Status		int
-	Message		string
+	Status		int		`json:"status"`
+	Message		string	`json:"message"`
 }
 
 // 启动HTTP服务
@@ -27,7 +27,7 @@ func StartHttpServer(ch chan *base.SendPacket) {
 
 	server := &http.Server{
 		Addr:         base.DefaultConfig.HttpListenAddress,
-		WriteTimeout: 10 * time.Second,            //设置3秒的写超时
+		WriteTimeout: 10 * time.Second,            //设置10秒的写超时
 		Handler:      mux,
 	}
 
@@ -36,161 +36,24 @@ func StartHttpServer(ch chan *base.SendPacket) {
 
 	mux.Handle("/", restHandler)
 	mux.HandleFunc("/power", restHandler.power)
+	mux.HandleFunc("/activate", restHandler.activate)
+	mux.HandleFunc("/lock", restHandler.lock)
+	mux.HandleFunc("/unlock", restHandler.unlock)
+	mux.HandleFunc("/settemp", restHandler.setTemp)
+	mux.HandleFunc("/deadline", restHandler.deadline)
 	mux.HandleFunc("/clear", restHandler.clear)
+	mux.HandleFunc("/clean", restHandler.clean)
+	mux.HandleFunc("/special", restHandler.special)
 
 	if err := server.ListenAndServe(); err != nil {
 		fmt.Println("start server failed.")
 	}
 }
 
+// 默认处理接口
 func (*RestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, _ = io.WriteString(w, "hello")
 }
-
-
-// 设备开关机接口
-func (handler *RestHandler) power(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		body, _ := ioutil.ReadAll(r.Body)
-
-		defer func () {
-			 _ = r.Body.Close()
-		}()
-
-		parameter := make(map[string]interface{})
-
-		if err := json.Unmarshal(body, &parameter); err != nil {
-			fmt.Println(err)
-			w.WriteHeader(400)
-			return
-		}
-
-		serialNumber, ok := parameter["serialNumber"].(string)
-		if !ok {
-			w.WriteHeader(400)
-			return
-		}
-		status, ok := parameter["status"].(float64)
-		if !ok {
-			w.WriteHeader(400)
-			return
-		}
-
-		control := new(protocol.ControlMessage)
-		if ok = control.LoadEquipment(serialNumber); ok {
-			pak := new(base.SendPacket)
-			pak.SerialNumber = serialNumber
-			pak.Payload = control.Power(int(status))
-
-			fmt.Println("control producer.")
-
-			handler.ch <- pak
-
-			response(w, 0, "ok")
-		} else {
-			response(w, 1, "Equipment not found.")
-		}
-
-	} else {
-		w.WriteHeader(404)
-	}
-}
-
-// 设定温度
-func (handler *RestHandler) setTemp(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		body, _ := ioutil.ReadAll(r.Body)
-
-		defer func () {
-			_ = r.Body.Close()
-		}()
-
-		parameter := make(map[string]interface{})
-		if err := json.Unmarshal(body, &parameter); err != nil {
-			fmt.Println(err)
-			w.WriteHeader(400)
-			return
-		}
-
-		serialNumber, ok := parameter["serialNumber"].(string)
-		if !ok {
-			w.WriteHeader(400)
-			return
-		}
-		temp, ok := parameter["temp"].(float64)
-		if !ok {
-			w.WriteHeader(400)
-			return
-		}
-
-		control := new(protocol.ControlMessage)
-		if ok = control.LoadEquipment(serialNumber); ok {
-			pak := new(base.SendPacket)
-			pak.SerialNumber = serialNumber
-			pak.Payload = control.SetTemp(int(temp))
-
-			fmt.Println("control producer.")
-
-			handler.ch <- pak
-
-			response(w, 0, "ok")
-		} else {
-			response(w, 1, "Equipment not found.")
-		}
-
-	} else {
-		w.WriteHeader(404)
-	}
-}
-
-// 设备数据清零接口
-// 参数status 使用位表示清零项目
-func (handler *RestHandler) clear(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		body, _ := ioutil.ReadAll(r.Body)
-
-		defer func () {
-			_ = r.Body.Close()
-		}()
-
-		parameter := make(map[string]interface{})
-		if err := json.Unmarshal(body, &parameter); err != nil {
-			fmt.Println(err)
-			w.WriteHeader(400)
-			return
-		}
-
-		serialNumber, ok := parameter["serialNumber"].(string)
-		if !ok {
-			w.WriteHeader(400)
-			return
-		}
-		status, ok := parameter["status"].(float64)
-		if !ok {
-			w.WriteHeader(400)
-			return
-		}
-
-		control := new(protocol.ControlMessage)
-		if ok = control.LoadEquipment(serialNumber); ok {
-			pak := new(base.SendPacket)
-			pak.SerialNumber = serialNumber
-			pak.Payload = control.Clear(int8(status))
-
-			fmt.Println("control producer.")
-
-			handler.ch <- pak
-
-			response(w, 0, "ok")
-		} else {
-			response(w, 1, "Equipment not found.")
-		}
-
-	} else {
-		w.WriteHeader(404)
-	}
-}
-
 
 // 返回消息
 // status: 状态码

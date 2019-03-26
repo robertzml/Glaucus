@@ -15,7 +15,7 @@ func Run() {
 	base.InitConfig()
 
 	startRedis()
-	startMqtt()
+	//startMqtt()
 	//startTest()
 
 	ch := make(chan *base.SendPacket)

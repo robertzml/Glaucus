@@ -3,6 +3,7 @@ package protocol
 import (
 	"../redis"
 	"strconv"
+	"time"
 )
 
 // 设备控制报文
@@ -36,15 +37,42 @@ func (msg *ControlMessage) Power(power int) string {
 	return msg.splice()
 }
 
-func (msg *ControlMessage) Lock(isLock int) string {
-	msg.ControlAction = spliceTLV(0x1a, strconv.Itoa(isLock))
+// 激活非激活报文
+func (msg *ControlMessage) Activate(status int) string {
+	msg.ControlAction = spliceTLV(0x1b, strconv.Itoa(status))
+	return msg.splice()
+}
 
+// 设备加锁报文
+func (msg *ControlMessage) Lock() string {
+	msg.ControlAction = spliceTLV(0x1a, strconv.Itoa(0))
+	return msg.splice()
+}
+
+// 设备解锁报文
+func (msg *ControlMessage) Unlock(deadline time.Time) string {
+	unlock := spliceTLV(0x1a, strconv.Itoa(1))
+	dl := ParseDateTimeToString(deadline)
+
+	msg.ControlAction = unlock + spliceTLV(0x20, dl)
 	return msg.splice()
 }
 
 // 设定温度报文
 func (msg *ControlMessage) SetTemp(temp int) string {
 	msg.ControlAction = spliceTLV(0x1c, strconv.FormatInt(int64(temp),16))
+	return msg.splice()
+}
+
+// 设置允许使用时间
+func (msg *ControlMessage) SetDeadline(deadline time.Time) string {
+	msg.ControlAction = spliceTLV(0x20, ParseDateTimeToString(deadline))
+	return msg.splice()
+}
+
+// 手动清洗开关
+func (msg *ControlMessage) Clean(status int) string {
+	msg.ControlAction = spliceTLV(0x1f, strconv.Itoa(status))
 	return msg.splice()
 }
 
@@ -62,5 +90,11 @@ func (msg *ControlMessage) Clear(status int8) string {
 		msg.ControlAction = spliceTLV(0x35, strconv.Itoa(0))
 	}
 
+	return msg.splice()
+}
+
+// 热水器主控板特殊参数报文
+func (msg *ControlMessage) Special(option string) string {
+	msg.ControlAction = spliceTLV(0x22, option)
 	return msg.splice()
 }
