@@ -1,12 +1,13 @@
 package app
 
 import (
-	"../base"
-	"../mqtt"
-	"../redis"
-	"../rest"
 	"fmt"
 	"log"
+
+	"github.com/robertzml/Glaucus/base"
+	"github.com/robertzml/Glaucus/mqtt"
+	"github.com/robertzml/Glaucus/redis"
+	"github.com/robertzml/Glaucus/rest"
 )
 
 func Run() {

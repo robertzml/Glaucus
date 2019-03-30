@@ -1,10 +1,11 @@
 package redis
 
 import (
-	"../base"
 	"fmt"
 	redigo "github.com/gomodule/redigo/redis"
 	"time"
+
+	"github.com/robertzml/Glaucus/base"
 )
 
 // redis 连接池

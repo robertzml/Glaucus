@@ -1,7 +1,7 @@
 package rest
 
 import (
-	"../base"
+	"github.com/robertzml/Glaucus/base"
 	"encoding/json"
 	"fmt"
 	"io"

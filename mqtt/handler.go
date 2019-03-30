@@ -5,9 +5,9 @@
 package mqtt
 
 import (
-	"../protocol"
 	"fmt"
 	paho "github.com/eclipse/paho.mqtt.golang"
+	"github.com/robertzml/Glaucus/protocol"
 )
 
 // 默认订阅消息处理方法
@@ -15,7 +15,6 @@ func defaultHandler(client paho.Client, msg paho.Message) {
 	fmt.Printf("TOPIC: %s, Id: %d, QoS: %d\n", msg.Topic(), msg.MessageID(), msg.Qos())
 	fmt.Printf("MSG: %s\n", msg.Payload())
 }
-
 
 // 状态消息订阅处理方法
 var StatusHandler paho.MessageHandler = func(client paho.Client, msg paho.Message) {

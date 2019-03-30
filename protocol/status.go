@@ -1,19 +1,19 @@
 package protocol
 
 import (
-	"../equipment"
 	"errors"
 	"fmt"
+	"github.com/robertzml/Glaucus/equipment"
 	"strconv"
 	"time"
 )
 
 // 设备状态报文
 type StatusMessage struct {
-	SerialNumber    	string
-	MainboardNumber 	string
-	DeviceType			string
-	ControllerType		string
+	SerialNumber    string
+	MainboardNumber string
+	DeviceType      string
+	ControllerType  string
 }
 
 // 解析协议内容
@@ -106,7 +106,6 @@ func (msg *StatusMessage) Handle(data interface{}) (err error) {
 
 	return nil
 }
-
 
 // 整体解析热水器状态
 func (msg *StatusMessage) handleWaterHeaterTotal(payload string) (err error) {
@@ -203,7 +202,6 @@ func (msg *StatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 	waterHeaterStatus.SaveStatus()
 	return
 }
-
 
 // 处理热水器变化状态，并局部更新
 func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {

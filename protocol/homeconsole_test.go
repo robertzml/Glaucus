@@ -6,7 +6,7 @@ import (
 )
 
 func TestTLV_String(t *testing.T) {
-	tlv:= TLV {10, 2, "abc"}
+	tlv := TLV{10, 2, "abc"}
 
 	// fmt.Println(tlv.String())
 
@@ -49,13 +49,13 @@ func TestParseMessage(t *testing.T) {
 
 	index := 0
 	for index < tlv.Length {
-		 item, err := parseTLV(tlv.Value, index);
-		 if err != nil {
-		 	t.Error(err.Error())
-		 	return
-		 }
+		item, err := parseTLV(tlv.Value, index);
+		if err != nil {
+			t.Error(err.Error())
+			return
+		}
 
-		 fmt.Printf("Tag: %d, Lenght: %d, Value: %s\n", item.Tag, item.Length, item.Value)
-		 index += item.Length + 8
+		fmt.Printf("Tag: %d, Lenght: %d, Value: %s\n", item.Tag, item.Length, item.Value)
+		index += item.Length + 8
 	}
 }

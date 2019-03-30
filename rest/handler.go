@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"../base"
-	"../protocol"
+	"github.com/robertzml/Glaucus/base"
+	"github.com/robertzml/Glaucus/protocol"
 	"time"
 )
 
@@ -34,7 +34,22 @@ func (handler *RestHandler) control(w http.ResponseWriter, r *http.Request) {
 
 		control := new(protocol.ControlMessage)
 		if ok = control.LoadEquipment(serialNumber); ok {
-						
+			typef, ok := parameter["type"].(float64)
+			if !ok {
+				w.WriteHeader(400)
+				return
+			}
+			type := int(typef)
+
+			optionf, ok := parameter["option"].(float64)
+			if !ok {
+				w.WriteHeader(400)
+				return
+			}
+			option := int(optionf)
+
+			pak := new(base.SendPacket)
+
 
 		} else {
 			response(w, 1, "Equipment not found.")

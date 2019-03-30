@@ -39,7 +39,7 @@ func parseType(message string) (cell TLV, msg Message, err error) {
 /*
 解析协议头部
 返回seq和协议内容
- */
+*/
 func parseHead(message string) (seq string, payload string, err error) {
 	vlen := len(HomeConsoleVersion)
 	v := message[0:vlen]
@@ -56,7 +56,7 @@ func parseHead(message string) (seq string, payload string, err error) {
 
 /*
 解析TLV
- */
+*/
 func parseTLV(payload string, pos int) (tlv TLV, err error) {
 	tag, err := strconv.ParseInt(payload[pos:pos+4], 16, 0)
 	if err != nil {
@@ -78,7 +78,7 @@ func parseTLV(payload string, pos int) (tlv TLV, err error) {
 /*
 解析时间 转换为分钟
 8位  最大FFFFFF小时+FF分钟
- */
+*/
 func ParseTime(payload string) (totalMin int, err error) {
 	if len(payload) != 8 {
 		err = errors.New("time length is wrong.")
@@ -102,7 +102,7 @@ func ParseTime(payload string) (totalMin int, err error) {
 /*
 解析累积量
 8位或4位  2位一转
- */
+*/
 func ParseCumulate(payload string, length int) (total int, err error) {
 	if len(payload) != length {
 		err = errors.New("cumulate length is wrong.")
@@ -123,7 +123,7 @@ func ParseCumulate(payload string, length int) (total int, err error) {
 /*
 解析日期 转换为 时间戳
 10位 2位一转
- */
+*/
 func ParseDateToTimestamp(payload string) (timestamp int64, err error) {
 	if len(payload) != 10 {
 		err = errors.New("date length is wrong.")
@@ -146,7 +146,7 @@ func ParseDateToTimestamp(payload string) (timestamp int64, err error) {
 
 // 编码日期到TLV FFFFFFFFFF 格式
 func ParseDateTimeToString(date time.Time) (string) {
-	year := strconv.FormatInt(int64(date.Year() - 2000), 16)
+	year := strconv.FormatInt(int64(date.Year()-2000), 16)
 	month := strconv.FormatInt(int64(date.Month()), 16)
 	day := strconv.FormatInt(int64(date.Day()), 16)
 	hour := strconv.FormatInt(int64(date.Hour()), 16)

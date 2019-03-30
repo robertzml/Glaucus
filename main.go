@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./app"
+	"github.com/robertzml/Glaucus/app"
 )
 
 func main() {

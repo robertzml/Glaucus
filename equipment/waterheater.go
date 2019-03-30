@@ -1,7 +1,7 @@
 package equipment
 
 import (
-	"../redis"
+	"github.com/robertzml/Glaucus/redis"
 )
 
 

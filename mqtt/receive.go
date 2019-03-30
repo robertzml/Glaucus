@@ -1,8 +1,8 @@
 package mqtt
 
 import (
-	"../base"
 	"fmt"
+	"github.com/robertzml/Glaucus/base"
 )
 
 // 启动MQTT接收服务
@@ -19,10 +19,10 @@ func StartReceive() {
 	}
 
 	/*
-	var answerTopic = fmt.Sprintf("equipment/%d/1/+/answer_info", base.DefaultConfig.MqttChannel)
-	if err := m.Subscribe(answerTopic, 2, AnswerHandler); err != nil {
-		fmt.Println(err)
-		return
-	}
+		var answerTopic = fmt.Sprintf("equipment/%d/1/+/answer_info", base.DefaultConfig.MqttChannel)
+		if err := m.Subscribe(answerTopic, 2, AnswerHandler); err != nil {
+			fmt.Println(err)
+			return
+		}
 	*/
 }

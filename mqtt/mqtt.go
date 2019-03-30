@@ -45,7 +45,7 @@ func (m *MQTT) Subscribe(topic string, qos byte, callback paho.MessageHandler) (
 }
 
 // 取消订阅
-func (m *MQTT) Unsubscribe(topic string) (err error){
+func (m *MQTT) Unsubscribe(topic string) (err error) {
 	if token := m.client.Unsubscribe(topic); token.Wait() && token.Error() != nil {
 		err = token.Error()
 	}

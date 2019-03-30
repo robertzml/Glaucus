@@ -12,7 +12,7 @@ func (msg *ControlMessage) splice() string {
 	mn := spliceTLV(0x12b, msg.MainboardNumber)
 	ca := spliceTLV(0x012, msg.ControlAction)
 
-	body := spliceTLV(0x0010, sn + mn + ca)
+	body := spliceTLV(0x0010, sn+mn+ca)
 
 	return head + body
 }

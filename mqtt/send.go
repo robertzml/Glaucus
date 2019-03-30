@@ -1,8 +1,8 @@
 package mqtt
 
 import (
-	"../base"
 	"fmt"
+	"github.com/robertzml/Glaucus/base"
 )
 
 // 启动MQTT发送服务
@@ -18,7 +18,7 @@ func StartSend(ch chan *base.SendPacket) {
 	}()
 
 	for {
-		input := <- ch
+		input := <-ch
 		fmt.Println("control consumer.")
 
 		var controlTopic = fmt.Sprintf("server/%d/1/%s/control_info", base.DefaultConfig.MqttChannel, input.SerialNumber)
