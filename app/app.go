@@ -16,12 +16,13 @@ func Run() {
 	base.InitConfig()
 
 	startRedis()
-	//startMqtt()
-	//startTest()
+	startMqtt()
 
 	ch := make(chan *base.SendPacket)
 	go startRest(ch)
 	go startControl(ch)
+
+	//startTest()
 }
 
 // 启动redis 线程池

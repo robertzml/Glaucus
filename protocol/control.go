@@ -3,7 +3,6 @@ package protocol
 import (
 	"github.com/robertzml/Glaucus/redis"
 	"strconv"
-	"time"
 )
 
 // 设备控制报文
@@ -49,9 +48,9 @@ func (msg *ControlMessage) Lock() string {
 }
 
 // 设备解锁报文
-func (msg *ControlMessage) Unlock(deadline time.Time) string {
+func (msg *ControlMessage) Unlock(deadline int64) string {
 	unlock := spliceTLV(0x1a, strconv.Itoa(1))
-	dl := ParseDateTimeToString(deadline)
+	dl := ParseTimestampToString(deadline)
 
 	msg.ControlAction = unlock + spliceTLV(0x20, dl)
 	return msg.splice()
@@ -64,8 +63,8 @@ func (msg *ControlMessage) SetTemp(temp int) string {
 }
 
 // 设置允许使用时间
-func (msg *ControlMessage) SetDeadline(deadline time.Time) string {
-	msg.ControlAction = spliceTLV(0x20, ParseDateTimeToString(deadline))
+func (msg *ControlMessage) SetDeadline(deadline int64) string {
+	msg.ControlAction = spliceTLV(0x20, ParseTimestampToString(deadline))
 	return msg.splice()
 }
 
@@ -89,6 +88,12 @@ func (msg *ControlMessage) Clear(status int8) string {
 		msg.ControlAction = spliceTLV(0x35, strconv.Itoa(0))
 	}
 
+	return msg.splice()
+}
+
+// 软件功能报文
+func (msg *ControlMessage) SoftFunction(option string) string {
+	msg.ControlAction = spliceTLV(0x1d, option)
 	return msg.splice()
 }
 

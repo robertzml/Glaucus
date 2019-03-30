@@ -154,3 +154,16 @@ func ParseDateTimeToString(date time.Time) (string) {
 
 	return year + month + day + hour + minute
 }
+
+// 编码时间戳到TLV FFFFFFFFFF 格式
+func ParseTimestampToString(timestamp int64) (string) {
+	date := time.Unix(timestamp, 0)
+
+	year := strconv.FormatInt(int64(date.Year()-2000), 16)
+	month := strconv.FormatInt(int64(date.Month()), 16)
+	day := strconv.FormatInt(int64(date.Day()), 16)
+	hour := strconv.FormatInt(int64(date.Hour()), 16)
+	minute := strconv.FormatInt(int64(date.Minute()), 16)
+
+	return year + month + day + hour + minute
+}
