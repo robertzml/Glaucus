@@ -15,14 +15,14 @@ func Run() {
 
 	base.InitConfig()
 
-	startRedis()
-	startMqtt()
+	//startRedis()
+	//startMqtt()
+	//
+	//ch := make(chan *base.SendPacket)
+	//go startRest(ch)
+	//go startControl(ch)
 
-	ch := make(chan *base.SendPacket)
-	go startRest(ch)
-	go startControl(ch)
-
-	//startTest()
+	startTest()
 }
 
 // 启动redis 线程池
@@ -50,5 +50,7 @@ func startControl(ch chan *base.SendPacket) {
 }
 
 func startTest() {
-	log.Fatal("abc")
+	mqtt.GetConnections()
+
+	log.Println("abc")
 }

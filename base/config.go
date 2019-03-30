@@ -8,6 +8,9 @@ type Config struct {
 	// MQTT 服务器地址
 	MqttServerAddress string
 
+	// MQTT HTTP服务地址
+	MqttServerHttp string
+
 	// MQTT主题订阅频道
 	MqttChannel int
 
@@ -21,6 +24,7 @@ type Config struct {
 // 初始化默认配置
 func InitConfig() {
 	DefaultConfig.MqttServerAddress = "tcp://192.168.0.120:1883"
+	DefaultConfig.MqttServerHttp = "http://192.168.0.120:18083"
 	DefaultConfig.MqttChannel = 1
 	DefaultConfig.RedisServerAddress = "192.168.0.120:6379"
 	DefaultConfig.HttpListenAddress = ":8181"
