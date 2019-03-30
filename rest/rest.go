@@ -38,15 +38,6 @@ func StartHttpServer(ch chan *base.SendPacket) {
 	mux.HandleFunc("/control", restHandler.control)
 	mux.HandleFunc("/special", restHandler.special)
 
-	mux.HandleFunc("/power", restHandler.power)
-	mux.HandleFunc("/activate", restHandler.activate)
-	mux.HandleFunc("/lock", restHandler.lock)
-	mux.HandleFunc("/unlock", restHandler.unlock)
-	mux.HandleFunc("/settemp", restHandler.setTemp)
-	mux.HandleFunc("/deadline", restHandler.deadline)
-	mux.HandleFunc("/clear", restHandler.clear)
-	mux.HandleFunc("/clean", restHandler.clean)
-
 	if err := server.ListenAndServe(); err != nil {
 		fmt.Println("start server failed.")
 	}

@@ -4,6 +4,7 @@ package protocol
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -146,11 +147,11 @@ func ParseDateToTimestamp(payload string) (timestamp int64, err error) {
 
 // 编码日期到TLV FFFFFFFFFF 格式
 func ParseDateTimeToString(date time.Time) (string) {
-	year := strconv.FormatInt(int64(date.Year()-2000), 16)
-	month := strconv.FormatInt(int64(date.Month()), 16)
-	day := strconv.FormatInt(int64(date.Day()), 16)
-	hour := strconv.FormatInt(int64(date.Hour()), 16)
-	minute := strconv.FormatInt(int64(date.Minute()), 16)
+	year := fmt.Sprintf("%02X", date.Year() - 2000)
+	month := fmt.Sprintf("%02X", int(date.Month()))
+	day := fmt.Sprintf("%02X", date.Day())
+	hour := fmt.Sprintf("%02X", date.Hour())
+	minute := fmt.Sprintf("%02X", date.Minute())
 
 	return year + month + day + hour + minute
 }
@@ -159,11 +160,11 @@ func ParseDateTimeToString(date time.Time) (string) {
 func ParseTimestampToString(timestamp int64) (string) {
 	date := time.Unix(timestamp, 0)
 
-	year := strconv.FormatInt(int64(date.Year()-2000), 16)
-	month := strconv.FormatInt(int64(date.Month()), 16)
-	day := strconv.FormatInt(int64(date.Day()), 16)
-	hour := strconv.FormatInt(int64(date.Hour()), 16)
-	minute := strconv.FormatInt(int64(date.Minute()), 16)
+	year := fmt.Sprintf("%02X", date.Year() - 2000)
+	month := fmt.Sprintf("%02X", int(date.Month()))
+	day := fmt.Sprintf("%02X", date.Day())
+	hour := fmt.Sprintf("%02X", date.Hour())
+	minute := fmt.Sprintf("%02X", date.Minute())
 
 	return year + month + day + hour + minute
 }

@@ -64,7 +64,8 @@ func (msg *ControlMessage) SetTemp(temp int) string {
 
 // 设置允许使用时间
 func (msg *ControlMessage) SetDeadline(deadline int64) string {
-	msg.ControlAction = spliceTLV(0x20, ParseTimestampToString(deadline))
+	dl := ParseTimestampToString(deadline)
+	msg.ControlAction = spliceTLV(0x20, dl)
 	return msg.splice()
 }
 

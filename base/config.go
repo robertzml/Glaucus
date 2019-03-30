@@ -23,5 +23,5 @@ func InitConfig() {
 	DefaultConfig.MqttServerAddress = "tcp://192.168.0.120:1883"
 	DefaultConfig.MqttChannel = 1
 	DefaultConfig.RedisServerAddress = "192.168.0.120:6379"
-	DefaultConfig.HttpListenAddress = ":2450"
+	DefaultConfig.HttpListenAddress = ":8181"
 }
