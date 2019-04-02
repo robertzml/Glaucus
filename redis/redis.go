@@ -28,6 +28,7 @@ func InitPool() {
 		Wait:        true,
 		Dial: func() (redigo.Conn, error) {
 			con, err := redigo.Dial("tcp", base.DefaultConfig.RedisServerAddress,
+				redigo.DialPassword(base.DefaultConfig.RedisPassword),
 				redigo.DialConnectTimeout(timeout*time.Second),
 				redigo.DialReadTimeout(timeout*time.Second),
 				redigo.DialWriteTimeout(timeout*time.Second))

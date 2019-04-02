@@ -1,7 +1,7 @@
 package mqtt
 
 import (
-	"bytes"
+	"encoding/base64"
 	"fmt"
 	"github.com/robertzml/Glaucus/base"
 	"io/ioutil"
@@ -9,36 +9,21 @@ import (
 )
 
 func GetConnections() {
-	auth()
+	// auth()
 
-	res, err := http.Get(base.DefaultConfig.MqttServerHttp + "/api/v3/connections/")
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", base.DefaultConfig.MqttServerHttp + "/api/v3/connections/", nil)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	defer func() {
-		_ = res.Body.Close()
-	}()
+	auth := "admin:public"
+	authstr :=  base64.StdEncoding.EncodeToString([]byte(auth))
 
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	req.Header.Add("Authorization", "Basic " + authstr)
 
-	fmt.Println(string(body))
-}
-
-func auth() {
-	user := make(map[string]interface{})
-	user["username"] = "admin"
-	user["password"] = "public"
-
-	tmp := `{"username":"admin", "password": "public"}`
-	req := bytes.NewBuffer([]byte(tmp))
-
-	res, err := http.Post(base.DefaultConfig.MqttServerHttp + "/api/v3/auth", "application/json",req)
+	res, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
 		return

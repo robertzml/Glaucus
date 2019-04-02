@@ -17,6 +17,9 @@ type Config struct {
 	// Redis 服务器地址
 	RedisServerAddress string
 
+	// Redis 密码
+	RedisPassword 	string
+
 	// HTTP接口监听地址
 	HttpListenAddress string
 }
@@ -27,5 +30,6 @@ func InitConfig() {
 	DefaultConfig.MqttServerHttp = "http://192.168.0.120:18083"
 	DefaultConfig.MqttChannel = 1
 	DefaultConfig.RedisServerAddress = "192.168.0.120:6379"
+	DefaultConfig.RedisPassword = "123456"
 	DefaultConfig.HttpListenAddress = ":8181"
 }
