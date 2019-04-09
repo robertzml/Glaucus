@@ -13,8 +13,8 @@ ENV GO111MODULE on
 ENV GOPROXY https://goproxy.io
 
 # COMPILE
-RUN go build
+RUN go build .
 
-EXPOSE 6540
+EXPOSE 8181
 
-ENTRYPOINT ["./gorest"]
+ENTRYPOINT ["./Glaucus"]
