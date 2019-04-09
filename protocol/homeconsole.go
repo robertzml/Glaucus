@@ -48,10 +48,12 @@ func Receive(topic string, payload []byte, qos byte) {
 		return
 	}
 
-	// msg.Print(cell)
-
 	pass, err := msg.Authorize()
-	if !pass || err != nil {
+	if !pass {
+		fmt.Println("authorize failed.")
+		return
+	}
+	if err != nil {
 		fmt.Println("catch error in authorize.", err.Error())
 		return
 	}
