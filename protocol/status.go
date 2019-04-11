@@ -71,7 +71,7 @@ func (msg *StatusMessage) Authorize() (pass bool, err error) {
 
 	if exists := whs.LoadStatus(msg.SerialNumber); exists {
 		if whs.MainboardNumber != msg.MainboardNumber {
-			return false, errors.New("Mainboard Number not equal.")
+			return false, errors.New("mainboard Number not equal.")
 		}
 	} else {
 		fmt.Println("authorize: new equipment found.")
@@ -112,10 +112,6 @@ func (msg *StatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 	waterHeaterStatus := new(equipment.WaterHeater)
 
 	exists := waterHeaterStatus.LoadStatus(msg.SerialNumber)
-	if !exists {
-		waterHeaterStatus.Online = 1
-		waterHeaterStatus.LineTime = time.Now().Unix()
-	}
 
 	waterHeaterStatus.SerialNumber = msg.SerialNumber
 	waterHeaterStatus.MainboardNumber = msg.MainboardNumber
@@ -199,7 +195,26 @@ func (msg *StatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 		index += tlv.Length + 8
 	}
 
+	if !exists || waterHeaterStatus.Online == 0 {
+		waterHeaterStatus.LineTime = time.Now().Unix()
+
+		whKey := new(equipment.WaterHeaterKey)
+		whKey.SerialNumber = waterHeaterStatus.SerialNumber
+		whKey.MainboardNumber = waterHeaterStatus.MainboardNumber
+		whKey.Logtime = waterHeaterStatus.Logtime
+		whKey.Activate = waterHeaterStatus.Activate
+		whKey.ActivationTime = waterHeaterStatus.ActivationTime
+		whKey.Lock = waterHeaterStatus.Lock
+		whKey.DeadlineTime = waterHeaterStatus.DeadlineTime
+		whKey.Online = 1
+		whKey.LineTime = waterHeaterStatus.LineTime
+
+		waterHeaterStatus.PushKey(whKey)
+	}
+
+	waterHeaterStatus.Online = 1
 	waterHeaterStatus.SaveStatus()
+
 	return
 }
 
@@ -240,6 +255,8 @@ func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 	alarmChange := false
 
 	// 关键数据
+	keyChange := false
+
 	whKey := new(equipment.WaterHeaterKey)
 	whKey.SerialNumber = whs.SerialNumber
 	whKey.MainboardNumber = whs.MainboardNumber
@@ -248,10 +265,16 @@ func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 	whKey.ActivationTime = whs.ActivationTime
 	whKey.Lock = whs.Lock
 	whKey.DeadlineTime = whs.DeadlineTime
+
+	if whs.Online == 0 {
+		keyChange = true
+
+		whs.LineTime = time.Now().Unix()
+	}
+
+	whs.Online = 1
 	whKey.Online = whs.Online
 	whKey.LineTime = whs.LineTime
-
-	keyChange := false
 
 	// 累计数据
 	whCumulate := new(equipment.WaterHeaterCumulate)
