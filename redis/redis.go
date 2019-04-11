@@ -16,9 +16,39 @@ type RedisClient struct {
 	client redigo.Conn
 }
 
+var RedisPools []*redigo.Pool
+
 // 初始化Redis连接池
 func InitPool() {
 	timeout := time.Duration(30)
+
+	deviceType := 2
+	RedisPools = make([]*redigo.Pool, deviceType)
+
+
+	for i = 0; i < 2; i++ {
+		pool := &redigo.Pool{
+			MaxIdle:     100,
+			MaxActive:   1000,
+			IdleTimeout: 30 * time.Second,
+			Wait:        true,
+			Dial: func() (redigo.Conn, error) {
+				con, err := redigo.Dial("tcp", base.DefaultConfig.RedisServerAddress,
+					redigo.DialPassword(base.DefaultConfig.RedisPassword),
+					redigo.DialDatabase(i),
+					redigo.DialConnectTimeout(timeout*time.Second),
+					redigo.DialReadTimeout(timeout*time.Second),
+					redigo.DialWriteTimeout(timeout*time.Second))
+				if err != nil {
+					return nil, err
+				}
+				return con, nil
+			},
+		}
+
+		RedisPools = append(RedisPools, pool)
+	}
+
 
 	// 建立连接池
 	RedisPool = &redigo.Pool{
@@ -29,6 +59,7 @@ func InitPool() {
 		Dial: func() (redigo.Conn, error) {
 			con, err := redigo.Dial("tcp", base.DefaultConfig.RedisServerAddress,
 				redigo.DialPassword(base.DefaultConfig.RedisPassword),
+				redigo.DialDatabase(1),
 				redigo.DialConnectTimeout(timeout*time.Second),
 				redigo.DialReadTimeout(timeout*time.Second),
 				redigo.DialWriteTimeout(timeout*time.Second))

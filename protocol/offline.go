@@ -51,5 +51,5 @@ func Offline(topic string, payload []byte, qos byte) {
 
 	whs.PushKey(whKey)
 
-	fmt.Printf("equipment %s is offline.", serialNumber)
+	fmt.Printf("equipment %s is offline.\n", serialNumber)
 }
