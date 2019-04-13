@@ -19,16 +19,13 @@ func StartReceive() {
 	}
 
 	var statusTopic = fmt.Sprintf("equipment/%d/1/+/status_info", base.DefaultConfig.MqttChannel)
-	if err := m.Subscribe(statusTopic, 0, StatusHandler); err != nil {
+	if err := m.Subscribe(statusTopic, 0, WaterHeaterStatusHandler); err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	/*
-		var answerTopic = fmt.Sprintf("equipment/%d/1/+/answer_info", base.DefaultConfig.MqttChannel)
-		if err := m.Subscribe(answerTopic, 2, AnswerHandler); err != nil {
-			fmt.Println(err)
-			return
-		}
-	*/
+	wcStatusTopic := fmt.Sprintf("equipment/%d/2/+/status_info", base.DefaultConfig.MqttChannel)
+	if err := m.Subscribe(wcStatusTopic, 0, WaterCleanerStatusHandler); err != nil {
+		fmt.Println(err)
+	}
 }

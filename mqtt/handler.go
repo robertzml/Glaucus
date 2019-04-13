@@ -24,16 +24,18 @@ var OfflineHandler paho.MessageHandler = func(client paho.Client, msg paho.Messa
 	protocol.Offline(msg.Topic(), msg.Payload(), msg.Qos())
 }
 
-// 状态消息订阅处理方法
-var StatusHandler paho.MessageHandler = func(client paho.Client, msg paho.Message) {
+// 热水器状态消息订阅处理方法
+var WaterHeaterStatusHandler paho.MessageHandler = func(client paho.Client, msg paho.Message) {
 	fmt.Printf("Status TOPIC: %s, Id: %d, QoS: %d\n", msg.Topic(), msg.MessageID(), msg.Qos())
 	fmt.Printf("Status MSG: %s\n", msg.Payload())
 
-	protocol.Receive(msg.Topic(), msg.Payload(), msg.Qos())
+	protocol.Receive(1, msg.Topic(), msg.Payload(), msg.Qos())
 }
 
-// 响应消息订阅处理方法
-var AnswerHandler paho.MessageHandler = func(client paho.Client, msg paho.Message) {
-	fmt.Printf("Answer TOPIC: %s, Id: %d, QoS: %d\n", msg.Topic(), msg.MessageID(), msg.Qos())
-	fmt.Printf("Answer MSG: %s\n", msg.Payload())
+// 净水器状态消息订阅处理方法
+var WaterCleanerStatusHandler paho.MessageHandler = func(client paho.Client, msg paho.Message) {
+	fmt.Printf("Status TOPIC: %s, Id: %d, QoS: %d\n", msg.Topic(), msg.MessageID(), msg.Qos())
+	fmt.Printf("Status MSG: %s\n", msg.Payload())
+
+	protocol.Receive(2, msg.Topic(), msg.Payload(), msg.Qos())
 }

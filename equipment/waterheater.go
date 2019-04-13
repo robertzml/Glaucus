@@ -92,14 +92,14 @@ type WaterHeaterCumulate struct {
 // 返回 exists: 设备是否存在redis中
 func (equipment *WaterHeater) LoadStatus(serialNumber string) (exists bool) {
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(0)
 	defer rc.Close()
 
-	if rc.Exists(RealStatusPrefix+serialNumber) == 0 {
+	if rc.Exists(WaterHeaterPrefix+serialNumber) == 0 {
 		return false
 	}
 
-	rc.Hgetall(RealStatusPrefix+serialNumber, equipment)
+	rc.Hgetall(WaterHeaterPrefix+serialNumber, equipment)
 
 	return true
 }
@@ -107,19 +107,19 @@ func (equipment *WaterHeater) LoadStatus(serialNumber string) (exists bool) {
 // 整体更新设备实时状态
 func (equipment *WaterHeater) SaveStatus() {
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(0)
 	defer rc.Close()
 
-	rc.Hmset(RealStatusPrefix+equipment.SerialNumber, equipment)
+	rc.Hmset(WaterHeaterPrefix+equipment.SerialNumber, equipment)
 }
 
 // 部分更新设备实时状态
 func (equipment *WaterHeater) UpdateField(field string, val interface{}) {
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(0)
 	defer rc.Close()
 
-	rc.Hset(equipment.SerialNumber, field, val)
+	rc.Hset(WaterHeaterPrefix+equipment.SerialNumber, field, val)
 }
 
 // 推送运行数据
@@ -127,10 +127,10 @@ func (equipment *WaterHeater) PushRunning(running *WaterHeaterRunning) {
 	val := serialize(running)
 
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(0)
 	defer rc.Close()
 
-	rc.Rpush("wh_running", val)
+	rc.Rpush(WaterHeaterPrefix+"running", val)
 }
 
 // 推送报警数据
@@ -138,10 +138,10 @@ func (equipment *WaterHeater) PushAlarm(alarm *WaterHeaterAlarm) {
 	val := serialize(alarm)
 
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(0)
 	defer rc.Close()
 
-	rc.Rpush("wh_alarm", val)
+	rc.Rpush(WaterHeaterPrefix+"alarm", val)
 }
 
 // 推送关键数据
@@ -149,10 +149,10 @@ func (equipment *WaterHeater) PushKey(key *WaterHeaterKey) {
 	val := serialize(key)
 
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(0)
 	defer rc.Close()
 
-	rc.Rpush("wh_key", val)
+	rc.Rpush(WaterHeaterPrefix+"key", val)
 }
 
 // 推送累计数据
@@ -160,8 +160,8 @@ func (equipment *WaterHeater) PushCumulate(cumulate *WaterHeaterCumulate) {
 	val := serialize(cumulate)
 
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(0)
 	defer rc.Close()
 
-	rc.Rpush("wh_cumulate", val)
+	rc.Rpush(WaterHeaterPrefix+"cumulate", val)
 }

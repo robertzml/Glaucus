@@ -13,7 +13,7 @@ import (
 // 根据收到的报文，解析出协议头部，确定协议类型
 // cell 报文头
 // msg  报文内容
-func parseType(message string) (cell TLV, msg Message, err error) {
+func parseType(deviceType int, message string) (cell TLV, msg Message, err error) {
 	// read header
 	_, payload, err := parseHead(message)
 	if err != nil {
@@ -28,7 +28,14 @@ func parseType(message string) (cell TLV, msg Message, err error) {
 
 	switch cell.Tag {
 	case 0x14:
-		msg = new(StatusMessage)
+		if deviceType == 1 {
+			msg = new(StatusMessage)
+		} else if deviceType == 2 {
+			msg = new(WCStatusMessage)
+		} else {
+			msg = nil
+			err = errors.New("wrong device type.")
+		}
 	default:
 		msg = nil
 		err = errors.New("TLV not defined")

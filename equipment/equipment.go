@@ -5,13 +5,16 @@ import (
 )
 
 const (
-	// 实时状态前缀
-	RealStatusPrefix = "wh_"
+	// 热水器Redis前缀
+	WaterHeaterPrefix = "wh_"
+
+	// 净水器Redis前缀
+	WaterCleanerPrefix = "wc_"
 )
 
 type Equipment interface {
 	// 从redis中获取设备状态
-	LoadStatus(serialnumber string) (exists bool)
+	LoadStatus(serialNumber string) (exists bool)
 
 	// 保存实时状态到redis中
 	SaveStatus()

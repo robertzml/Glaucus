@@ -26,7 +26,7 @@ func InitPool() {
 	RedisPools = make([]*redigo.Pool, deviceType)
 
 
-	for i = 0; i < 2; i++ {
+	for i := 0; i < 2; i++ {
 		pool := &redigo.Pool{
 			MaxIdle:     100,
 			MaxActive:   1000,
@@ -72,8 +72,9 @@ func InitPool() {
 }
 
 // 从连接池中获取一个redis 连接
-func (r *RedisClient) Get() {
-	r.client = RedisPool.Get()
+// db: 数据库序号 0,1,2
+func (r *RedisClient) Get(db int) {
+	r.client = RedisPools[db].Get()
 	if r.client.Err() != nil {
 		panic(r.client.Err())
 	}
