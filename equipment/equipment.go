@@ -20,9 +20,6 @@ type Equipment interface {
 	SaveStatus()
 }
 
-func SaveToRedis(equipment Equipment) {
-	equipment.SaveStatus()
-}
 
 // 序列化数据
 func serialize(v interface{}) string {

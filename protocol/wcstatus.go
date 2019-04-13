@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/robertzml/Glaucus/equipment"
+	"time"
 )
 
 // 净水器设备状态报文
@@ -87,16 +88,16 @@ func (msg *WCStatusMessage) Handle(data interface{}) (err error) {
 		tlv := data.(TLV)
 		if tlv.Tag == 0x128 {
 			// 局部更新
-			//if err = msg.handleWaterHeaterChange(tlv.Value); err != nil {
-			//	return err
-			//}
+			if err = msg.handleWaterCleanerChange(tlv.Value); err != nil {
+				return err
+			}
 			fmt.Println("water cleaner partial update.")
 
 		} else if tlv.Tag == 0x12e {
 			// 整体更新
-			//if err := msg.handleWaterHeaterTotal(tlv.Value); err != nil {
-			//	return err
-			//}
+			if err := msg.handleWaterCleanerTotal(tlv.Value); err != nil {
+				return err
+			}
 
 			fmt.Println("water cleaner total update.")
 		}
@@ -105,3 +106,36 @@ func (msg *WCStatusMessage) Handle(data interface{}) (err error) {
 	return nil
 }
 
+// 整体解析净水器状态
+func (msg *WCStatusMessage) handleWaterCleanerTotal(payload string) (err error) {
+	wcs := new(equipment.WaterCleaner)
+
+	exists := wcs.LoadStatus(msg.SerialNumber)
+
+	wcs.SerialNumber = msg.SerialNumber
+	wcs.MainboardNumber = msg.MainboardNumber
+	wcs.Logtime = time.Now().Unix()
+	wcs.DeviceType = msg.DeviceType
+	wcs.ControllerType = msg.ControllerType
+
+	if !exists || wcs.Online == 0 {
+	
+	}
+
+	return nil
+}
+
+// 处理净水器变化状态，并局部更新
+func (msg *WCStatusMessage) handleWaterCleanerChange(payload string) (err error) {
+	wcs := new(equipment.WaterCleaner)
+
+	exists := wcs.LoadStatus(msg.SerialNumber)
+	if !exists {
+		fmt.Println("cannot update partial for new equipment.")
+		return nil
+	}
+
+	wcs.Logtime = time.Now().Unix()
+
+	return nil
+}

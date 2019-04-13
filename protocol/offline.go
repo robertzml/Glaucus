@@ -2,9 +2,7 @@ package protocol
 
 import (
 	"fmt"
-	"github.com/robertzml/Glaucus/equipment"
 	"strings"
-	"time"
 )
 
 // 处理离线报文
@@ -23,33 +21,14 @@ func Offline(topic string, payload []byte, qos byte) {
 		return
 	}
 
+	productType := kv[2]
 	serialNumber := kv[3]
-	whs := new(equipment.WaterHeater)
 
-	if exists := whs.LoadStatus(serialNumber); !exists {
-		fmt.Println("don't find equipment.")
-		return
+	if productType == "1" {
+		handleWaterHeaterOffline(serialNumber)
+	} else {
+
 	}
-
-	// 更新离线状态和时间
-	whs.Online = 0
-	whs.LineTime = time.Now().Unix()
-
-	whs.SaveStatus()
-
-	// 关键数据
-	whKey := new(equipment.WaterHeaterKey)
-	whKey.SerialNumber = whs.SerialNumber
-	whKey.MainboardNumber = whs.MainboardNumber
-	whKey.Logtime = whs.Logtime
-	whKey.Activate = whs.Activate
-	whKey.ActivationTime = whs.ActivationTime
-	whKey.Lock = whs.Lock
-	whKey.DeadlineTime = whs.DeadlineTime
-	whKey.Online = 0
-	whKey.LineTime = whs.LineTime
-
-	whs.PushKey(whKey)
 
 	fmt.Printf("equipment %s is offline.\n", serialNumber)
 }

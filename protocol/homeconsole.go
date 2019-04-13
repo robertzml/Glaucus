@@ -10,18 +10,18 @@ const (
 
 
 // 处理接收的报文
-// deviceType: 设备类型
+// productType: 设备类型
 // topic: 主题
 // payload: 接收内容
 // qos: QoS
-func Receive(deviceType int, topic string, payload []byte, qos byte) {
+func Receive(productType int, topic string, payload []byte, qos byte) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("catch runtime panic in mqtt receive: %v\n", r)
 		}
 	}()
 
-	cell, msg, err := parseType(deviceType, string(payload[:]))
+	cell, msg, err := parseType(productType, string(payload[:]))
 	if err != nil {
 		fmt.Println("catch error in parseType: ", err.Error())
 		return

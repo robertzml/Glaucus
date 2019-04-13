@@ -9,6 +9,9 @@ type WaterCleaner struct {
 	Logtime           int64
 	DeviceType        string
 	ControllerType    string
+
+	Online            int8
+	LineTime          int64
 }
 
 // 获取redis中净水器实时状态

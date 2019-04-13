@@ -12,14 +12,14 @@ func StartReceive() {
 	clientId := fmt.Sprintf("server-channel-%d", base.DefaultConfig.MqttChannel)
 	m.Connect(clientId, base.DefaultConfig.MqttServerAddress)
 
-	var offlineTopic = fmt.Sprintf("equipment/%d/1/+/offline_info", base.DefaultConfig.MqttChannel)
-	if err := m.Subscribe(offlineTopic, 0, OfflineHandler); err != nil {
+	var whOfflineTopic = fmt.Sprintf("equipment/%d/1/+/offline_info", base.DefaultConfig.MqttChannel)
+	if err := m.Subscribe(whOfflineTopic, 0, WaterHeaterOfflineHandler); err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	var statusTopic = fmt.Sprintf("equipment/%d/1/+/status_info", base.DefaultConfig.MqttChannel)
-	if err := m.Subscribe(statusTopic, 0, WaterHeaterStatusHandler); err != nil {
+	var whStatusTopic = fmt.Sprintf("equipment/%d/1/+/status_info", base.DefaultConfig.MqttChannel)
+	if err := m.Subscribe(whStatusTopic, 0, WaterHeaterStatusHandler); err != nil {
 		fmt.Println(err)
 		return
 	}

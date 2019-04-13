@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-// 设备状态报文
-type StatusMessage struct {
+// 热水器设备状态报文
+type WHStatusMessage struct {
 	SerialNumber    string
 	MainboardNumber string
 	DeviceType      string
@@ -17,7 +17,7 @@ type StatusMessage struct {
 }
 
 // 解析协议内容
-func (msg *StatusMessage) Parse(payload string) (data interface{}, err error) {
+func (msg *WHStatusMessage) Parse(payload string) (data interface{}, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("catch runtime panic: %v\n", r)
@@ -60,13 +60,13 @@ func (msg *StatusMessage) Parse(payload string) (data interface{}, err error) {
 }
 
 // 打印协议信息
-func (msg *StatusMessage) Print(cell TLV) {
+func (msg *WHStatusMessage) Print(cell TLV) {
 	fmt.Printf("StatusMessage Print Tag: %#x, Serial Number:%s\n", cell.Tag, msg.SerialNumber)
 }
 
 // 安全检查
 // 返回: pass 是否通过
-func (msg *StatusMessage) Authorize() (pass bool, err error) {
+func (msg *WHStatusMessage) Authorize() (pass bool, err error) {
 	whs := new(equipment.WaterHeater)
 
 	if exists := whs.LoadStatus(msg.SerialNumber); exists {
@@ -83,7 +83,7 @@ func (msg *StatusMessage) Authorize() (pass bool, err error) {
 }
 
 // 报文后续处理
-func (msg *StatusMessage) Handle(data interface{}) (err error) {
+func (msg *WHStatusMessage) Handle(data interface{}) (err error) {
 	switch data.(type) {
 	case TLV:
 		tlv := data.(TLV)
@@ -108,7 +108,7 @@ func (msg *StatusMessage) Handle(data interface{}) (err error) {
 }
 
 // 整体解析热水器状态
-func (msg *StatusMessage) handleWaterHeaterTotal(payload string) (err error) {
+func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 	waterHeaterStatus := new(equipment.WaterHeater)
 
 	exists := waterHeaterStatus.LoadStatus(msg.SerialNumber)
@@ -219,7 +219,7 @@ func (msg *StatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 }
 
 // 处理热水器变化状态，并局部更新
-func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
+func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) {
 	whs := new(equipment.WaterHeater)
 
 	exists := whs.LoadStatus(msg.SerialNumber)
@@ -426,4 +426,34 @@ func (msg *StatusMessage) handleWaterHeaterChange(payload string) (err error) {
 	}
 
 	return nil
+}
+
+// 处理热水器离线
+func handleWaterHeaterOffline(serialNumber string) {
+	whs := new(equipment.WaterHeater)
+
+	if exists := whs.LoadStatus(serialNumber); !exists {
+		fmt.Println("don't find equipment.")
+		return
+	}
+
+	// 更新离线状态和时间
+	whs.Online = 0
+	whs.LineTime = time.Now().Unix()
+
+	whs.SaveStatus()
+
+	// 关键数据
+	whKey := new(equipment.WaterHeaterKey)
+	whKey.SerialNumber = whs.SerialNumber
+	whKey.MainboardNumber = whs.MainboardNumber
+	whKey.Logtime = whs.Logtime
+	whKey.Activate = whs.Activate
+	whKey.ActivationTime = whs.ActivationTime
+	whKey.Lock = whs.Lock
+	whKey.DeadlineTime = whs.DeadlineTime
+	whKey.Online = 0
+	whKey.LineTime = whs.LineTime
+
+	whs.PushKey(whKey)
 }

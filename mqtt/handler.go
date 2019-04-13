@@ -17,7 +17,7 @@ func defaultHandler(client paho.Client, msg paho.Message) {
 }
 
 // 离线消息订阅处理方法
-var OfflineHandler paho.MessageHandler = func(client paho.Client, msg paho.Message) {
+var WaterHeaterOfflineHandler paho.MessageHandler = func(client paho.Client, msg paho.Message) {
 	fmt.Printf("Status TOPIC: %s, Id: %d, QoS: %d\n", msg.Topic(), msg.MessageID(), msg.Qos())
 	fmt.Printf("Status MSG: %s\n", msg.Payload())
 
