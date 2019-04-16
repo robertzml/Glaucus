@@ -36,6 +36,10 @@ func parseType(productType int, message string) (cell TLV, msg Message, err erro
 			msg = nil
 			err = errors.New("wrong device type")
 		}
+	case 0x15:
+		if productType == 1 {
+			msg = new(WHOfflineMessage)
+		}
 	default:
 		msg = nil
 		err = errors.New("TLV not defined")

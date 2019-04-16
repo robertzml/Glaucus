@@ -46,29 +46,29 @@ func InitPool() {
 			},
 		}
 
-		RedisPools = append(RedisPools, pool)
+		RedisPools[i] = pool
 	}
 
 
 	// 建立连接池
-	RedisPool = &redigo.Pool{
-		MaxIdle:     100,
-		MaxActive:   1000,
-		IdleTimeout: 30 * time.Second,
-		Wait:        true,
-		Dial: func() (redigo.Conn, error) {
-			con, err := redigo.Dial("tcp", base.DefaultConfig.RedisServerAddress,
-				redigo.DialPassword(base.DefaultConfig.RedisPassword),
-				redigo.DialDatabase(1),
-				redigo.DialConnectTimeout(timeout*time.Second),
-				redigo.DialReadTimeout(timeout*time.Second),
-				redigo.DialWriteTimeout(timeout*time.Second))
-			if err != nil {
-				return nil, err
-			}
-			return con, nil
-		},
-	}
+	//RedisPool = &redigo.Pool{
+	//	MaxIdle:     100,
+	//	MaxActive:   1000,
+	//	IdleTimeout: 30 * time.Second,
+	//	Wait:        true,
+	//	Dial: func() (redigo.Conn, error) {
+	//		con, err := redigo.Dial("tcp", base.DefaultConfig.RedisServerAddress,
+	//			redigo.DialPassword(base.DefaultConfig.RedisPassword),
+	//			redigo.DialDatabase(1),
+	//			redigo.DialConnectTimeout(timeout*time.Second),
+	//			redigo.DialReadTimeout(timeout*time.Second),
+	//			redigo.DialWriteTimeout(timeout*time.Second))
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//		return con, nil
+	//	},
+	//}
 }
 
 // 从连接池中获取一个redis 连接
