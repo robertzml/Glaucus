@@ -92,7 +92,7 @@ type WaterHeaterCumulate struct {
 // 返回 exists: 设备是否存在redis中
 func (equipment *WaterHeater) LoadStatus(serialNumber string) (exists bool) {
 	rc := new(redis.RedisClient)
-	rc.Get(0)
+	rc.Get()
 	defer rc.Close()
 
 	if rc.Exists(WaterHeaterPrefix+serialNumber) == 0 {
@@ -107,7 +107,7 @@ func (equipment *WaterHeater) LoadStatus(serialNumber string) (exists bool) {
 // 整体更新设备实时状态
 func (equipment *WaterHeater) SaveStatus() {
 	rc := new(redis.RedisClient)
-	rc.Get(0)
+	rc.Get()
 	defer rc.Close()
 
 	rc.Hmset(WaterHeaterPrefix+equipment.SerialNumber, equipment)
@@ -116,7 +116,7 @@ func (equipment *WaterHeater) SaveStatus() {
 // 部分更新设备实时状态
 func (equipment *WaterHeater) UpdateField(field string, val interface{}) {
 	rc := new(redis.RedisClient)
-	rc.Get(0)
+	rc.Get()
 	defer rc.Close()
 
 	rc.Hset(WaterHeaterPrefix+equipment.SerialNumber, field, val)
@@ -127,7 +127,7 @@ func (equipment *WaterHeater) PushRunning(running *WaterHeaterRunning) {
 	val := serialize(running)
 
 	rc := new(redis.RedisClient)
-	rc.Get(0)
+	rc.Get()
 	defer rc.Close()
 
 	rc.Rpush(WaterHeaterPrefix+"running", val)
@@ -138,7 +138,7 @@ func (equipment *WaterHeater) PushAlarm(alarm *WaterHeaterAlarm) {
 	val := serialize(alarm)
 
 	rc := new(redis.RedisClient)
-	rc.Get(0)
+	rc.Get()
 	defer rc.Close()
 
 	rc.Rpush(WaterHeaterPrefix+"alarm", val)
@@ -149,7 +149,7 @@ func (equipment *WaterHeater) PushKey(key *WaterHeaterKey) {
 	val := serialize(key)
 
 	rc := new(redis.RedisClient)
-	rc.Get(0)
+	rc.Get()
 	defer rc.Close()
 
 	rc.Rpush(WaterHeaterPrefix+"key", val)
@@ -160,7 +160,7 @@ func (equipment *WaterHeater) PushCumulate(cumulate *WaterHeaterCumulate) {
 	val := serialize(cumulate)
 
 	rc := new(redis.RedisClient)
-	rc.Get(0)
+	rc.Get()
 	defer rc.Close()
 
 	rc.Rpush(WaterHeaterPrefix+"cumulate", val)

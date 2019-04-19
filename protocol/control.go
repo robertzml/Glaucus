@@ -16,7 +16,7 @@ type ControlMessage struct {
 // serialNumber: 设备序列号
 func (msg *ControlMessage) LoadEquipment(serialNumber string) bool {
 	rc := new(redis.RedisClient)
-	rc.Get(0)
+	rc.Get()
 	defer rc.Close()
 
 	msg.SerialNumber = serialNumber

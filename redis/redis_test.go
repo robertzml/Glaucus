@@ -2,6 +2,7 @@ package redis
 
 import (
 	"fmt"
+	"github.com/robertzml/Glaucus/base"
 	"testing"
 )
 
@@ -21,13 +22,14 @@ func TestSaveStruct(t *testing.T) {
 }*/
 
 func TestPool(t *testing.T) {
-	InitPool()
+	base.InitConfig()
+	InitPool(0)
 
 	rc := new(RedisClient)
 	rc.Get()
 	defer rc.Close()
 
-	v := rc.Hget("wh_01100101801100e1", "MainboardN55umber")
+	v := rc.Hget("wh_01100101801100e2", "SerialNumber")
 	fmt.Println(v)
 
 	if r := recover(); r != nil {

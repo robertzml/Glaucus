@@ -19,7 +19,7 @@ type WaterCleaner struct {
 // 返回 exists: 设备是否存在redis中
 func (equipment *WaterCleaner) LoadStatus(serialNumber string) (exists bool) {
 	rc := new(redis.RedisClient)
-	rc.Get(1)
+	rc.Get()
 	defer rc.Close()
 
 	if rc.Exists(WaterCleanerPrefix+serialNumber) == 0 {
@@ -34,7 +34,7 @@ func (equipment *WaterCleaner) LoadStatus(serialNumber string) (exists bool) {
 // 整体更新设备实时状态
 func (equipment *WaterCleaner) SaveStatus() {
 	rc := new(redis.RedisClient)
-	rc.Get(1)
+	rc.Get()
 	defer rc.Close()
 
 	rc.Hmset(WaterCleanerPrefix+equipment.SerialNumber, equipment)

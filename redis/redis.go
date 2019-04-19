@@ -19,35 +19,28 @@ type RedisClient struct {
 var RedisPools []*redigo.Pool
 
 // 初始化Redis连接池
-func InitPool() {
+func InitPool(db int) {
 	timeout := time.Duration(30)
 
-	deviceType := 2
-	RedisPools = make([]*redigo.Pool, deviceType)
-
-
-	for i := 0; i < 2; i++ {
-		pool := &redigo.Pool{
-			MaxIdle:     100,
-			MaxActive:   1000,
-			IdleTimeout: 30 * time.Second,
-			Wait:        true,
-			Dial: func() (redigo.Conn, error) {
-				con, err := redigo.Dial("tcp", base.DefaultConfig.RedisServerAddress,
-					redigo.DialPassword(base.DefaultConfig.RedisPassword),
-					redigo.DialDatabase(i),
-					redigo.DialConnectTimeout(timeout*time.Second),
-					redigo.DialReadTimeout(timeout*time.Second),
-					redigo.DialWriteTimeout(timeout*time.Second))
-				if err != nil {
-					return nil, err
-				}
-				return con, nil
-			},
-		}
-
-		RedisPools[i] = pool
+	RedisPool = &redigo.Pool{
+		MaxIdle:     100,
+		MaxActive:   1000,
+		IdleTimeout: 30 * time.Second,
+		Wait:        true,
+		Dial: func() (redigo.Conn, error) {
+			con, err := redigo.Dial("tcp", base.DefaultConfig.RedisServerAddress,
+				redigo.DialPassword(base.DefaultConfig.RedisPassword),
+				redigo.DialDatabase(db),
+				redigo.DialConnectTimeout(timeout*time.Second),
+				redigo.DialReadTimeout(timeout*time.Second),
+				redigo.DialWriteTimeout(timeout*time.Second))
+			if err != nil {
+				return nil, err
+			}
+			return con, nil
+		},
 	}
+
 
 
 	// 建立连接池
@@ -73,8 +66,8 @@ func InitPool() {
 
 // 从连接池中获取一个redis 连接
 // db: 数据库序号 0,1,2
-func (r *RedisClient) Get(db int) {
-	r.client = RedisPools[db].Get()
+func (r *RedisClient) Get() {
+	r.client = RedisPool.Get()
 	if r.client.Err() != nil {
 		panic(r.client.Err())
 	}

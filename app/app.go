@@ -28,7 +28,7 @@ func Run() {
 // 启动redis 线程池
 func startRedis() {
 	fmt.Println("start redis pool.")
-	redis.InitPool()
+	redis.InitPool(base.DefaultConfig.RedisDatabase)
 }
 
 // 启动MQTT 服务订阅
