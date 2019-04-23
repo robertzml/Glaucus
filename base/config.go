@@ -1,7 +1,13 @@
 package base
 
-// 默认配置
-var DefaultConfig Config
+
+var (
+	// 默认配置
+	DefaultConfig Config
+
+	// MQTT 发送控制指令 channel
+	MqttControlCh  chan *SendPacket
+)
 
 // 配置
 type Config struct {
@@ -36,4 +42,9 @@ func InitConfig() {
 	DefaultConfig.RedisServerAddress = "192.168.0.120:6379"
 	DefaultConfig.RedisPassword = "123456"
 	DefaultConfig.HttpListenAddress = ":8181"
+}
+
+// 初始化全局 channel
+func InitChannel() {
+	MqttControlCh = make(chan *SendPacket)
 }

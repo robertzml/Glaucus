@@ -14,13 +14,13 @@ func Run() {
 	fmt.Println("app is running")
 
 	base.InitConfig()
+	base.InitChannel()
 
 	startRedis()
 	startMqtt()
 
-	ch := make(chan *base.SendPacket)
-	go startRest(ch)
-	go startControl(ch)
+	go startRest()
+	go startControl()
 
 	//startTest()
 }
@@ -38,15 +38,15 @@ func startMqtt() {
 }
 
 // 启动HTTP接收服务
-func startRest(ch chan *base.SendPacket) {
+func startRest() {
 	fmt.Println("start rest server.")
-	rest.StartHttpServer(ch)
+	rest.StartHttpServer()
 }
 
 // 启动控制服务
-func startControl(ch chan *base.SendPacket) {
+func startControl() {
 	fmt.Println("start control server.")
-	mqtt.StartSend(ch)
+	mqtt.StartSend()
 }
 
 func startTest() {

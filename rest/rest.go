@@ -22,7 +22,7 @@ type ResponseMessage struct {
 }
 
 // 启动HTTP服务
-func StartHttpServer(ch chan *base.SendPacket) {
+func StartHttpServer() {
 	mux := http.NewServeMux()
 
 	server := &http.Server{
@@ -32,7 +32,7 @@ func StartHttpServer(ch chan *base.SendPacket) {
 	}
 
 	restHandler := new(RestHandler)
-	restHandler.ch = ch
+	restHandler.ch = base.MqttControlCh
 
 	mux.Handle("/", restHandler)
 	mux.HandleFunc("/control", restHandler.control)

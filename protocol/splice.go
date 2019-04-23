@@ -5,7 +5,7 @@ package protocol
 import "fmt"
 
 // 拼接设备控制报文
-func (msg *ControlMessage) splice() string {
+func (msg *WHControlMessage) splice() string {
 	head := spliceHead()
 
 	sn := spliceTLV(0x127, msg.SerialNumber)

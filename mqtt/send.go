@@ -6,8 +6,8 @@ import (
 )
 
 // 启动MQTT发送服务
-// 通过ch 获取发送请求
-func StartSend(ch chan *base.SendPacket) {
+// 通过全局 MqttControlCh 获取发送请求
+func StartSend() {
 	m := new(MQTT)
 
 	clientId := fmt.Sprintf("send-channel-%d", base.DefaultConfig.MqttChannel)
@@ -18,7 +18,7 @@ func StartSend(ch chan *base.SendPacket) {
 	}()
 
 	for {
-		input := <-ch
+		input := <-base.MqttControlCh
 		fmt.Println("control consumer.")
 
 		var controlTopic = fmt.Sprintf("server/%d/1/%s/control_info", base.DefaultConfig.MqttChannel, input.SerialNumber)

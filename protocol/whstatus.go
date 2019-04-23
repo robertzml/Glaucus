@@ -3,6 +3,7 @@ package protocol
 import (
 	"errors"
 	"fmt"
+	"github.com/robertzml/Glaucus/base"
 	"github.com/robertzml/Glaucus/equipment"
 	"strconv"
 	"time"
@@ -71,6 +72,17 @@ func (msg *WHStatusMessage) Authorize() (pass bool, err error) {
 
 	if exists := whs.LoadStatus(msg.SerialNumber); exists {
 		if whs.MainboardNumber != msg.MainboardNumber {
+			resMsg := new(WHResultMessage)
+			resMsg.SerialNumber = msg.SerialNumber
+			resMsg.MainboardNumber = msg.MainboardNumber
+			resMsg.ResultAction = "D8"
+
+			pak := new(base.SendPacket)
+			pak.SerialNumber = msg.SerialNumber
+			pak.Payload = resMsg.splice()
+
+			base.MqttControlCh <- pak
+
 			return false, errors.New("mainboard Number not equal.")
 		}
 	} else {

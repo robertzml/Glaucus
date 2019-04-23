@@ -47,7 +47,7 @@ func (handler *RestHandler) control(w http.ResponseWriter, r *http.Request) {
 		}
 		option := int(optionf)
 
-		control := new(protocol.ControlMessage)
+		control := new(protocol.WHControlMessage)
 		if ok = control.LoadEquipment(serialNumber); ok {
 			pak := new(base.SendPacket)
 			pak.SerialNumber = serialNumber
@@ -135,7 +135,7 @@ func (handler *RestHandler) special(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		control := new(protocol.ControlMessage)
+		control := new(protocol.WHControlMessage)
 		if ok = control.LoadEquipment(serialNumber); ok {
 			pak := new(base.SendPacket)
 			pak.SerialNumber = serialNumber
