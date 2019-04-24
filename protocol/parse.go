@@ -26,6 +26,14 @@ func parseType(productType int, message string) (cell TLV, msg Message, err erro
 		return
 	}
 
+	// check message length
+	length := len(message) - len(HomeConsoleVersion) - 8 - 8
+	if cell.Length != length {
+		err = errors.New("message length is not correct")
+		return
+	}
+
+
 	switch cell.Tag {
 	case 0x14:
 		if productType == 1 {

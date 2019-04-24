@@ -16,7 +16,6 @@ type RedisClient struct {
 	client redigo.Conn
 }
 
-var RedisPools []*redigo.Pool
 
 // 初始化Redis连接池
 func InitPool(db int) {

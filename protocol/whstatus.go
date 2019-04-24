@@ -419,7 +419,10 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 		index += tlv.Length + 8
 	}
 
+	fmt.Println("before save status.")
 	whs.SaveStatus()
+	fmt.Println("after save status.")
+
 
 	if runningChange {
 		whs.PushRunning(whRunning)
@@ -437,5 +440,6 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 		whs.PushCumulate(whCumulate)
 	}
 
+	fmt.Println("after push key.")
 	return nil
 }
