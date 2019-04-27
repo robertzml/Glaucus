@@ -19,12 +19,12 @@ type RedisClient struct {
 
 // 初始化Redis连接池
 func InitPool(db int) {
-	timeout := time.Duration(30)
+	timeout := time.Duration(10)
 
 	RedisPool = &redigo.Pool{
 		MaxIdle:     100,
 		MaxActive:   1000,
-		IdleTimeout: 30 * time.Second,
+		IdleTimeout: 10 * time.Second,
 		Wait:        true,
 		Dial: func() (redigo.Conn, error) {
 			con, err := redigo.Dial("tcp", base.DefaultConfig.RedisServerAddress,
@@ -38,35 +38,24 @@ func InitPool(db int) {
 			}
 			return con, nil
 		},
+		TestOnBorrow: func(c redigo.Conn, t time.Time) error {
+			if time.Since(t) < time.Minute {
+				return nil
+			}
+			_, err := c.Do("PING")
+			return err
+		},
 	}
-
-
-
-	// 建立连接池
-	//RedisPool = &redigo.Pool{
-	//	MaxIdle:     100,
-	//	MaxActive:   1000,
-	//	IdleTimeout: 30 * time.Second,
-	//	Wait:        true,
-	//	Dial: func() (redigo.Conn, error) {
-	//		con, err := redigo.Dial("tcp", base.DefaultConfig.RedisServerAddress,
-	//			redigo.DialPassword(base.DefaultConfig.RedisPassword),
-	//			redigo.DialDatabase(1),
-	//			redigo.DialConnectTimeout(timeout*time.Second),
-	//			redigo.DialReadTimeout(timeout*time.Second),
-	//			redigo.DialWriteTimeout(timeout*time.Second))
-	//		if err != nil {
-	//			return nil, err
-	//		}
-	//		return con, nil
-	//	},
-	//}
 }
 
 // 从连接池中获取一个redis 连接
 // db: 数据库序号 0,1,2
 func (r *RedisClient) Get() {
+	fmt.Println("before get connection.")
 	r.client = RedisPool.Get()
+
+	fmt.Printf("get connection %+v \n", r.client)
+
 	if r.client.Err() != nil {
 		panic(r.client.Err())
 	}

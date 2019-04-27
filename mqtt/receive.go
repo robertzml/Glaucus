@@ -3,6 +3,7 @@ package mqtt
 import (
 	"fmt"
 	"github.com/robertzml/Glaucus/base"
+	"time"
 )
 
 // 启动MQTT接收服务
@@ -24,4 +25,13 @@ func StartReceive() {
 		fmt.Println(err)
 	}
 	*/
+
+	go testConnection(m)
+}
+
+func testConnection(m *MQTT) {
+	for {
+		fmt.Printf("connection: %t, time: %s.\n", m.IsConnect(), time.Now())
+		time.Sleep(10 * 1e9)
+	}
 }

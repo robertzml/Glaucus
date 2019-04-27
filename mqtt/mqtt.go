@@ -33,6 +33,11 @@ func (m *MQTT) Disconnect() {
 	m.client.Disconnect(250)
 }
 
+// 检查连接是否正常
+func (m *MQTT) IsConnect() bool {
+	return m.client.IsConnected()
+}
+
 // 订阅相关主题，设置QoS
 func (m *MQTT) Subscribe(topic string, qos byte, callback paho.MessageHandler) (err error) {
 	if token := m.client.Subscribe(topic, qos, callback); token.Wait() && token.Error() != nil {
