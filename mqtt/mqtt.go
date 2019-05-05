@@ -11,6 +11,18 @@ type MQTT struct {
 	client   paho.Client
 }
 
+type MLogger struct {
+
+}
+
+func (MLogger) Println(v ...interface{}) {
+	fmt.Println(v)
+}
+
+func (MLogger) Printf(format string, v ...interface{}) {
+	fmt.Printf(format, v)
+}
+
 // connect to mqtt server by clientId
 func (m *MQTT) Connect(clientId string, address string) {
 	m.ClientId = clientId

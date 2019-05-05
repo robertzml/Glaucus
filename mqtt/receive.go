@@ -4,10 +4,17 @@ import (
 	"fmt"
 	"github.com/robertzml/Glaucus/base"
 	"time"
+	paho "github.com/eclipse/paho.mqtt.golang"
 )
 
 // 启动MQTT接收服务
 func StartReceive() {
+
+	paho.ERROR = MLogger{}
+	paho.CRITICAL = MLogger{}
+	paho.WARN = MLogger{}
+	paho.DEBUG = MLogger{}
+
 	m := new(MQTT)
 
 	clientId := fmt.Sprintf("server-channel-%d", base.DefaultConfig.MqttChannel)
