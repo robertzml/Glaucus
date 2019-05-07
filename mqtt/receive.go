@@ -3,6 +3,7 @@ package mqtt
 import (
 	"fmt"
 	"github.com/robertzml/Glaucus/base"
+	"github.com/robertzml/Glaucus/redis"
 	"time"
 	paho "github.com/eclipse/paho.mqtt.golang"
 )
@@ -39,6 +40,8 @@ func StartReceive() {
 func testConnection(m *MQTT) {
 	for {
 		fmt.Printf("connection: %t, time: %s.\n", m.IsConnect(), time.Now())
+
+		fmt.Printf("active: %d, idle: %d\n", redis.RedisPool.ActiveCount(), redis.RedisPool.IdleCount())
 		time.Sleep(10 * 1e9)
 	}
 }
