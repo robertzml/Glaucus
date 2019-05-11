@@ -131,6 +131,8 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 	waterHeaterStatus.DeviceType = msg.DeviceType
 	waterHeaterStatus.ControllerType = msg.ControllerType
 
+	preErrorCode := waterHeaterStatus.ErrorCode
+
 	index := 0
 	length := len(payload)
 
@@ -150,7 +152,7 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 			waterHeaterStatus.OutTemp = int(v)
 		case 0x04:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
-			waterHeaterStatus.OutFlow = int(v) * 10
+			waterHeaterStatus.OutFlow = int(v)
 		case 0x05:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
 			waterHeaterStatus.ColdInTemp = int(v)
@@ -224,6 +226,10 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 		waterHeaterStatus.PushKey(whKey)
 	}
 
+	if preErrorCode != waterHeaterStatus.ErrorCode {
+		waterHeaterStatus.ErrorTime = time.Now().Unix()
+	}
+
 	waterHeaterStatus.Online = 1
 	waterHeaterStatus.SaveStatus()
 
@@ -263,6 +269,8 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 	whAlarm.SerialNumber = whs.SerialNumber
 	whAlarm.MainboardNumber = whs.MainboardNumber
 	whAlarm.Logtime = whs.Logtime
+	whAlarm.ErrorCode = whs.ErrorCode
+	whAlarm.ErrorTime = whs.ErrorTime
 
 	alarmChange := false
 
@@ -326,7 +334,7 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 			runningChange = true
 		case 0x04:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
-			whs.OutFlow = int(v) * 10
+			whs.OutFlow = int(v)
 			whRunning.OutFlow = whs.OutFlow
 			runningChange = true
 		case 0x05:
@@ -344,6 +352,11 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 		case 0x07:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
 			whs.ErrorCode = int(v)
+
+			if whAlarm.ErrorCode != whs.ErrorCode {
+				whAlarm.ErrorTime = time.Now().Unix()
+			}
+
 			whAlarm.ErrorCode = whs.ErrorCode
 			alarmChange = true
 		case 0x08:

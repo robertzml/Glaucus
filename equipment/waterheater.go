@@ -18,6 +18,7 @@ type WaterHeater struct {
 	ColdInTemp        int
 	HotInTemp         int
 	ErrorCode         int
+	ErrorTime		  int64
 	WifiVersion       string
 	CumulateHeatTime  int
 	CumulateHotWater  int
@@ -58,6 +59,7 @@ type WaterHeaterAlarm struct {
 	MainboardNumber string
 	Logtime         int64
 	ErrorCode       int
+	ErrorTime		int64
 }
 
 // 热水器关键数据
