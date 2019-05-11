@@ -22,18 +22,18 @@ func InitPool(db int) {
 	timeout := time.Duration(20)
 
 	RedisPool = &redigo.Pool{
-		MaxIdle:     3,
-		MaxActive:   100,
-		IdleTimeout: 30 * time.Second,
+		MaxIdle:     10,
+		MaxActive:   50,
+		IdleTimeout: 10 * time.Second,
 		Wait:        true,
 		MaxConnLifetime: 60 * time.Second,
 		Dial: func() (redigo.Conn, error) {
 			con, err := redigo.Dial("tcp", base.DefaultConfig.RedisServerAddress,
 				redigo.DialPassword(base.DefaultConfig.RedisPassword),
 				redigo.DialDatabase(db),
-				redigo.DialConnectTimeout(timeout*time.Second),
-				redigo.DialReadTimeout(timeout*time.Second),
-				redigo.DialWriteTimeout(timeout*time.Second))
+				redigo.DialConnectTimeout(timeout * time.Second),
+				redigo.DialReadTimeout(timeout * time.Second),
+				redigo.DialWriteTimeout(timeout * time.Second))
 			if err != nil {
 				return nil, err
 			}
@@ -53,11 +53,9 @@ func InitPool(db int) {
 }
 
 // 从连接池中获取一个redis 连接
-// db: 数据库序号 0,1,2
 func (r *RedisClient) Get() {
 	fmt.Println("before get connection.")
 	r.client = RedisPool.Get()
-
 	fmt.Printf("get connection %+v \n", r.client)
 
 	if r.client.Err() != nil {
@@ -71,6 +69,7 @@ func (r *RedisClient) Close() {
 	if err := r.client.Close(); err != nil {
 		panic(err.Error())
 	}
+	fmt.Println("close connection.")
 }
 
 // 写入数据

@@ -2,7 +2,9 @@ package app
 
 import (
 	"fmt"
+	"github.com/robertzml/Glaucus/protocol"
 	"log"
+	"time"
 
 	"github.com/robertzml/Glaucus/base"
 	"github.com/robertzml/Glaucus/mqtt"
@@ -17,11 +19,13 @@ func Run() {
 	base.InitChannel()
 
 	startRedis()
-	startMqtt()
 
+	go startMqtt()
+	go startStore()
 	go startRest()
 	go startControl()
 
+	go reportStatus()
 	//startTest()
 }
 
@@ -37,6 +41,12 @@ func startMqtt() {
 	mqtt.StartReceive()
 }
 
+// 启用数据存储服务
+func startStore() {
+	fmt.Println("start data store.")
+	protocol.Store()
+}
+
 // 启动HTTP接收服务
 func startRest() {
 	fmt.Println("start rest server.")
@@ -47,6 +57,15 @@ func startRest() {
 func startControl() {
 	fmt.Println("start control server.")
 	mqtt.StartSend()
+}
+
+func reportStatus() {
+	for {
+		fmt.Printf("time: %s, redis active: %d, redis idle: %d. mqtt connection: %t.\n",
+			time.Now(), redis.RedisPool.ActiveCount(), redis.RedisPool.IdleCount(), mqtt.ReceiveMqtt.IsConnect())
+
+		time.Sleep(10 * 1e9)
+	}
 }
 
 func startTest() {

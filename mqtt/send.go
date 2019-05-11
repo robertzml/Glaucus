@@ -11,7 +11,7 @@ func StartSend() {
 	m := new(MQTT)
 
 	clientId := fmt.Sprintf("send-channel-%d", base.DefaultConfig.MqttChannel)
-	m.Connect(clientId, base.DefaultConfig.MqttServerAddress)
+	m.Connect(clientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttServerAddress)
 
 	defer func() {
 		m.Disconnect()

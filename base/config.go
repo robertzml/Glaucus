@@ -7,6 +7,9 @@ var (
 
 	// MQTT 发送控制指令 channel
 	MqttControlCh  chan *SendPacket
+
+	// MQTT 接收上报状态 channel
+	MqttStatusCh   chan *ReceivePacket
 )
 
 // 配置
@@ -16,6 +19,9 @@ type Config struct {
 
 	// MQTT HTTP服务地址
 	MqttServerHttp string
+
+	// MQTT 用户名
+	MqttUsername string
 
 	// MQTT主题订阅频道
 	MqttChannel int
@@ -38,6 +44,7 @@ func InitConfig() {
 	DefaultConfig.MqttServerAddress = "tcp://192.168.0.120:1883"
 	DefaultConfig.MqttServerHttp = "http://192.168.0.120:18083"
 	DefaultConfig.MqttChannel = 1
+	DefaultConfig.MqttUsername = "glaucus"
 	DefaultConfig.RedisDatabase = 0
 	DefaultConfig.RedisServerAddress = "192.168.0.120:6379"
 	DefaultConfig.RedisPassword = "123456"
@@ -47,4 +54,5 @@ func InitConfig() {
 // 初始化全局 channel
 func InitChannel() {
 	MqttControlCh = make(chan *SendPacket)
+	MqttStatusCh = make(chan *ReceivePacket, 10)
 }

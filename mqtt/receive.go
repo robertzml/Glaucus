@@ -2,27 +2,30 @@ package mqtt
 
 import (
 	"fmt"
-	"github.com/robertzml/Glaucus/base"
-	"github.com/robertzml/Glaucus/redis"
-	"time"
 	paho "github.com/eclipse/paho.mqtt.golang"
+	"github.com/robertzml/Glaucus/base"
 )
 
-// 启动MQTT接收服务
-func StartReceive() {
+// 全局MQTT 接收连接
+var ReceiveMqtt *MQTT
 
+// 初始化全局MQTT连接
+func InitReceive() {
 	paho.ERROR = MLogger{}
 	paho.CRITICAL = MLogger{}
 	paho.WARN = MLogger{}
 	paho.DEBUG = MLogger{}
 
-	m := new(MQTT)
-
+	ReceiveMqtt = new(MQTT)
 	clientId := fmt.Sprintf("server-channel-%d", base.DefaultConfig.MqttChannel)
-	m.Connect(clientId, base.DefaultConfig.MqttServerAddress)
+	ReceiveMqtt.Connect(clientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttServerAddress)
+}
 
+
+// 启动MQTT接收服务
+func StartReceive() {
 	var whStatusTopic = fmt.Sprintf("equipment/%d/1/+/status_info", base.DefaultConfig.MqttChannel)
-	if err := m.Subscribe(whStatusTopic, 0, WaterHeaterStatusHandler); err != nil {
+	if err := ReceiveMqtt.Subscribe(whStatusTopic, 0, WaterHeaterStatusHandler); err != nil {
 		fmt.Println(err)
 		return
 	}
@@ -33,15 +36,4 @@ func StartReceive() {
 		fmt.Println(err)
 	}
 	*/
-
-	go testConnection(m)
-}
-
-func testConnection(m *MQTT) {
-	for {
-		fmt.Printf("connection: %t, time: %s.\n", m.IsConnect(), time.Now())
-
-		fmt.Printf("active: %d, idle: %d\n", redis.RedisPool.ActiveCount(), redis.RedisPool.IdleCount())
-		time.Sleep(10 * 1e9)
-	}
 }

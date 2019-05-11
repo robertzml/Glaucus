@@ -99,13 +99,13 @@ func parseTLV(payload string, pos int) (tlv TLV, err error) {
 解析时间 转换为分钟
 8位  最大FFFFFF小时+FF分钟
 */
-func ParseTime(payload string) (totalMin int, err error) {
+func parseTime(payload string) (totalMin int, err error) {
 	if len(payload) != 8 {
 		err = errors.New("time length is wrong.")
 		return
 	}
 
-	hour, err := ParseCumulate(payload[0:6], 6)
+	hour, err := parseCumulate(payload[0:6], 6)
 	if err != nil {
 		return
 	}
@@ -123,7 +123,7 @@ func ParseTime(payload string) (totalMin int, err error) {
 解析累积量
 8位或4位  2位一转
 */
-func ParseCumulate(payload string, length int) (total int, err error) {
+func parseCumulate(payload string, length int) (total int, err error) {
 	if len(payload) != length {
 		err = errors.New("cumulate length is wrong.")
 		return
@@ -144,7 +144,7 @@ func ParseCumulate(payload string, length int) (total int, err error) {
 解析日期 转换为 时间戳
 10位 2位一转
 */
-func ParseDateToTimestamp(payload string) (timestamp int64, err error) {
+func parseDateToTimestamp(payload string) (timestamp int64, err error) {
 	if len(payload) != 10 {
 		err = errors.New("date length is wrong.")
 		return
@@ -165,7 +165,7 @@ func ParseDateToTimestamp(payload string) (timestamp int64, err error) {
 }
 
 // 编码日期到TLV FFFFFFFFFF 格式
-func ParseDateTimeToString(date time.Time) (string) {
+func parseDateTimeToString(date time.Time) (string) {
 	year := fmt.Sprintf("%02X", date.Year() - 2000)
 	month := fmt.Sprintf("%02X", int(date.Month()))
 	day := fmt.Sprintf("%02X", date.Day())
@@ -176,7 +176,7 @@ func ParseDateTimeToString(date time.Time) (string) {
 }
 
 // 编码时间戳到TLV FFFFFFFFFF 格式
-func ParseTimestampToString(timestamp int64) (string) {
+func parseTimestampToString(timestamp int64) (string) {
 	date := time.Unix(timestamp, 0)
 
 	year := fmt.Sprintf("%02X", date.Year() - 2000)

@@ -165,19 +165,19 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 		case 0x08:
 			waterHeaterStatus.WifiVersion = tlv.Value
 		case 0x09:
-			v, _ := ParseTime(tlv.Value)
+			v, _ := parseTime(tlv.Value)
 			waterHeaterStatus.CumulateHeatTime = v
 		case 0x0a:
-			v, _ := ParseCumulate(tlv.Value, 8)
+			v, _ := parseCumulate(tlv.Value, 8)
 			waterHeaterStatus.CumulateHotWater = v
 		case 0x0b:
-			v, _ := ParseTime(tlv.Value)
+			v, _ := parseTime(tlv.Value)
 			waterHeaterStatus.CumulateWorkTime = v
 		case 0x0c:
-			v, _ := ParseCumulate(tlv.Value, 8)
+			v, _ := parseCumulate(tlv.Value, 8)
 			waterHeaterStatus.CumulateUsedPower = v
 		case 0x0d:
-			v, _ := ParseCumulate(tlv.Value, 8)
+			v, _ := parseCumulate(tlv.Value, 8)
 			waterHeaterStatus.CumulateSavePower = v
 		case 0x1a:
 			v, _ := strconv.Atoi(tlv.Value)
@@ -191,16 +191,16 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 		case 0x1d:
 			waterHeaterStatus.SoftwareFunction = tlv.Value
 		case 0x1e:
-			v, _ := ParseCumulate(tlv.Value, 4)
+			v, _ := parseCumulate(tlv.Value, 4)
 			waterHeaterStatus.OutputPower = v
 		case 0x1f:
 			v, _ := strconv.Atoi(tlv.Value)
 			waterHeaterStatus.ManualClean = int8(v)
 		case 0x20:
-			v, _ := ParseDateToTimestamp(tlv.Value)
+			v, _ := parseDateToTimestamp(tlv.Value)
 			waterHeaterStatus.DeadlineTime = v
 		case 0x21:
-			v, _ := ParseDateToTimestamp(tlv.Value)
+			v, _ := parseDateToTimestamp(tlv.Value)
 			waterHeaterStatus.ActivationTime = v
 		case 0x22:
 			waterHeaterStatus.SpecialParameter = tlv.Value
@@ -355,6 +355,7 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 
 			if whAlarm.ErrorCode != whs.ErrorCode {
 				whAlarm.ErrorTime = time.Now().Unix()
+				whs.ErrorTime = whAlarm.ErrorTime
 			}
 
 			whAlarm.ErrorCode = whs.ErrorCode
@@ -362,27 +363,27 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 		case 0x08:
 			whs.WifiVersion = tlv.Value
 		case 0x09:
-			v, _ := ParseTime(tlv.Value)
+			v, _ := parseTime(tlv.Value)
 			whs.CumulateHeatTime = v
 			whCumulate.CumulateHeatTime = whs.CumulateHeatTime
 			cumulateChange = true
 		case 0x0a:
-			v, _ := ParseCumulate(tlv.Value, 8)
+			v, _ := parseCumulate(tlv.Value, 8)
 			whs.CumulateHotWater = v
 			whCumulate.CumulateHotWater = whs.CumulateHotWater
 			cumulateChange = true
 		case 0x0b:
-			v, _ := ParseTime(tlv.Value)
+			v, _ := parseTime(tlv.Value)
 			whs.CumulateWorkTime = v
 			whCumulate.CumulateWorkTime = whs.CumulateWorkTime
 			cumulateChange = true
 		case 0x0c:
-			v, _ := ParseCumulate(tlv.Value, 8)
+			v, _ := parseCumulate(tlv.Value, 8)
 			whs.CumulateUsedPower = v
 			whCumulate.CumulateUsedPower = whs.CumulateUsedPower
 			cumulateChange = true
 		case 0x0d:
-			v, _ := ParseCumulate(tlv.Value, 8)
+			v, _ := parseCumulate(tlv.Value, 8)
 			whs.CumulateSavePower = v
 			whCumulate.CumulateSavePower = whs.CumulateSavePower
 			cumulateChange = true
@@ -406,7 +407,7 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 		case 0x1d:
 			whs.SoftwareFunction = tlv.Value
 		case 0x1e:
-			v, _ := ParseCumulate(tlv.Value, 4)
+			v, _ := parseCumulate(tlv.Value, 4)
 			whs.OutputPower = v
 			whRunning.OutputPower = whs.OutputPower
 			runningChange = true
@@ -416,12 +417,12 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 			whRunning.ManualClean = whs.ManualClean
 			runningChange = true
 		case 0x20:
-			v, _ := ParseDateToTimestamp(tlv.Value)
+			v, _ := parseDateToTimestamp(tlv.Value)
 			whs.DeadlineTime = v
 			whKey.DeadlineTime = whs.DeadlineTime
 			keyChange = true
 		case 0x21:
-			v, _ := ParseDateToTimestamp(tlv.Value)
+			v, _ := parseDateToTimestamp(tlv.Value)
 			whs.ActivationTime = v
 			whKey.ActivationTime = whs.ActivationTime
 			keyChange = true
@@ -450,6 +451,5 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 		whs.PushCumulate(whCumulate)
 	}
 
-	fmt.Println("after push key.")
 	return nil
 }

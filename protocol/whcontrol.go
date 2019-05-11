@@ -50,7 +50,7 @@ func (msg *WHControlMessage) Lock() string {
 // 设备解锁报文
 func (msg *WHControlMessage) Unlock(deadline int64) string {
 	unlock := spliceTLV(0x1a, strconv.Itoa(1))
-	dl := ParseTimestampToString(deadline)
+	dl := parseTimestampToString(deadline)
 
 	msg.ControlAction = unlock + spliceTLV(0x20, dl)
 	return msg.splice()
@@ -64,7 +64,7 @@ func (msg *WHControlMessage) SetTemp(temp int) string {
 
 // 设置允许使用时间
 func (msg *WHControlMessage) SetDeadline(deadline int64) string {
-	dl := ParseTimestampToString(deadline)
+	dl := parseTimestampToString(deadline)
 	msg.ControlAction = spliceTLV(0x20, dl)
 	return msg.splice()
 }
