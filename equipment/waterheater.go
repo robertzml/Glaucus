@@ -5,7 +5,7 @@ import (
 )
 
 
-//热水器实时状态
+// 热水器实时状态
 type WaterHeater struct {
 	SerialNumber      string
 	MainboardNumber   string
@@ -36,6 +36,15 @@ type WaterHeater struct {
 	SpecialParameter  string
 	Online            int8
 	LineTime          int64
+}
+
+// 热水器设置状态
+type WaterHeaterSetting struct {
+	SerialNumber      	string
+	SetActivateTime		int64
+	Activate        	int8
+	Lock            	int8
+	DeadlineTime    	int64
 }
 
 // 热水器运行数据
@@ -166,4 +175,28 @@ func (equipment *WaterHeater) PushCumulate(cumulate *WaterHeaterCumulate) {
 	defer rc.Close()
 
 	rc.Rpush(WaterHeaterPrefix+"cumulate", val)
+}
+
+// 获取设置状态
+func (setting *WaterHeaterSetting) LoadSetting(serialNumber string) (exists bool) {
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
+
+	if rc.Exists(WaterHeaterPrefix + "setting_" + serialNumber) == 0 {
+		return false
+	}
+
+	rc.Hgetall(WaterHeaterPrefix+ "setting_" + serialNumber, setting)
+
+	return true
+}
+
+// 保存设置状态
+func (setting *WaterHeaterSetting) SaveSetting() {
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
+
+	rc.Hmset(WaterHeaterPrefix + "setting_" + setting.SerialNumber, setting)
 }

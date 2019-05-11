@@ -20,7 +20,7 @@ func (msg *WHControlMessage) LoadEquipment(serialNumber string) bool {
 	defer rc.Close()
 
 	msg.SerialNumber = serialNumber
-	mn := rc.Hget("wh_"+msg.SerialNumber, "MainboardNumber")
+	mn := rc.Hget("wh_" + msg.SerialNumber, "MainboardNumber")
 	if len(mn) == 0 {
 		return false
 	} else {

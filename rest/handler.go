@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/robertzml/Glaucus/base"
+	"github.com/robertzml/Glaucus/equipment"
 	"github.com/robertzml/Glaucus/protocol"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 // 设备控制接口
@@ -52,13 +54,23 @@ func (handler *RestHandler) control(w http.ResponseWriter, r *http.Request) {
 			pak := new(base.SendPacket)
 			pak.SerialNumber = serialNumber
 
+			// 获取已保存的设置信息
+			set := new(equipment.WaterHeaterSetting)
+			_ = set.LoadSetting(serialNumber)
+			set.SerialNumber = serialNumber
+
 			switch controlType {
 			case 1:
 				pak.Payload = control.Power(option)
 			case 2:
 				pak.Payload = control.Activate(option)
+				set.Activate = int8(option)
+				if option == 1 {
+					set.SetActivateTime = time.Now().Unix()
+				}
 			case 3:
 				pak.Payload = control.Lock()
+				set.Lock = 0
 			case 4:
 				deadline, ok := parameter["deadline"].(float64)
 				if !ok {
@@ -66,6 +78,9 @@ func (handler *RestHandler) control(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				pak.Payload = control.Unlock(int64(deadline))
+
+				set.Lock = 1
+				set.DeadlineTime = int64(deadline)
 			case 5:
 				deadline, ok := parameter["deadline"].(float64)
 				if !ok {
@@ -74,6 +89,7 @@ func (handler *RestHandler) control(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				pak.Payload = control.SetDeadline(int64(deadline))
+				set.DeadlineTime = int64(deadline)
 			case 6:
 				pak.Payload = control.SetTemp(option)
 			case 7:
@@ -85,8 +101,12 @@ func (handler *RestHandler) control(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			fmt.Println("control producer.")
+			// 保存设置信息
+			if controlType >=2 && controlType <= 5 {
+				set.SaveSetting()
+			}
 
+			fmt.Println("control producer.")
 			handler.ch <- pak
 
 			response(w, 0, "ok")

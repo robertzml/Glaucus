@@ -453,3 +453,33 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 
 	return nil
 }
+
+// 处理比较设置数据
+func (msg *WHStatusMessage) handleSetting() (err error) {
+	whs := new(equipment.WaterHeater)
+
+	exists := whs.LoadStatus(msg.SerialNumber)
+	if !exists {
+		fmt.Println("cannot compare setting for new equipment.")
+		return nil
+	}
+
+	setting := new(equipment.WaterHeaterSetting)
+	exists = setting.LoadSetting(msg.SerialNumber)
+	if !exists {
+		fmt.Println("setting is empty.")
+		return nil
+	}
+
+	control := new(WHControlMessage)
+	if ok := control.LoadEquipment(msg.SerialNumber); ok {
+		pak := new(base.SendPacket)
+		pak.SerialNumber = msg.SerialNumber
+
+		if whs.Activate != setting.Activate {
+			pak.Payload = control.Activate(int(setting.Activate))
+		}
+	}
+
+	return nil
+}
