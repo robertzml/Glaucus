@@ -88,12 +88,14 @@ func (msg *WHOfflineMessage) Handle(data interface{}) (err error) {
 	whKey.Logtime = whs.Logtime
 	whKey.Activate = whs.Activate
 	whKey.ActivationTime = whs.ActivationTime
-	whKey.Lock = whs.Lock
+	whKey.Unlock = whs.Unlock
 	whKey.DeadlineTime = whs.DeadlineTime
 	whKey.Online = 0
 	whKey.LineTime = whs.LineTime
 
 	whs.PushKey(whKey)
+
+	fmt.Println("save offline will message.")
 	return nil
 }
 

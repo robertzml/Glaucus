@@ -116,6 +116,11 @@ func (msg *WHStatusMessage) Handle(data interface{}) (err error) {
 		}
 	}
 
+	if err := msg.handleSetting(); err != nil {
+		return err
+	}
+	fmt.Println("handle setting compare.")
+
 	return nil
 }
 
@@ -132,6 +137,7 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 	waterHeaterStatus.ControllerType = msg.ControllerType
 
 	preErrorCode := waterHeaterStatus.ErrorCode
+	preActivation := waterHeaterStatus.Activate
 
 	index := 0
 	length := len(payload)
@@ -181,7 +187,7 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 			waterHeaterStatus.CumulateSavePower = v
 		case 0x1a:
 			v, _ := strconv.Atoi(tlv.Value)
-			waterHeaterStatus.Lock = int8(v)
+			waterHeaterStatus.Unlock = int8(v)
 		case 0x1b:
 			v, _ := strconv.Atoi(tlv.Value)
 			waterHeaterStatus.Activate = int8(v)
@@ -218,7 +224,7 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 		whKey.Logtime = waterHeaterStatus.Logtime
 		whKey.Activate = waterHeaterStatus.Activate
 		whKey.ActivationTime = waterHeaterStatus.ActivationTime
-		whKey.Lock = waterHeaterStatus.Lock
+		whKey.Unlock = waterHeaterStatus.Unlock
 		whKey.DeadlineTime = waterHeaterStatus.DeadlineTime
 		whKey.Online = 1
 		whKey.LineTime = waterHeaterStatus.LineTime
@@ -228,6 +234,10 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 
 	if preErrorCode != waterHeaterStatus.ErrorCode {
 		waterHeaterStatus.ErrorTime = time.Now().Unix()
+	}
+
+	if preActivation == 0 && waterHeaterStatus.Activate == 1 {
+		msg.saveZeroCumulate()
 	}
 
 	waterHeaterStatus.Online = 1
@@ -247,6 +257,8 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 	}
 
 	whs.Logtime = time.Now().Unix()
+
+	preActivation := whs.Activate
 
 	// 运行数据
 	whRunning := new(equipment.WaterHeaterRunning)
@@ -283,7 +295,7 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 	whKey.Logtime = whs.Logtime
 	whKey.Activate = whs.Activate
 	whKey.ActivationTime = whs.ActivationTime
-	whKey.Lock = whs.Lock
+	whKey.Unlock = whs.Unlock
 	whKey.DeadlineTime = whs.DeadlineTime
 
 	if whs.Online == 0 {
@@ -389,14 +401,18 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 			cumulateChange = true
 		case 0x1a:
 			v, _ := strconv.Atoi(tlv.Value)
-			whs.Lock = int8(v)
-			whKey.Lock = whs.Lock
+			whs.Unlock = int8(v)
+			whKey.Unlock = whs.Unlock
 			keyChange = true
 		case 0x1b:
 			v, _ := strconv.Atoi(tlv.Value)
 			whs.Activate = int8(v)
 			whKey.Activate = whs.Activate
 			keyChange = true
+
+			if preActivation == 0 && whs.Activate == 1 {
+				msg.saveZeroCumulate()
+			}
 		case 0x1c:
 			v, _ := strconv.ParseInt(tlv.Value, 16, 0)
 			whs.SetTemp = int(v)
@@ -478,8 +494,73 @@ func (msg *WHStatusMessage) handleSetting() (err error) {
 
 		if whs.Activate != setting.Activate {
 			pak.Payload = control.Activate(int(setting.Activate))
+
+			fmt.Println("activate control producer.")
+			base.MqttControlCh <- pak
+
+			return nil
+		}
+		
+		if setting.Activate == 0 {
+			return nil
+		}
+
+		// 比较设备记录时间和设置激活时间，补发注销命令
+		if whs.Activate == 1 && whs.ActivationTime + 60 < setting.SetActivateTime {
+			pak.Payload = control.Activate(0)
+
+			fmt.Println("again inactivate control producer.")
+			base.MqttControlCh <- pak
+
+			return nil
+		}
+
+		if whs.Unlock != setting.Unlock {
+			if setting.Unlock == 0 {
+				pak.Payload = control.Lock()
+
+				fmt.Println("lock control producer.")
+				base.MqttControlCh <- pak
+			} else {
+				pak.Payload = control.Unlock(setting.DeadlineTime)
+
+				fmt.Println("unlock control producer.")
+				base.MqttControlCh <- pak
+			}
+
+			return nil
+		}
+
+		if whs.DeadlineTime != setting.DeadlineTime {
+			pak.Payload = control.SetDeadline(setting.DeadlineTime)
+
+			fmt.Println("set deadline control producer.")
+			base.MqttControlCh <- pak
+
+			return nil
 		}
 	}
 
 	return nil
+}
+
+// 补累计数据清零
+func (msg *WHStatusMessage) saveZeroCumulate() {
+	// 累计数据
+	whCumulate := new(equipment.WaterHeaterCumulate)
+	whCumulate.SerialNumber = msg.SerialNumber
+	whCumulate.MainboardNumber = msg.MainboardNumber
+	whCumulate.Logtime = time.Now().Unix()
+	whCumulate.CumulateHeatTime = 0
+	whCumulate.CumulateHotWater = 0
+	whCumulate.CumulateWorkTime = 0
+	whCumulate.CumulateUsedPower = 0
+	whCumulate.CumulateSavePower = 0
+	whCumulate.ColdInTemp = 0
+	whCumulate.SetTemp = 0
+
+	whs := new(equipment.WaterHeater)
+	whs.PushCumulate(whCumulate)
+
+	fmt.Println("save zero cumulate")
 }

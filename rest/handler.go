@@ -70,7 +70,7 @@ func (handler *RestHandler) control(w http.ResponseWriter, r *http.Request) {
 				}
 			case 3:
 				pak.Payload = control.Lock()
-				set.Lock = 0
+				set.Unlock = 0
 			case 4:
 				deadline, ok := parameter["deadline"].(float64)
 				if !ok {
@@ -79,7 +79,7 @@ func (handler *RestHandler) control(w http.ResponseWriter, r *http.Request) {
 				}
 				pak.Payload = control.Unlock(int64(deadline))
 
-				set.Lock = 1
+				set.Unlock = 1
 				set.DeadlineTime = int64(deadline)
 			case 5:
 				deadline, ok := parameter["deadline"].(float64)
@@ -107,7 +107,7 @@ func (handler *RestHandler) control(w http.ResponseWriter, r *http.Request) {
 			}
 
 			fmt.Println("control producer.")
-			handler.ch <- pak
+			base.MqttControlCh <- pak
 
 			response(w, 0, "ok")
 
@@ -172,7 +172,7 @@ func (handler *RestHandler) special(w http.ResponseWriter, r *http.Request) {
 
 			fmt.Println("control producer.")
 
-			handler.ch <- pak
+			base.MqttControlCh <- pak
 
 			response(w, 0, "ok")
 		} else {

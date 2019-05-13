@@ -54,9 +54,9 @@ func InitPool(db int) {
 
 // 从连接池中获取一个redis 连接
 func (r *RedisClient) Get() {
-	fmt.Println("before get connection.")
+	// fmt.Println("before get connection.")
 	r.client = RedisPool.Get()
-	fmt.Printf("get connection %+v \n", r.client)
+	// fmt.Printf("get connection %+v \n", r.client)
 
 	if r.client.Err() != nil {
 		panic(r.client.Err())
@@ -69,7 +69,7 @@ func (r *RedisClient) Close() {
 	if err := r.client.Close(); err != nil {
 		panic(err.Error())
 	}
-	fmt.Println("close connection.")
+	// fmt.Println("close connection.")
 }
 
 // 写入数据

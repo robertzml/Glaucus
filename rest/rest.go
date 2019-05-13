@@ -11,8 +11,6 @@ import (
 
 // HTTP接口处理结构体
 type RestHandler struct {
-	// 用于MQTT消息下发
-	ch  chan *base.SendPacket
 }
 
 // HTTP返回消息
@@ -32,7 +30,6 @@ func StartHttpServer() {
 	}
 
 	restHandler := new(RestHandler)
-	restHandler.ch = base.MqttControlCh
 
 	mux.Handle("/", restHandler)
 	mux.HandleFunc("/control", restHandler.control)

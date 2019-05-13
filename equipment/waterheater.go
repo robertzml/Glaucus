@@ -25,7 +25,7 @@ type WaterHeater struct {
 	CumulateWorkTime  int // 累计通电时间
 	CumulateUsedPower int
 	CumulateSavePower int
-	Lock              int8 // 解锁/加锁状态
+	Unlock              int8 // 解锁/加锁状态
 	Activate          int8
 	SetTemp           int
 	SoftwareFunction  string
@@ -43,7 +43,7 @@ type WaterHeaterSetting struct {
 	SerialNumber      	string
 	SetActivateTime		int64
 	Activate        	int8
-	Lock            	int8
+	Unlock            	int8
 	DeadlineTime    	int64
 }
 
@@ -78,7 +78,7 @@ type WaterHeaterKey struct {
 	Logtime         int64
 	Activate        int8
 	ActivationTime  int64
-	Lock            int8
+	Unlock          int8
 	DeadlineTime    int64
 	Online          int8
 	LineTime        int64
