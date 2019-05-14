@@ -80,11 +80,11 @@ func (r *RedisClient) Write(key string, val string) {
 }
 
 // 读取数据
-func (r *RedisClient) Read(key string) string {
+func (r *RedisClient) Read(key string) (string string, err error) {
 	if val, err := redigo.String(r.client.Do("GET", key)); err != nil {
-		panic(err)
+		return "", err
 	} else {
-		return val
+		return val, nil
 	}
 }
 

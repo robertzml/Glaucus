@@ -14,10 +14,10 @@ func InitReceive() {
 	paho.ERROR = MLogger{}
 	paho.CRITICAL = MLogger{}
 	paho.WARN = MLogger{}
-	// paho.DEBUG = MLogger{}
+	paho.DEBUG = MLogger{}
 
 	ReceiveMqtt = new(MQTT)
-	clientId := fmt.Sprintf("server-channel-%d", base.DefaultConfig.MqttChannel)
+	clientId := fmt.Sprintf("receive-channel-%d", base.DefaultConfig.MqttChannel)
 	ReceiveMqtt.Connect(clientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttServerAddress)
 }
 

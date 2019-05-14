@@ -83,7 +83,23 @@ func (msg *WHStatusMessage) Authorize() (pass bool, err error) {
 
 			base.MqttControlCh <- pak
 
-			return false, errors.New("mainboard Number not equal.")
+			return false, errors.New("mainboard number not equal.")
+		}
+
+		sn := whs.GetMainboard()
+		if (len(sn) > 0 && sn != msg.SerialNumber) {
+			resMsg := new(WHResultMessage)
+			resMsg.SerialNumber = msg.SerialNumber
+			resMsg.MainboardNumber = msg.MainboardNumber
+			resMsg.ResultAction = "D7"
+
+			pak := new(base.SendPacket)
+			pak.SerialNumber = msg.SerialNumber
+			pak.Payload = resMsg.splice()
+
+			base.MqttControlCh <- pak
+
+			return false, errors.New("serial number not equal.")
 		}
 	} else {
 		fmt.Println("authorize: new equipment found.")
@@ -111,7 +127,6 @@ func (msg *WHStatusMessage) Handle(data interface{}) (err error) {
 			if err := msg.handleWaterHeaterTotal(tlv.Value); err != nil {
 				return err
 			}
-
 			fmt.Println("total update.")
 		}
 	}
@@ -119,7 +134,7 @@ func (msg *WHStatusMessage) Handle(data interface{}) (err error) {
 	if err := msg.handleSetting(); err != nil {
 		return err
 	}
-	fmt.Println("handle setting compare.")
+	fmt.Println("setting compare pass.")
 
 	return nil
 }
@@ -242,6 +257,8 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 
 	waterHeaterStatus.Online = 1
 	waterHeaterStatus.SaveStatus()
+
+	waterHeaterStatus.SetMainboard()
 
 	return
 }

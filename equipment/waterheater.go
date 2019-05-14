@@ -133,6 +133,25 @@ func (equipment *WaterHeater) UpdateField(field string, val interface{}) {
 	rc.Hset(WaterHeaterPrefix+equipment.SerialNumber, field, val)
 }
 
+// 设置主板序列号和序列号
+func (equipment *WaterHeater) SetMainboard() {
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
+
+	rc.Write(equipment.MainboardNumber, equipment.SerialNumber)
+}
+
+// 读取主板序列号和序列号
+func (equipment *WaterHeater) GetMainboard() (serialNumber string) {
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
+
+	serialNumber, _ = rc.Read(equipment.MainboardNumber)
+	return
+}
+
 // 推送运行数据
 func (equipment *WaterHeater) PushRunning(running *WaterHeaterRunning) {
 	val := serialize(running)
@@ -200,3 +219,4 @@ func (setting *WaterHeaterSetting) SaveSetting() {
 
 	rc.Hmset(WaterHeaterPrefix + "setting_" + setting.SerialNumber, setting)
 }
+

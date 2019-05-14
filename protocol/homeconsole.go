@@ -35,12 +35,12 @@ func Store() {
 		}
 
 		pass, err := msg.Authorize()
-		if !pass {
-			fmt.Println("authorize failed.")
-			return
-		}
 		if err != nil {
 			fmt.Println("catch error in authorize.", err.Error())
+			return
+		}
+		if !pass {
+			fmt.Println("authorize failed.")
 			return
 		}
 

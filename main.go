@@ -22,17 +22,17 @@ func main() {
 
 	redis.InitPool(base.DefaultConfig.RedisDatabase)
 	mqtt.InitReceive()
+	mqtt.InitSend()
 
 	go startMqtt()
 	go startStore()
 	go startRest()
 	go startControl()
 
-	// go reportStatus()
 
 	for {
-		fmt.Printf("time: %s, redis active: %d, redis idle: %d. mqtt connection: %t.\n",
-			time.Now(), redis.RedisPool.ActiveCount(), redis.RedisPool.IdleCount(), mqtt.ReceiveMqtt.IsConnect())
+		fmt.Printf("time: %s, redis active: %d, redis idle: %d. receive mqtt connection: %t, send mqtt connection: %t.\n",
+			time.Now(), redis.RedisPool.ActiveCount(), redis.RedisPool.IdleCount(), mqtt.ReceiveMqtt.IsConnect(), mqtt.SendMqtt.IsConnect())
 
 		time.Sleep(10 * 1e9)
 	}
@@ -62,15 +62,3 @@ func startControl() {
 	mqtt.StartSend()
 }
 
-func reportStatus() {
-	defer func() {
-		fmt.Println("report status closed.")
-	}()
-
-	for {
-		fmt.Printf("time: %s, redis active: %d, redis idle: %d. mqtt connection: %t.\n",
-			time.Now(), redis.RedisPool.ActiveCount(), redis.RedisPool.IdleCount(), mqtt.ReceiveMqtt.IsConnect())
-
-		time.Sleep(10 * 1e9)
-	}
-}
