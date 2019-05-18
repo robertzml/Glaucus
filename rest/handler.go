@@ -2,9 +2,9 @@ package rest
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/robertzml/Glaucus/base"
 	"github.com/robertzml/Glaucus/equipment"
+	"github.com/robertzml/Glaucus/glog"
 	"github.com/robertzml/Glaucus/protocol"
 	"io/ioutil"
 	"net/http"
@@ -23,7 +23,7 @@ func (handler *RestHandler) control(w http.ResponseWriter, r *http.Request) {
 		parameter := make(map[string]interface{})
 
 		if err := json.Unmarshal(body, &parameter); err != nil {
-			fmt.Println(err)
+			glog.Write(1, packageName, "control", err.Error())
 			w.WriteHeader(400)
 			return
 		}
@@ -44,7 +44,6 @@ func (handler *RestHandler) control(w http.ResponseWriter, r *http.Request) {
 		optionf, ok := parameter["option"].(float64)
 		if !ok {
 			response(w, 2, "option parameter is wrong.")
-			//w.WriteHeader(400)
 			return
 		}
 		option := int(optionf)
@@ -84,7 +83,6 @@ func (handler *RestHandler) control(w http.ResponseWriter, r *http.Request) {
 			case 5:
 				deadline, ok := parameter["deadline"].(float64)
 				if !ok {
-					//w.WriteHeader(400)
 					response(w, 3, "deadline parameter is wrong.")
 					return
 				}
@@ -106,7 +104,7 @@ func (handler *RestHandler) control(w http.ResponseWriter, r *http.Request) {
 				set.SaveSetting()
 			}
 
-			fmt.Println("control producer.")
+			glog.Write(3, packageName, "control", "mqtt control producer.")
 			base.MqttControlCh <- pak
 
 			response(w, 0, "ok")
@@ -131,7 +129,7 @@ func (handler *RestHandler) special(w http.ResponseWriter, r *http.Request) {
 		parameter := make(map[string]interface{})
 
 		if err := json.Unmarshal(body, &parameter); err != nil {
-			fmt.Println(err)
+			glog.Write(1, packageName, "special", err.Error())
 			w.WriteHeader(400)
 			return
 		}
@@ -170,8 +168,7 @@ func (handler *RestHandler) special(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			fmt.Println("control producer.")
-
+			glog.Write(1, packageName, "special", "mqtt control producer.")
 			base.MqttControlCh <- pak
 
 			response(w, 0, "ok")

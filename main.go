@@ -22,12 +22,13 @@ func main() {
 	base.InitChannel()
 
 	glog.InitGlog()
+	go startLog()
+
 	redis.InitPool(base.DefaultConfig.RedisDatabase)
 
 	mqtt.InitMQTT()
 	mqtt.InitSend()
 
-	go startLog()
 	startMqtt()
 
 	go startStore()

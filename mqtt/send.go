@@ -4,6 +4,7 @@ import (
 	"fmt"
 	paho "github.com/eclipse/paho.mqtt.golang"
 	"github.com/robertzml/Glaucus/base"
+	"github.com/robertzml/Glaucus/glog"
 )
 
 // 初始化发送
@@ -24,17 +25,16 @@ func StartSend() {
 
 	for {
 		input := <-base.MqttControlCh
-		fmt.Println("control consumer.")
+		glog.Write(3, packageName, "send", "mqtt control consumer.")
 
 		var controlTopic = fmt.Sprintf("server/%d/1/%s/control_info", base.DefaultConfig.MqttChannel, input.SerialNumber)
 		SendMqtt.Publish(controlTopic, 2, input.Payload)
 
-		fmt.Printf("PUBLISH Topic:%s, Payload: %s\n", controlTopic, input.Payload)
+		glog.Write(3, packageName, "send", fmt.Sprintf("PUBLISH Topic:%s, Payload: %s", controlTopic, input.Payload))
 	}
 }
 
-
 // 发送连接回调
 var sendOnConnect paho.OnConnectHandler = func(client paho.Client) {
-	fmt.Println("connect to mqtt send.")
+	glog.Write(3, packageName, "onConnect", "send connect to mqtt.")
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	paho "github.com/eclipse/paho.mqtt.golang"
 	"github.com/robertzml/Glaucus/base"
+	"github.com/robertzml/Glaucus/glog"
 )
 
 // 启动MQTT接收服务
@@ -16,9 +17,11 @@ func StartReceive() {
 
 // 接收自动订阅
 var receiveOnConnect paho.OnConnectHandler = func(client paho.Client) {
+	glog.Write(3, packageName, "onConnect", "receive connect to mqtt.")
+
 	var whStatusTopic = fmt.Sprintf("equipment/%d/1/+/status_info", base.DefaultConfig.MqttChannel)
 	if err := ReceiveMqtt.Subscribe(whStatusTopic, 0, WaterHeaterStatusHandler); err != nil {
-		fmt.Println(err)
+		glog.Write(1, packageName, "OnConnect", err.Error())
 		return
 	}
 

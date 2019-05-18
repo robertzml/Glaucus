@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+var packageName = "rest"
+
 // HTTP接口处理结构体
 type RestHandler struct {
 }

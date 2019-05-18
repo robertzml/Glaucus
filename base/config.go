@@ -55,7 +55,7 @@ func InitConfig() {
 	DefaultConfig.RedisServerAddress = "192.168.0.120:6379"
 	DefaultConfig.RedisPassword = "123456"
 	DefaultConfig.HttpListenAddress = ":8181"
-	DefaultConfig.LogLevel = 4
+	DefaultConfig.LogLevel = 3
 	DefaultConfig.LogToConsole = true
 }
 

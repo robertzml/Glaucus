@@ -1,8 +1,8 @@
 package mqtt
 
 import (
-	"fmt"
 	paho "github.com/eclipse/paho.mqtt.golang"
+	"github.com/robertzml/Glaucus/glog"
 )
 
 
@@ -21,6 +21,7 @@ func (m *MQTT) Connect(clientId string, username string, address string, onConn 
 
 	//create and start a client using the above ClientOptions
 	if token := m.client.Connect(); token.Wait() && token.Error() != nil {
+		glog.Write(0, packageName, "Connect", token.Error().Error())
 		panic(token.Error())
 	}
 }
@@ -40,7 +41,7 @@ func (m *MQTT) Subscribe(topic string, qos byte, callback paho.MessageHandler) (
 	if token := m.client.Subscribe(topic, qos, callback); token.Wait() && token.Error() != nil {
 		err = token.Error()
 	} else {
-		fmt.Printf("subscribe: %s\n", topic)
+		glog.Write(3, packageName, "subscribe", "Topic:" + topic)
 		err = nil
 	}
 	return
