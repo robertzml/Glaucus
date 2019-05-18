@@ -127,6 +127,7 @@ func (msg *WHStatusMessage) Handle(data interface{}) (err error) {
 			if err := msg.handleWaterHeaterTotal(tlv.Value); err != nil {
 				return err
 			}
+			msg.timing()
 			fmt.Println("total update.")
 		}
 	}
@@ -147,7 +148,7 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 
 	waterHeaterStatus.SerialNumber = msg.SerialNumber
 	waterHeaterStatus.MainboardNumber = msg.MainboardNumber
-	waterHeaterStatus.Logtime = time.Now().Unix()
+	waterHeaterStatus.Logtime = time.Now().Unix() * 1000
 	waterHeaterStatus.DeviceType = msg.DeviceType
 	waterHeaterStatus.ControllerType = msg.ControllerType
 
@@ -231,7 +232,7 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 	}
 
 	if !exists || waterHeaterStatus.Online == 0 {
-		waterHeaterStatus.LineTime = time.Now().Unix()
+		waterHeaterStatus.LineTime = time.Now().Unix() * 1000
 
 		whKey := new(equipment.WaterHeaterKey)
 		whKey.SerialNumber = waterHeaterStatus.SerialNumber
@@ -248,7 +249,7 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 	}
 
 	if preErrorCode != waterHeaterStatus.ErrorCode {
-		waterHeaterStatus.ErrorTime = time.Now().Unix()
+		waterHeaterStatus.ErrorTime = time.Now().Unix() * 1000
 	}
 
 	if preActivation == 0 && waterHeaterStatus.Activate == 1 {
@@ -273,7 +274,7 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 		return nil
 	}
 
-	whs.Logtime = time.Now().Unix()
+	whs.Logtime = time.Now().Unix() * 1000
 
 	preActivation := whs.Activate
 
@@ -318,7 +319,7 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 	if whs.Online == 0 {
 		keyChange = true
 
-		whs.LineTime = time.Now().Unix()
+		whs.LineTime = time.Now().Unix() * 1000
 	}
 
 	whs.Online = 1
@@ -383,7 +384,7 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 			whs.ErrorCode = int(v)
 
 			if whAlarm.ErrorCode != whs.ErrorCode {
-				whAlarm.ErrorTime = time.Now().Unix()
+				whAlarm.ErrorTime = time.Now().Unix() * 1000
 				whs.ErrorTime = whAlarm.ErrorTime
 			}
 
@@ -523,7 +524,7 @@ func (msg *WHStatusMessage) handleSetting() (err error) {
 		}
 
 		// 比较设备记录时间和设置激活时间，补发注销命令
-		if whs.Activate == 1 && whs.ActivationTime + 60 < setting.SetActivateTime {
+		if whs.Activate == 1 && whs.ActivationTime + 60 * 1000 < setting.SetActivateTime {
 			pak.Payload = control.Activate(0)
 
 			fmt.Println("again inactivate control producer.")
@@ -567,7 +568,7 @@ func (msg *WHStatusMessage) saveZeroCumulate() {
 	whCumulate := new(equipment.WaterHeaterCumulate)
 	whCumulate.SerialNumber = msg.SerialNumber
 	whCumulate.MainboardNumber = msg.MainboardNumber
-	whCumulate.Logtime = time.Now().Unix()
+	whCumulate.Logtime = time.Now().Unix() * 1000
 	whCumulate.CumulateHeatTime = 0
 	whCumulate.CumulateHotWater = 0
 	whCumulate.CumulateWorkTime = 0
@@ -580,4 +581,20 @@ func (msg *WHStatusMessage) saveZeroCumulate() {
 	whs.PushCumulate(whCumulate)
 
 	fmt.Println("save zero cumulate")
+}
+
+// 下发校时
+func (msg *WHStatusMessage) timing() {
+	timing := new(TimingMessage)
+	timing.SerialNumber = msg.SerialNumber
+	timing.MainboardNumber = msg.MainboardNumber
+
+	payload := timing.splice()
+
+	pak := new(base.SendPacket)
+	pak.SerialNumber = msg.SerialNumber
+	pak.Payload = payload
+
+	fmt.Println("send timing", payload)
+	base.MqttControlCh <- pak
 }

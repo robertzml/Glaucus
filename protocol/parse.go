@@ -134,16 +134,16 @@ func parseCumulate(payload string, length int) (total int, err error) {
 		if err != nil {
 			break
 		}
-		total = total*100 + int(v)
+		total = total * 100 + int(v)
 	}
 
 	return
 }
 
-/*
-解析日期 转换为 时间戳
-10位 2位一转
-*/
+
+// 解析日期 转换为 时间戳
+// 10位 2位一转
+// 输出13位
 func parseDateToTimestamp(payload string) (timestamp int64, err error) {
 	if len(payload) != 10 {
 		err = errors.New("date length is wrong.")
@@ -160,7 +160,7 @@ func parseDateToTimestamp(payload string) (timestamp int64, err error) {
 
 	date := time.Date(int(year), time.Month(month), int(day), int(hour), int(minute), 0, 0, time.Local)
 
-	timestamp = date.Unix()
+	timestamp = date.Unix() * 1000
 	return
 }
 
@@ -176,7 +176,9 @@ func parseDateTimeToString(date time.Time) (string) {
 }
 
 // 编码时间戳到TLV FFFFFFFFFF 格式
+// timestamp 13位
 func parseTimestampToString(timestamp int64) (string) {
+	timestamp = timestamp / 1000
 	date := time.Unix(timestamp, 0)
 
 	year := fmt.Sprintf("%02X", date.Year() - 2000)

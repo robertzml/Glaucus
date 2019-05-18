@@ -2,13 +2,11 @@ package mqtt
 
 import (
 	"fmt"
-	"github.com/robertzml/Glaucus/base"
 	paho "github.com/eclipse/paho.mqtt.golang"
+	"github.com/robertzml/Glaucus/base"
 )
 
-var SendMqtt *MQTT
-
-// 初始化全局MQTT连接
+// 初始化发送
 func InitSend() {
 	SendMqtt = new(MQTT)
 
@@ -19,7 +17,6 @@ func InitSend() {
 // 启动MQTT发送服务
 // 通过全局 MqttControlCh 获取发送请求
 func StartSend() {
-
 	defer func() {
 		SendMqtt.Disconnect()
 		fmt.Println("Send mqtt function is close.")
@@ -36,6 +33,8 @@ func StartSend() {
 	}
 }
 
+
+// 发送连接回调
 var sendOnConnect paho.OnConnectHandler = func(client paho.Client) {
 	fmt.Println("connect to mqtt send.")
 }

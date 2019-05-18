@@ -3,6 +3,9 @@ package protocol
 import (
 	"fmt"
 	"github.com/robertzml/Glaucus/base"
+	"github.com/robertzml/Glaucus/mqtt"
+	"sync"
+	"time"
 )
 
 const (
@@ -52,4 +55,27 @@ func Store() {
 
 		fmt.Println("store finish.")
 	}
+}
+
+// 校时任务
+func LoopTiming() {
+	var wg sync.WaitGroup
+	wg.Add(1)
+	ticker1 := time.NewTicker(5 * time.Second)
+
+	go func(t *time.Ticker) {
+		defer wg.Done()
+		for {
+			<-t.C
+			timing := new(TimingMessage)
+			msg := timing.splice()
+
+			var timingTopic = fmt.Sprintf("server/%d/1/+/control_info", base.DefaultConfig.MqttChannel)
+			mqtt.SendMqtt.Publish(timingTopic, 1, msg)
+
+			fmt.Println("send timing", msg)
+		}
+	}(ticker1)
+
+	wg.Wait()
 }

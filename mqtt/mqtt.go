@@ -5,23 +5,6 @@ import (
 	paho "github.com/eclipse/paho.mqtt.golang"
 )
 
-type MQTT struct {
-	ClientId string
-	Address  string
-	client   paho.Client
-}
-
-type MLogger struct {
-
-}
-
-func (MLogger) Println(v ...interface{}) {
-	fmt.Println(v)
-}
-
-func (MLogger) Printf(format string, v ...interface{}) {
-	fmt.Printf(format, v)
-}
 
 // connect to mqtt server by clientId
 func (m *MQTT) Connect(clientId string, username string, address string, onConn paho.OnConnectHandler) {

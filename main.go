@@ -22,14 +22,14 @@ func main() {
 
 	redis.InitPool(base.DefaultConfig.RedisDatabase)
 
-	mqtt.InitReceive()
+	mqtt.InitMQTT()
 	mqtt.InitSend()
 
 	startMqtt()
+
 	go startStore()
 	go startRest()
 	go startControl()
-
 
 	for {
 		fmt.Printf("time: %s, redis active: %d, redis idle: %d. receive mqtt connection: %t, send mqtt connection: %t.\n",
@@ -62,4 +62,3 @@ func startControl() {
 	fmt.Println("start control server.")
 	mqtt.StartSend()
 }
-

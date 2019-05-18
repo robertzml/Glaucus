@@ -6,26 +6,12 @@ import (
 	"github.com/robertzml/Glaucus/base"
 )
 
-// 全局MQTT 接收连接
-var ReceiveMqtt *MQTT
-
-// 初始化全局MQTT连接
-func InitReceive() {
-	paho.ERROR = MLogger{}
-	paho.CRITICAL = MLogger{}
-	paho.WARN = MLogger{}
-	// paho.DEBUG = MLogger{}
-
-	ReceiveMqtt = new(MQTT)
-}
-
-
 // 启动MQTT接收服务
 func StartReceive() {
+	ReceiveMqtt = new(MQTT)
 
 	clientId := fmt.Sprintf("receive-channel-%d", base.DefaultConfig.MqttChannel)
 	ReceiveMqtt.Connect(clientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttServerAddress, receiveOnConnect)
-
 }
 
 // 接收自动订阅
