@@ -3,6 +3,7 @@ package protocol
 import (
 	"fmt"
 	"github.com/robertzml/Glaucus/equipment"
+	"github.com/robertzml/Glaucus/glog"
 	"strconv"
 	"time"
 )
@@ -18,7 +19,7 @@ type WHOfflineMessage struct {
 func (msg *WHOfflineMessage) Parse(payload string) (data interface{}, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Printf("catch runtime panic: %v\n", r)
+			glog.Write(1, packageName, "whoffline parse", fmt.Sprintf("catch runtime panic: %v", r))
 			err = fmt.Errorf("%v", r)
 		}
 	}()
@@ -29,7 +30,7 @@ func (msg *WHOfflineMessage) Parse(payload string) (data interface{}, err error)
 	for index < length {
 		tlv, err := parseTLV(payload, index)
 		if err != nil {
-			fmt.Printf("error occur: %s", err.Error())
+			glog.Write(1, packageName, "whoffline parse", fmt.Sprintf("error occur: %s", err.Error()))
 			return nil, err
 		}
 
@@ -57,7 +58,7 @@ func (msg *WHOfflineMessage) Parse(payload string) (data interface{}, err error)
 
 // 打印协议信息
 func (msg *WHOfflineMessage) Print(cell TLV) {
-	fmt.Printf("OfflineMessage Print Tag: %#x, Serial Number:%s\n", cell.Tag, msg.SerialNumber)
+	fmt.Printf("Offline Message Print Tag: %#x, Serial Number:%s\n", cell.Tag, msg.SerialNumber)
 }
 
 // 安全检查
@@ -71,7 +72,7 @@ func (msg *WHOfflineMessage) Handle(data interface{}) (err error) {
 	whs := new(equipment.WaterHeater)
 
 	if exists := whs.LoadStatus(msg.SerialNumber); !exists {
-		fmt.Println("don't find equipment.")
+		glog.Write(2, packageName, "whoffline handle", "don't find equipment.")
 		return nil
 	}
 
@@ -95,7 +96,7 @@ func (msg *WHOfflineMessage) Handle(data interface{}) (err error) {
 
 	whs.PushKey(whKey)
 
-	fmt.Println("save offline will message.")
+	glog.Write(3, packageName, "whoffline handle", "save offline will message.")
 	return nil
 }
 
