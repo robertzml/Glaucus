@@ -37,6 +37,12 @@ type Config struct {
 
 	// HTTP接口监听地址
 	HttpListenAddress string
+
+	// 日志级别
+	LogLevel	int
+
+	// 输出日志到控制台
+	LogToConsole bool
 }
 
 // 初始化默认配置
@@ -49,6 +55,8 @@ func InitConfig() {
 	DefaultConfig.RedisServerAddress = "192.168.0.120:6379"
 	DefaultConfig.RedisPassword = "123456"
 	DefaultConfig.HttpListenAddress = ":8181"
+	DefaultConfig.LogLevel = 4
+	DefaultConfig.LogToConsole = true
 }
 
 // 初始化全局 channel
