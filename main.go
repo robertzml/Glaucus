@@ -21,10 +21,11 @@ func main() {
 	base.InitChannel()
 
 	redis.InitPool(base.DefaultConfig.RedisDatabase)
+
 	mqtt.InitReceive()
 	mqtt.InitSend()
 
-	go startMqtt()
+	startMqtt()
 	go startStore()
 	go startRest()
 	go startControl()

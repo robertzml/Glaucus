@@ -24,7 +24,7 @@ func (MLogger) Printf(format string, v ...interface{}) {
 }
 
 // connect to mqtt server by clientId
-func (m *MQTT) Connect(clientId string, username string, address string) {
+func (m *MQTT) Connect(clientId string, username string, address string, onConn paho.OnConnectHandler) {
 	m.ClientId = clientId
 	m.Address = address
 
@@ -32,6 +32,7 @@ func (m *MQTT) Connect(clientId string, username string, address string) {
 	opts.SetClientID(clientId)
 	opts.SetUsername(username)
 	opts.SetDefaultPublishHandler(defaultHandler)
+	opts.SetOnConnectHandler(onConn)
 
 	m.client = paho.NewClient(opts)
 

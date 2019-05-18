@@ -3,6 +3,7 @@ package mqtt
 import (
 	"fmt"
 	"github.com/robertzml/Glaucus/base"
+	paho "github.com/eclipse/paho.mqtt.golang"
 )
 
 var SendMqtt *MQTT
@@ -12,7 +13,7 @@ func InitSend() {
 	SendMqtt = new(MQTT)
 
 	clientId := fmt.Sprintf("send-channel-%d", base.DefaultConfig.MqttChannel)
-	SendMqtt.Connect(clientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttServerAddress)
+	SendMqtt.Connect(clientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttServerAddress, sendOnConnect)
 }
 
 // 启动MQTT发送服务
@@ -33,4 +34,8 @@ func StartSend() {
 
 		fmt.Printf("PUBLISH Topic:%s, Payload: %s\n", controlTopic, input.Payload)
 	}
+}
+
+var sendOnConnect paho.OnConnectHandler = func(client paho.Client) {
+	fmt.Println("connect to mqtt send.")
 }
