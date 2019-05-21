@@ -73,14 +73,11 @@ func (msg *WHStatusMessage) Authorize() (pass bool, err error) {
 
 	if exists := whs.LoadStatus(msg.SerialNumber); exists {
 		if whs.MainboardNumber != msg.MainboardNumber {
-			resMsg := new(WHResultMessage)
-			resMsg.SerialNumber = msg.SerialNumber
-			resMsg.MainboardNumber = msg.MainboardNumber
-			resMsg.ResultAction = "D8"
+			resMsg := NewWHResultMessage(msg.SerialNumber, msg.MainboardNumber)
 
 			pak := new(base.SendPacket)
 			pak.SerialNumber = msg.SerialNumber
-			pak.Payload = resMsg.splice()
+			pak.Payload = resMsg.duplicate("D8")
 
 			glog.Write(3, packageName, "whstatus authorize", "d8, mqtt control producer.")
 			base.MqttControlCh <- pak
@@ -90,14 +87,11 @@ func (msg *WHStatusMessage) Authorize() (pass bool, err error) {
 
 		sn := whs.GetMainboard()
 		if (len(sn) > 0 && sn != msg.SerialNumber) {
-			resMsg := new(WHResultMessage)
-			resMsg.SerialNumber = msg.SerialNumber
-			resMsg.MainboardNumber = msg.MainboardNumber
-			resMsg.ResultAction = "D7"
+			resMsg := NewWHResultMessage(msg.SerialNumber, msg.MainboardNumber)
 
 			pak := new(base.SendPacket)
 			pak.SerialNumber = msg.SerialNumber
-			pak.Payload = resMsg.splice()
+			pak.Payload = resMsg.duplicate("D7")
 
 			glog.Write(3, packageName, "whstatus authorize", "d7, mqtt control producer.")
 			base.MqttControlCh <- pak
