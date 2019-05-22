@@ -110,7 +110,76 @@ func (handler *RestHandler) control(w http.ResponseWriter, r *http.Request) {
 			response(w, 0, "ok")
 
 		} else {
-			response(w, 1, "Equipment not found.")
+			response(w, 1, "equipment not found.")
+		}
+	} else {
+		w.WriteHeader(404)
+	}
+}
+
+// 设备状态接口
+func (handler *RestHandler) result(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		body, _ := ioutil.ReadAll(r.Body)
+
+		defer func() {
+			_ = r.Body.Close()
+		}()
+
+		parameter := make(map[string]interface{})
+
+		if err := json.Unmarshal(body, &parameter); err != nil {
+			glog.Write(1, packageName, "result", err.Error())
+			w.WriteHeader(400)
+			return
+		}
+
+		serialNumber, ok := parameter["serialNumber"].(string)
+		if !ok {
+			w.WriteHeader(400)
+			return
+		}
+
+		typef, ok := parameter["type"].(float64)
+		if !ok {
+			w.WriteHeader(400)
+			return
+		}
+		resultType := int(typef)
+
+		optionf, ok := parameter["option"].(float64)
+		if !ok {
+			response(w, 2, "option parameter is wrong.")
+			return
+		}
+		option := int(optionf)
+
+		waterHeader := new(equipment.WaterHeater)
+		if mainboardNumber, exist := waterHeader.GetMainboardNumber(serialNumber); exist {
+			resultMsg := protocol.NewWHResultMessage(serialNumber, mainboardNumber)
+
+			pak := new(base.SendPacket)
+			pak.SerialNumber = serialNumber
+
+			switch resultType {
+			case 1:
+				pak.Payload = resultMsg.Fast()
+			case 2:
+				pak.Payload = resultMsg.Cycle(option)
+			case 3:
+				pak.Payload = resultMsg.Reply()
+			default:
+				w.WriteHeader(400)
+				return
+			}
+
+			glog.Write(3, packageName, "control", "mqtt control producer.")
+			base.MqttControlCh <- pak
+
+			response(w, 0, "ok")
+
+		} else {
+			response(w, 1, "equipment not found.")
 		}
 	} else {
 		w.WriteHeader(404)
