@@ -39,3 +39,8 @@ func (equipment *WaterCleaner) SaveStatus() {
 
 	rc.Hmset(WaterCleanerPrefix+equipment.SerialNumber, equipment)
 }
+
+// 通过设备序列号获取主板序列号
+func (equipment *WaterCleaner) GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool) {
+	return "", false
+}

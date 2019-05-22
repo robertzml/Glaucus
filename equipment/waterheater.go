@@ -106,11 +106,11 @@ func (equipment *WaterHeater) LoadStatus(serialNumber string) (exists bool) {
 	rc.Get()
 	defer rc.Close()
 
-	if rc.Exists(WaterHeaterPrefix+serialNumber) == 0 {
+	if rc.Exists(WaterHeaterPrefix + serialNumber) == 0 {
 		return false
 	}
 
-	rc.Hgetall(WaterHeaterPrefix+serialNumber, equipment)
+	rc.Hgetall(WaterHeaterPrefix + serialNumber, equipment)
 
 	return true
 }
@@ -124,48 +124,18 @@ func (equipment *WaterHeater) SaveStatus() {
 	rc.Hmset(WaterHeaterPrefix+equipment.SerialNumber, equipment)
 }
 
-
-// 部分更新设备实时状态
-func (equipment *WaterHeater) UpdateField(field string, val interface{}) {
-	rc := new(redis.RedisClient)
-	rc.Get()
-	defer rc.Close()
-
-	rc.Hset(WaterHeaterPrefix+equipment.SerialNumber, field, val)
-}
-
-
 // 通过设备序列号获取主板序列号
 func (equipment *WaterHeater) GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool) {
 	rc := new(redis.RedisClient)
 	rc.Get()
 	defer rc.Close()
 
-	mn := rc.Hget("wh_" + serialNumber, "MainboardNumber")
+	mn := rc.Hget(WaterHeaterPrefix + serialNumber, "MainboardNumber")
 	if len(mn) == 0 {
 		return "",false
 	} else {
 		return mn,true
 	}
-}
-
-// 设置主板序列号和序列号
-func (equipment *WaterHeater) SetMainboardString() {
-	rc := new(redis.RedisClient)
-	rc.Get()
-	defer rc.Close()
-
-	rc.Write(equipment.MainboardNumber, equipment.SerialNumber)
-}
-
-// 读取主板序列号和序列号
-func (equipment *WaterHeater) GetMainboardString() (serialNumber string) {
-	rc := new(redis.RedisClient)
-	rc.Get()
-	defer rc.Close()
-
-	serialNumber, _ = rc.Read(equipment.MainboardNumber)
-	return
 }
 
 // 推送运行数据
@@ -176,7 +146,7 @@ func (equipment *WaterHeater) PushRunning(running *WaterHeaterRunning) {
 	rc.Get()
 	defer rc.Close()
 
-	rc.Rpush(WaterHeaterPrefix+"running", val)
+	rc.Rpush(WaterHeaterPrefix + "running", val)
 }
 
 // 推送报警数据
@@ -187,7 +157,7 @@ func (equipment *WaterHeater) PushAlarm(alarm *WaterHeaterAlarm) {
 	rc.Get()
 	defer rc.Close()
 
-	rc.Rpush(WaterHeaterPrefix+"alarm", val)
+	rc.Rpush(WaterHeaterPrefix + "alarm", val)
 }
 
 // 推送关键数据
@@ -198,7 +168,7 @@ func (equipment *WaterHeater) PushKey(key *WaterHeaterKey) {
 	rc.Get()
 	defer rc.Close()
 
-	rc.Rpush(WaterHeaterPrefix+"key", val)
+	rc.Rpush(WaterHeaterPrefix + "key", val)
 }
 
 // 推送累计数据
@@ -209,7 +179,7 @@ func (equipment *WaterHeater) PushCumulate(cumulate *WaterHeaterCumulate) {
 	rc.Get()
 	defer rc.Close()
 
-	rc.Rpush(WaterHeaterPrefix+"cumulate", val)
+	rc.Rpush(WaterHeaterPrefix + "cumulate", val)
 }
 
 // 获取设置状态
@@ -222,7 +192,7 @@ func (setting *WaterHeaterSetting) LoadSetting(serialNumber string) (exists bool
 		return false
 	}
 
-	rc.Hgetall(WaterHeaterPrefix+ "setting_" + serialNumber, setting)
+	rc.Hgetall(WaterHeaterPrefix + "setting_" + serialNumber, setting)
 
 	return true
 }

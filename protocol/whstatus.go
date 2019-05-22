@@ -85,7 +85,7 @@ func (msg *WHStatusMessage) Authorize() (pass bool, err error) {
 			return false, errors.New("mainboard number not equal.")
 		}
 
-		sn := whs.GetMainboardString()
+		sn := equipment.GetMainboardString(whs.MainboardNumber)
 		if (len(sn) > 0 && sn != msg.SerialNumber) {
 			resMsg := NewWHResultMessage(msg.SerialNumber, msg.MainboardNumber)
 
@@ -255,7 +255,7 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 	waterHeaterStatus.Online = 1
 	waterHeaterStatus.SaveStatus()
 
-	waterHeaterStatus.SetMainboardString()
+	equipment.SetMainboardString(waterHeaterStatus.MainboardNumber, waterHeaterStatus.SerialNumber)
 
 	return
 }
