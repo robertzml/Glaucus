@@ -5,7 +5,6 @@ import (
 	"github.com/robertzml/Glaucus/glog"
 )
 
-
 // connect to mqtt server by clientId
 func (m *MQTT) Connect(clientId string, username string, address string, onConn paho.OnConnectHandler) {
 	m.ClientId = clientId
@@ -41,7 +40,7 @@ func (m *MQTT) Subscribe(topic string, qos byte, callback paho.MessageHandler) (
 	if token := m.client.Subscribe(topic, qos, callback); token.Wait() && token.Error() != nil {
 		err = token.Error()
 	} else {
-		glog.Write(3, packageName, "subscribe", "Topic:" + topic)
+		glog.Write(3, packageName, "subscribe", "Topic:"+topic)
 		err = nil
 	}
 	return
@@ -56,6 +55,7 @@ func (m *MQTT) Unsubscribe(topic string) (err error) {
 	return err
 }
 
+// 发布订阅
 func (m *MQTT) Publish(topic string, qos byte, payload string) {
 	token := m.client.Publish(topic, qos, false, payload)
 	token.Wait()

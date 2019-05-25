@@ -19,14 +19,14 @@ func InitSend() {
 
 // 启动MQTT发送服务
 // 通过全局 MqttControlCh 获取发送请求
-func StartSend(ch <-chan *base.SendPacket) {
+func StartSend() {
 	defer func() {
 		SendMqtt.Disconnect()
 		fmt.Println("Send mqtt function is close.")
 	}()
 
 	for {
-		input := <-ch
+		input := <-base.MqttControlCh
 		glog.Write(3, packageName, "send", "mqtt control consumer.")
 
 		var controlTopic = fmt.Sprintf("server/1/%s/control_info", input.SerialNumber)

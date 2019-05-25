@@ -12,7 +12,7 @@ import (
 // redis 连接池
 var RedisPool *redigo.Pool
 
-var packageName = "redis"
+const packageName = "redis"
 
 // redis 连接
 type RedisClient struct {

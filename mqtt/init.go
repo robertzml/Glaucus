@@ -3,6 +3,7 @@ package mqtt
 import (
 	"fmt"
 	paho "github.com/eclipse/paho.mqtt.golang"
+	"github.com/robertzml/Glaucus/base"
 	"github.com/robertzml/Glaucus/glog"
 )
 
@@ -12,6 +13,9 @@ var (
 
 	// 全局MQTT 发送连接
 	SendMqtt *MQTT
+
+	// MQTT 订阅 channel
+	MqttSubscribeCh  chan *base.ReceivePacket
 )
 
 // 当前包名称

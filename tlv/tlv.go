@@ -1,6 +1,7 @@
 package tlv
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 )
@@ -23,6 +24,23 @@ func (tlv *TLV) String() string {
 // TLV长度，包含头部
 func (tlv *TLV) Size() int {
 	return tlv.Length + 8
+}
+
+
+// 解析协议头部
+// 返回seq和协议内容
+func ParseHead(message string) (seq string, payload string, err error) {
+	vlen := len(HomeConsoleVersion)
+	v := message[0:vlen]
+	if HomeConsoleVersion != v {
+		err = errors.New("version not match")
+		return
+	}
+
+	seq = message[vlen : vlen+8]
+	payload = message[vlen+8:]
+
+	return
 }
 
 // 解析TLV

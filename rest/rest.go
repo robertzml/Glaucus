@@ -15,8 +15,6 @@ const (
 
 // HTTP接口处理结构体
 type RestHandler struct {
-	// 下发控制channel
-	mqttCh chan<- *base.SendPacket
 }
 
 // HTTP返回消息
@@ -26,7 +24,7 @@ type ResponseMessage struct {
 }
 
 // 启动HTTP服务
-func StartHttpServer(ch chan<- *base.SendPacket) {
+func StartHttpServer() {
 	mux := http.NewServeMux()
 
 	server := &http.Server{
@@ -36,7 +34,6 @@ func StartHttpServer(ch chan<- *base.SendPacket) {
 	}
 
 	restHandler := new(RestHandler)
-	restHandler.mqttCh = ch
 
 	mux.Handle("/", restHandler)
 	mux.HandleFunc("/control", restHandler.control)

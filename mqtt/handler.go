@@ -30,11 +30,3 @@ var WaterHeaterStatusHandler paho.MessageHandler = func(client paho.Client, msg 
 	base.MqttStatusCh <- pak
 	glog.Write(3, packageName, "whstatus", "mqtt status producer.")
 }
-
-// 净水器状态消息订阅处理方法
-var WaterCleanerStatusHandler paho.MessageHandler = func(client paho.Client, msg paho.Message) {
-	fmt.Printf("Status TOPIC: %s, Id: %d, QoS: %d\n", msg.Topic(), msg.MessageID(), msg.Qos())
-	fmt.Printf("Status MSG: %s\n", msg.Payload())
-
-	// protocol.Receive(2, msg.Topic(), msg.Payload(), msg.Qos())
-}

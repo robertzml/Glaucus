@@ -31,7 +31,7 @@ func main() {
 		fmt.Println("in send mode.")
 
 		base.InitConfig(0)
-
+		base.InitChannel()
 		glog.InitGlog()
 		go startLog()
 
@@ -39,10 +39,9 @@ func main() {
 		mqtt.InitMQTT()
 		mqtt.InitSend()
 
-		mqttCh := make(chan *base.SendPacket)
-
-		go startRest(mqttCh)
-		go startControl(mqttCh)
+		// 启动 接口服务，设备控制服务
+		go startRest()
+		go startControl()
 
 		for {
 			text := fmt.Sprintf("redis active: %d, redis idle: %d. send mqtt connection: %t.",
@@ -58,11 +57,25 @@ func main() {
 
 		base.InitConfig(*channelId)
 		base.InitChannel()
-
 		glog.InitGlog()
 		go startLog()
 
 		redis.InitPool(base.DefaultConfig.RedisDatabase)
+		mqtt.InitMQTT()
+
+		// 启动 MQTT订阅，数据处理服务，设备控制服务
+		startMqtt()
+		go startStore()
+		go startControl()
+
+		for {
+			text := fmt.Sprintf("redis active: %d, redis idle: %d. receive mqtt connection: %t, send mqtt connection: %t.",
+				redis.RedisPool.ActiveCount(), redis.RedisPool.IdleCount(), mqtt.ReceiveMqtt.IsConnect(), mqtt.SendMqtt.IsConnect())
+
+			glog.Write(3, "main", "state", text)
+
+			time.Sleep(10 * 1e9)
+		}
 	}
 
 
@@ -105,15 +118,15 @@ func startStore() {
 }
 
 // 启动设备控制服务
-func startControl(ch <-chan *base.SendPacket) {
+func startControl() {
 	glog.Write(3, "main", "start", "start control server.")
-	mqtt.StartSend(ch)
+	mqtt.StartSend()
 }
 
 // 启动HTTP接收服务
-func startRest(ch chan<- *base.SendPacket) {
+func startRest() {
 	glog.Write(3, "main", "start", "start rest server.")
-	rest.StartHttpServer(ch)
+	rest.StartHttpServer()
 }
 
 

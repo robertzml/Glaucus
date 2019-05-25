@@ -7,17 +7,19 @@ import (
 	"github.com/robertzml/Glaucus/glog"
 )
 
+var receiveClientId string
+
 // 启动MQTT接收服务
 func StartReceive() {
 	ReceiveMqtt = new(MQTT)
 
-	clientId := fmt.Sprintf("receive-channel-%d", base.DefaultConfig.MqttChannel)
-	ReceiveMqtt.Connect(clientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttServerAddress, receiveOnConnect)
+	receiveClientId = fmt.Sprintf("receive-channel-%d", base.DefaultConfig.MqttChannel)
+	ReceiveMqtt.Connect(receiveClientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttServerAddress, receiveOnConnect)
 }
 
 // 接收自动订阅
 var receiveOnConnect paho.OnConnectHandler = func(client paho.Client) {
-	glog.Write(3, packageName, "onConnect", "receive connect to mqtt.")
+	glog.Write(3, packageName, "onConnect", fmt.Sprintf("%s connect to mqtt.", receiveClientId))
 
 	var whStatusTopic = fmt.Sprintf("equipment/%d/1/+/status_info", base.DefaultConfig.MqttChannel)
 	if err := ReceiveMqtt.Subscribe(whStatusTopic, 0, WaterHeaterStatusHandler); err != nil {

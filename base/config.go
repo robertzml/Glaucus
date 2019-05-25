@@ -8,8 +8,8 @@ var (
 	// MQTT 发送控制指令 channel
 	MqttControlCh  chan *SendPacket
 
-	// MQTT 接收上报状态 channel
-	MqttStatusCh   chan *ReceivePacket
+	// MQTT 状态订阅消息 channel
+	MqttStatusCh  chan *ReceivePacket
 )
 
 // 配置

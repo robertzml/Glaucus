@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-
 // 解析时间 转换为分钟
 // 8位  最大FFFFFF小时+FF分钟
 func ParseTime(payload string) (totalMin int, err error) {
