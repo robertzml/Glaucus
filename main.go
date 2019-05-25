@@ -6,7 +6,7 @@ import (
 	"github.com/robertzml/Glaucus/base"
 	"github.com/robertzml/Glaucus/glog"
 	"github.com/robertzml/Glaucus/mqtt"
-	"github.com/robertzml/Glaucus/protocol"
+	"github.com/robertzml/Glaucus/receive"
 	"github.com/robertzml/Glaucus/redis"
 	"github.com/robertzml/Glaucus/rest"
 	"time"
@@ -77,26 +77,6 @@ func main() {
 			time.Sleep(10 * 1e9)
 		}
 	}
-
-
-	//
-	//mqtt.InitMQTT()
-	//mqtt.InitSend()
-	//
-	//startMqtt()
-	//
-	//go startStore()
-	//go startRest()
-	//go startControl()
-	//
-	//for {
-	//	text := fmt.Sprintf("redis active: %d, redis idle: %d. receive mqtt connection: %t, send mqtt connection: %t.",
-	//		redis.RedisPool.ActiveCount(), redis.RedisPool.IdleCount(), mqtt.ReceiveMqtt.IsConnect(), mqtt.SendMqtt.IsConnect())
-	//
-	//	glog.Write(3, "main", "state", text)
-	//
-	//	time.Sleep(10 * 1e9)
-	//}
 }
 
 // 启动日志服务
@@ -114,7 +94,7 @@ func startMqtt() {
 // 启用数据存储服务
 func startStore() {
 	glog.Write(3, "main", "start", "start data store.")
-	protocol.Store()
+	receive.Store()
 }
 
 // 启动设备控制服务

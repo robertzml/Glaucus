@@ -579,3 +579,19 @@ func (msg *WHStatusMessage) handleSetting() (err error) {
 
 	return nil
 }
+
+// 下发校时
+func (msg *WHStatusMessage) timing() {
+	timing := new(send.TimingMessage)
+	timing.SerialNumber = msg.SerialNumber
+	timing.MainboardNumber = msg.MainboardNumber
+
+	payload := timing.Splice()
+
+	pak := new(base.SendPacket)
+	pak.SerialNumber = msg.SerialNumber
+	pak.Payload = payload
+
+	glog.Write(3, packageName, "whstatus timing", "send timing, mqtt control producer.")
+	base.MqttControlCh <- pak
+}
