@@ -4,5 +4,5 @@ package send
 // 所有下发的报文均实现改接口
 type Message interface {
 
-	Splice() string
+	splice() string
 }

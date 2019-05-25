@@ -36,6 +36,7 @@ func StartHttpServer() {
 	mux.Handle("/", restHandler)
 	mux.HandleFunc("/control", restHandler.control)
 	mux.HandleFunc("/special", restHandler.special)
+	mux.HandleFunc("/result", restHandler.result)
 
 	if err := server.ListenAndServe(); err != nil {
 		fmt.Println("start server failed.")

@@ -163,7 +163,7 @@ func (handler *RestHandler) result(w http.ResponseWriter, r *http.Request) {
 
 			switch resultType {
 			case 1:
-				pak.Payload = resultMsg.Fast()
+				pak.Payload = resultMsg.Fast(option)
 			case 2:
 				pak.Payload = resultMsg.Cycle(option)
 			case 3:

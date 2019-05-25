@@ -56,8 +56,8 @@ func (msg *WHResultMessage) duplicate(option string) string {
 }
 
 // 快速响应
-func (msg *WHResultMessage) Fast() string {
-	msg.ResultAction = spliceTLV(0x16, "1")
+func (msg *WHResultMessage) Fast(option int) string {
+	msg.ResultAction = spliceTLV(0x16, strconv.FormatInt(int64(option), 16))
 	return msg.splice()
 }
 
