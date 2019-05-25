@@ -16,7 +16,7 @@ func ParseTime(payload string) (totalMin int, err error) {
 		return
 	}
 
-	hour, err := parseCumulate(payload[0:6], 6)
+	hour, err := ParseCumulate(payload[0:6], 6)
 	if err != nil {
 		return
 	}

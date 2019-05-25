@@ -15,7 +15,7 @@ var (
 )
 
 // 当前包名称
-var packageName = "mqtt"
+const packageName = "mqtt"
 
 // MQTT 结构体
 type MQTT struct {

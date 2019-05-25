@@ -24,11 +24,4 @@ var receiveOnConnect paho.OnConnectHandler = func(client paho.Client) {
 		glog.Write(1, packageName, "OnConnect", err.Error())
 		return
 	}
-
-	/*
-		wcStatusTopic := fmt.Sprintf("equipment/%d/2/+/status_info", base.DefaultConfig.MqttChannel)
-		if err := m.Subscribe(wcStatusTopic, 0, WaterCleanerStatusHandler); err != nil {
-			fmt.Println(err)
-		}
-	*/
 }

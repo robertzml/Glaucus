@@ -46,10 +46,10 @@ type Config struct {
 }
 
 // 初始化默认配置
-func InitConfig() {
+func InitConfig(channel int) {
 	DefaultConfig.MqttServerAddress = "tcp://192.168.0.120:1883"
 	DefaultConfig.MqttServerHttp = "http://192.168.0.120:18083"
-	DefaultConfig.MqttChannel = 1
+	DefaultConfig.MqttChannel = channel
 	DefaultConfig.MqttUsername = "glaucus"
 	DefaultConfig.RedisDatabase = 0
 	DefaultConfig.RedisServerAddress = "192.168.0.120:6379"

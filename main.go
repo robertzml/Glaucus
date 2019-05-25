@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/robertzml/Glaucus/base"
 	"github.com/robertzml/Glaucus/glog"
@@ -11,38 +12,78 @@ import (
 	"time"
 )
 
+var sendMode = flag.Bool("send", false, "启用发送服务")
+var receiveMode = flag.Bool("receive", true, "启用接收服务")
+var channelId = flag.Int("c", 1, "接收频道")
+
+
 func main() {
+	flag.Parse()
+
 	fmt.Println("app is running")
 
 	defer func() {
 		fmt.Println("app is stop.")
 	}()
 
-	base.InitConfig()
-	base.InitChannel()
 
-	glog.InitGlog()
-	go startLog()
+	if *sendMode {
+		fmt.Println("in send mode.")
 
-	redis.InitPool(base.DefaultConfig.RedisDatabase)
+		base.InitConfig(0)
 
-	mqtt.InitMQTT()
-	mqtt.InitSend()
+		glog.InitGlog()
+		go startLog()
 
-	startMqtt()
+		redis.InitPool(base.DefaultConfig.RedisDatabase)
+		mqtt.InitMQTT()
+		mqtt.InitSend()
 
-	go startStore()
-	go startRest()
-	go startControl()
+		mqttCh := make(chan *base.SendPacket)
 
-	for {
-		text := fmt.Sprintf("redis active: %d, redis idle: %d. receive mqtt connection: %t, send mqtt connection: %t.",
-			redis.RedisPool.ActiveCount(), redis.RedisPool.IdleCount(), mqtt.ReceiveMqtt.IsConnect(), mqtt.SendMqtt.IsConnect())
+		go startRest(mqttCh)
+		go startControl(mqttCh)
 
-		glog.Write(3, "main", "state", text)
+		for {
+			text := fmt.Sprintf("redis active: %d, redis idle: %d. send mqtt connection: %t.",
+				redis.RedisPool.ActiveCount(), redis.RedisPool.IdleCount(), mqtt.SendMqtt.IsConnect())
 
-		time.Sleep(10 * 1e9)
+			glog.Write(3, "main", "state", text)
+
+			time.Sleep(10 * 1e9)
+		}
+
+	} else if *receiveMode {
+		fmt.Printf("in receive mode, channel is %d.\n", *channelId)
+
+		base.InitConfig(*channelId)
+		base.InitChannel()
+
+		glog.InitGlog()
+		go startLog()
+
+		redis.InitPool(base.DefaultConfig.RedisDatabase)
 	}
+
+
+	//
+	//mqtt.InitMQTT()
+	//mqtt.InitSend()
+	//
+	//startMqtt()
+	//
+	//go startStore()
+	//go startRest()
+	//go startControl()
+	//
+	//for {
+	//	text := fmt.Sprintf("redis active: %d, redis idle: %d. receive mqtt connection: %t, send mqtt connection: %t.",
+	//		redis.RedisPool.ActiveCount(), redis.RedisPool.IdleCount(), mqtt.ReceiveMqtt.IsConnect(), mqtt.SendMqtt.IsConnect())
+	//
+	//	glog.Write(3, "main", "state", text)
+	//
+	//	time.Sleep(10 * 1e9)
+	//}
 }
 
 // 启动日志服务
@@ -63,14 +104,16 @@ func startStore() {
 	protocol.Store()
 }
 
-// 启动HTTP接收服务
-func startRest() {
-	glog.Write(3, "main", "start", "start rest server.")
-	rest.StartHttpServer()
+// 启动设备控制服务
+func startControl(ch <-chan *base.SendPacket) {
+	glog.Write(3, "main", "start", "start control server.")
+	mqtt.StartSend(ch)
 }
 
-// 启动控制服务
-func startControl() {
-	glog.Write(3, "main", "start", "start control server.")
-	mqtt.StartSend()
+// 启动HTTP接收服务
+func startRest(ch chan<- *base.SendPacket) {
+	glog.Write(3, "main", "start", "start rest server.")
+	rest.StartHttpServer(ch)
 }
+
+
