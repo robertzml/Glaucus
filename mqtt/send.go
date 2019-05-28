@@ -12,9 +12,6 @@ var sendClientId string
 // 初始化发送
 func InitSend() {
 	SendMqtt = new(MQTT)
-
-	sendClientId = fmt.Sprintf("send-channel-%d", base.DefaultConfig.MqttChannel)
-	SendMqtt.Connect(sendClientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttServerAddress, sendOnConnect)
 }
 
 // 启动MQTT发送服务
@@ -24,6 +21,9 @@ func StartSend() {
 		SendMqtt.Disconnect()
 		fmt.Println("Send mqtt function is close.")
 	}()
+
+	sendClientId = fmt.Sprintf("send-channel-%d", base.DefaultConfig.MqttChannel)
+	SendMqtt.Connect(sendClientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttServerAddress, sendOnConnect)
 
 	for {
 		input := <-base.MqttControlCh

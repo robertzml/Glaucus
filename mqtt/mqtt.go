@@ -32,7 +32,11 @@ func (m *MQTT) Disconnect() {
 
 // 检查连接是否正常
 func (m *MQTT) IsConnect() bool {
-	return m.client.IsConnected()
+	if m.client == nil {
+		return false
+	} else {
+		return m.client.IsConnected()
+	}
 }
 
 // 订阅相关主题，设置QoS

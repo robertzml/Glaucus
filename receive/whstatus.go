@@ -336,6 +336,11 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 			keyChange = true
 		case 0x22:
 			whs.SpecialParameter = cell.Value
+		case 0x23:
+			v, _ := strconv.ParseInt(cell.Value, 16, 0)
+			whs.EnergySave = int(v)
+		case 0x24:
+			whs.IMSI = cell.Value
 		}
 
 		index += cell.Length + 8
@@ -448,6 +453,11 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 			waterHeaterStatus.ActivationTime = v
 		case 0x22:
 			waterHeaterStatus.SpecialParameter = cell.Value
+		case 0x23:
+			v, _ := strconv.ParseInt(cell.Value, 16, 0)
+			waterHeaterStatus.EnergySave = int(v)
+		case 0x24:
+			waterHeaterStatus.IMSI = cell.Value
 		}
 
 		index += cell.Length + 8
@@ -582,11 +592,8 @@ func (msg *WHStatusMessage) handleSetting() (err error) {
 
 // 下发校时
 func (msg *WHStatusMessage) timing() {
-	timing := new(send.TimingMessage)
-	timing.SerialNumber = msg.SerialNumber
-	timing.MainboardNumber = msg.MainboardNumber
-
-	payload := timing.Splice()
+	timing := send.NewTimingMessage(msg.SerialNumber, msg.MainboardNumber)
+	payload := timing.Time()
 
 	pak := new(base.SendPacket)
 	pak.SerialNumber = msg.SerialNumber

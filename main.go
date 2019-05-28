@@ -62,6 +62,7 @@ func main() {
 
 		redis.InitPool(base.DefaultConfig.RedisDatabase)
 		mqtt.InitMQTT()
+		mqtt.InitSend()
 
 		// 启动 MQTT订阅，数据处理服务，设备控制服务
 		startMqtt()

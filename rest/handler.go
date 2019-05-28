@@ -5,7 +5,6 @@ import (
 	"github.com/robertzml/Glaucus/base"
 	"github.com/robertzml/Glaucus/equipment"
 	"github.com/robertzml/Glaucus/glog"
-	"github.com/robertzml/Glaucus/protocol"
 	"github.com/robertzml/Glaucus/send"
 	"io/ioutil"
 	"net/http"
@@ -213,7 +212,7 @@ func (handler *RestHandler) waterHeaterControl(param ControlParam) (status int, 
 func (handler *RestHandler) waterHeaterResult(param ResultParam) (status int, msg string, httpCode int) {
 	waterHeater := new(equipment.WaterHeater)
 	if mainboardNumber, exist := waterHeater.GetMainboardNumber(param.SerialNumber); exist {
-		resultMsg := protocol.NewWHResultMessage(param.SerialNumber, mainboardNumber)
+		resultMsg := send.NewWHResultMessage(param.SerialNumber, mainboardNumber)
 
 		pak := new(base.SendPacket)
 		pak.SerialNumber = param.SerialNumber

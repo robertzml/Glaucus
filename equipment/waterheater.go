@@ -25,7 +25,7 @@ type WaterHeater struct {
 	CumulateWorkTime  int // 累计通电时间
 	CumulateUsedPower int
 	CumulateSavePower int
-	Unlock              int8 // 解锁/加锁状态
+	Unlock            int8 // 解锁/加锁状态
 	Activate          int8
 	SetTemp           int
 	SoftwareFunction  string
@@ -36,6 +36,8 @@ type WaterHeater struct {
 	SpecialParameter  string
 	Online            int8
 	LineTime          int64
+	EnergySave		  int
+	IMSI			  string
 }
 
 // 热水器设置状态

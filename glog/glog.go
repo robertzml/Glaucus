@@ -83,7 +83,6 @@ func createDir(path string) {
 	}
 }
 
-
 // 写文件
 func writeFile(filename string, data []byte) error {
 	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0x644)
@@ -97,5 +96,6 @@ func writeFile(filename string, data []byte) error {
 	if err1 := f.Close(); err == nil {
 		err = err1
 	}
+
 	return err
 }
