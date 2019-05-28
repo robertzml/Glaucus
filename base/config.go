@@ -32,6 +32,9 @@ type Config struct {
 	// Redis 服务器地址
 	RedisServerAddress string
 
+	// 持久化 Redis 服务器地址
+	RedisPersisServerAddress string
+
 	// Redis 密码
 	RedisPassword 	string
 
@@ -53,6 +56,7 @@ func InitConfig(channel int) {
 	DefaultConfig.MqttUsername = "glaucus"
 	DefaultConfig.RedisDatabase = 0
 	DefaultConfig.RedisServerAddress = "192.168.0.120:6379"
+	DefaultConfig.RedisPersisServerAddress = "192.168.0.120:6380"
 	DefaultConfig.RedisPassword = "123456"
 	DefaultConfig.HttpListenAddress = ":8181"
 	DefaultConfig.LogLevel = 3

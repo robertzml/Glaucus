@@ -12,6 +12,9 @@ import (
 // redis 连接池
 var RedisPool *redigo.Pool
 
+// 持久化 redis 连接池
+var RedisPoolP *redigo.Pool
+
 const packageName = "redis"
 
 // redis 连接
@@ -53,11 +56,45 @@ func InitPool(db int) {
 			return err
 		},
 	}
+
+	RedisPoolP = &redigo.Pool{
+		MaxIdle:     10,
+		MaxActive:   50,
+		IdleTimeout: 10 * time.Second,
+		Wait:        true,
+		MaxConnLifetime: 60 * time.Second,
+		Dial: func() (redigo.Conn, error) {
+			con, err := redigo.Dial("tcp", base.DefaultConfig.RedisPersisServerAddress,
+				redigo.DialPassword(base.DefaultConfig.RedisPassword),
+				redigo.DialDatabase(db),
+				redigo.DialConnectTimeout(timeout * time.Second),
+				redigo.DialReadTimeout(timeout * time.Second),
+				redigo.DialWriteTimeout(timeout * time.Second))
+			if err != nil {
+				return nil, err
+			}
+			return con, nil
+		},
+		TestOnBorrow: func(c redigo.Conn, t time.Time) error {
+			if time.Since(t) < time.Minute {
+				return nil
+			}
+			_, err := c.Do("PING")
+			if err != nil {
+				glog.Write(1, packageName, "testOnBorrow", err.Error())
+			}
+			return err
+		},
+	}
 }
 
 // 从连接池中获取一个redis 连接
-func (r *RedisClient) Get() {
-	r.client = RedisPool.Get()
+func (r *RedisClient) Get(persis bool) {
+	if persis {
+		r.client = RedisPoolP.Get()
+	} else {
+		r.client = RedisPool.Get()
+	}
 
 	if r.client.Err() != nil {
 		glog.Write(0, packageName, "get", r.client.Err().Error())

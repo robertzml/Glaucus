@@ -28,7 +28,7 @@ type Equipment interface {
 // 设置 Redis 主板序列号 string
 func SetMainboardString(mainboardNumber string, serialNumber string) {
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(true)
 	defer rc.Close()
 
 	rc.Write(mainboardNumber, serialNumber)
@@ -38,7 +38,7 @@ func SetMainboardString(mainboardNumber string, serialNumber string) {
 // 返回: 设备序列号
 func GetMainboardString(mainboardNumber string) (serialNumber string) {
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(true)
 	defer rc.Close()
 
 	serialNumber, _ = rc.Read(mainboardNumber)

@@ -105,7 +105,7 @@ type WaterHeaterCumulate struct {
 // 返回 exists: 设备是否存在redis中
 func (equipment *WaterHeater) LoadStatus(serialNumber string) (exists bool) {
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(true)
 	defer rc.Close()
 
 	if rc.Exists(WaterHeaterPrefix + serialNumber) == 0 {
@@ -120,7 +120,7 @@ func (equipment *WaterHeater) LoadStatus(serialNumber string) (exists bool) {
 // 整体更新设备实时状态
 func (equipment *WaterHeater) SaveStatus() {
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(true)
 	defer rc.Close()
 
 	rc.Hmset(WaterHeaterPrefix+equipment.SerialNumber, equipment)
@@ -129,7 +129,7 @@ func (equipment *WaterHeater) SaveStatus() {
 // 通过设备序列号获取主板序列号
 func (equipment *WaterHeater) GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool) {
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(true)
 	defer rc.Close()
 
 	mn := rc.Hget(WaterHeaterPrefix + serialNumber, "MainboardNumber")
@@ -145,7 +145,7 @@ func (equipment *WaterHeater) PushRunning(running *WaterHeaterRunning) {
 	val := serialize(running)
 
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(false)
 	defer rc.Close()
 
 	rc.Rpush(WaterHeaterPrefix + "running", val)
@@ -156,7 +156,7 @@ func (equipment *WaterHeater) PushAlarm(alarm *WaterHeaterAlarm) {
 	val := serialize(alarm)
 
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(false)
 	defer rc.Close()
 
 	rc.Rpush(WaterHeaterPrefix + "alarm", val)
@@ -167,7 +167,7 @@ func (equipment *WaterHeater) PushKey(key *WaterHeaterKey) {
 	val := serialize(key)
 
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(false)
 	defer rc.Close()
 
 	rc.Rpush(WaterHeaterPrefix + "key", val)
@@ -178,7 +178,7 @@ func (equipment *WaterHeater) PushCumulate(cumulate *WaterHeaterCumulate) {
 	val := serialize(cumulate)
 
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(false)
 	defer rc.Close()
 
 	rc.Rpush(WaterHeaterPrefix + "cumulate", val)
@@ -187,7 +187,7 @@ func (equipment *WaterHeater) PushCumulate(cumulate *WaterHeaterCumulate) {
 // 获取设置状态
 func (setting *WaterHeaterSetting) LoadSetting(serialNumber string) (exists bool) {
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(true)
 	defer rc.Close()
 
 	if rc.Exists(WaterHeaterPrefix + "setting_" + serialNumber) == 0 {
@@ -202,7 +202,7 @@ func (setting *WaterHeaterSetting) LoadSetting(serialNumber string) (exists bool
 // 保存设置状态
 func (setting *WaterHeaterSetting) SaveSetting() {
 	rc := new(redis.RedisClient)
-	rc.Get()
+	rc.Get(true)
 	defer rc.Close()
 
 	rc.Hmset(WaterHeaterPrefix + "setting_" + setting.SerialNumber, setting)
