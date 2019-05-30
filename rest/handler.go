@@ -172,7 +172,7 @@ func (handler *RestHandler) waterHeaterControl(param ControlParam) (status int, 
 			pak.Payload = controlMsg.Activate(param.Option)
 			set.Activate = int8(param.Option)
 			if param.Option == 1 {
-				set.SetActivateTime = time.Now().Unix()
+				set.SetActivateTime = time.Now().Unix() * 1000
 			}
 		case 3:
 			pak.Payload = controlMsg.Lock()

@@ -28,25 +28,25 @@ func Store() {
 		cell, msg, err := parseType(pak.ProductType, pak.Payload)
 		if err != nil {
 			glog.Write(1, packageName, "store", "catch error in parseType: " + err.Error())
-			return
+			continue
 		}
 
 		data, err := msg.Parse(cell.Value)
 		if err != nil {
 			glog.Write(1, packageName, "store", "catch error in parse: " + err.Error())
-			return
+			continue
 		}
 
 		pass := msg.Authorize()
 		if !pass {
 			glog.Write(2, packageName, "store", "authorize failed.")
-			return
+			continue
 		}
 
 		err = msg.Handle(data)
 		if err != nil {
 			glog.Write(1, packageName, "store", "catch error in handle: " + err.Error())
-			return
+			continue
 		}
 
 		glog.Write(3, packageName, "store", "store finish.")

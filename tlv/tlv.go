@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	HomeConsoleVersion = "Homeconsole05.00"
+	HomeConsoleVersion = "Homeconsole04.00"
 	packageName = "tlv"
 )
 
@@ -32,7 +32,9 @@ func (tlv *TLV) Size() int {
 func ParseHead(message string) (seq string, payload string, err error) {
 	vlen := len(HomeConsoleVersion)
 	v := message[0:vlen]
-	if HomeConsoleVersion != v {
+	version, _ := strconv.ParseFloat(v[11:], 32)
+
+	if version < 4 {
 		err = errors.New("version not match")
 		return
 	}
