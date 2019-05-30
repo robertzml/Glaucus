@@ -100,6 +100,17 @@ type WaterHeaterCumulate struct {
 	SetTemp           int
 }
 
+// 热水器登录数据
+type WaterHeaterLogin struct {
+	SerialNumber      string
+	MainboardNumber   string
+	Logtime           int64
+	DeviceType        string
+	ControllerType    string
+	WifiVersion       string
+	SoftwareFunction  string
+}
+
 // 获取redis中设备实时状态
 // serialNumber: 设备序列号
 // 返回 exists: 设备是否存在redis中
@@ -182,6 +193,17 @@ func (equipment *WaterHeater) PushCumulate(cumulate *WaterHeaterCumulate) {
 	defer rc.Close()
 
 	rc.Rpush(WaterHeaterPrefix + "cumulate", val)
+}
+
+// 推送登录数据
+func (equipment *WaterHeater) PushLogin(login *WaterHeaterLogin) {
+	val := serialize(login)
+
+	rc := new(redis.RedisClient)
+	rc.Get(false)
+	defer rc.Close()
+
+	rc.Rpush(WaterHeaterPrefix + "login", val)
 }
 
 // 获取设置状态

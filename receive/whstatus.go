@@ -372,10 +372,11 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 	waterHeaterStatus := new(equipment.WaterHeater)
 
 	exists := waterHeaterStatus.LoadStatus(msg.SerialNumber)
+	now := time.Now().Unix() * 1000
 
 	waterHeaterStatus.SerialNumber = msg.SerialNumber
 	waterHeaterStatus.MainboardNumber = msg.MainboardNumber
-	waterHeaterStatus.Logtime = time.Now().Unix() * 1000
+	waterHeaterStatus.Logtime = now
 	waterHeaterStatus.DeviceType = msg.DeviceType
 	waterHeaterStatus.ControllerType = msg.ControllerType
 
@@ -463,8 +464,9 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 		index += cell.Length + 8
 	}
 
+	// 在线状态变化，推送 wh_key list
 	if !exists || waterHeaterStatus.Online == 0 {
-		waterHeaterStatus.LineTime = time.Now().Unix() * 1000
+		waterHeaterStatus.LineTime = now
 
 		whKey := new(equipment.WaterHeaterKey)
 		whKey.SerialNumber = waterHeaterStatus.SerialNumber
@@ -480,8 +482,22 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 		waterHeaterStatus.PushKey(whKey)
 	}
 
+	// 全新设备，推送 wh_login list
+	if !exists {
+		whLogin := new(equipment.WaterHeaterLogin)
+		whLogin.SerialNumber = waterHeaterStatus.SerialNumber
+		whLogin.MainboardNumber = waterHeaterStatus.MainboardNumber
+		whLogin.Logtime = now
+		whLogin.DeviceType = waterHeaterStatus.DeviceType
+		whLogin.ControllerType = waterHeaterStatus.ControllerType
+		whLogin.WifiVersion = waterHeaterStatus.WifiVersion
+		whLogin.SoftwareFunction = waterHeaterStatus.SoftwareFunction
+
+		waterHeaterStatus.PushLogin(whLogin)
+	}
+
 	if preErrorCode != waterHeaterStatus.ErrorCode {
-		waterHeaterStatus.ErrorTime = time.Now().Unix() * 1000
+		waterHeaterStatus.ErrorTime = now
 	}
 
 	if preActivation == 0 && waterHeaterStatus.Activate == 1 {
