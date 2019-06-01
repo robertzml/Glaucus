@@ -6,13 +6,14 @@ import (
 )
 
 // connect to mqtt server by clientId
-func (m *MQTT) Connect(clientId string, username string, address string, onConn paho.OnConnectHandler) {
+func (m *MQTT) Connect(clientId string, username string, password string, address string, onConn paho.OnConnectHandler) {
 	m.ClientId = clientId
 	m.Address = address
 
 	opts := paho.NewClientOptions().AddBroker(address)
 	opts.SetClientID(clientId)
 	opts.SetUsername(username)
+	opts.SetPassword(password)
 	opts.SetDefaultPublishHandler(defaultHandler)
 	opts.SetOnConnectHandler(onConn)
 

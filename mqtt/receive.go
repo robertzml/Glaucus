@@ -14,7 +14,7 @@ func StartReceive() {
 	ReceiveMqtt = new(MQTT)
 
 	receiveClientId = fmt.Sprintf("receive-channel-%d", base.DefaultConfig.MqttChannel)
-	ReceiveMqtt.Connect(receiveClientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttServerAddress, receiveOnConnect)
+	ReceiveMqtt.Connect(receiveClientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttPassword, base.DefaultConfig.MqttServerAddress, receiveOnConnect)
 }
 
 // 接收自动订阅

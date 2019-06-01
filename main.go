@@ -30,7 +30,7 @@ func main() {
 	if *sendMode {
 		fmt.Println("in send mode.")
 
-		base.InitConfig(0)
+		base.LoadConfig(0)
 		base.InitChannel()
 		glog.InitGlog()
 		go startLog()
@@ -55,7 +55,7 @@ func main() {
 	} else if *receiveMode {
 		fmt.Printf("in receive mode, channel is %d.\n", *channelId)
 
-		base.InitConfig(*channelId)
+		base.LoadConfig(*channelId)
 		base.InitChannel()
 		glog.InitGlog()
 		go startLog()

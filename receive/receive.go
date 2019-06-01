@@ -77,7 +77,6 @@ func parseType(productType int, message string) (cell tlv.TLV, msg Message, err 
 		return
 	}
 
-
 	switch cell.Tag {
 	case 0x14:
 		if productType == 1 {

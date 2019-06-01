@@ -23,7 +23,7 @@ func StartSend() {
 	}()
 
 	sendClientId = fmt.Sprintf("send-channel-%d", base.DefaultConfig.MqttChannel)
-	SendMqtt.Connect(sendClientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttServerAddress, sendOnConnect)
+	SendMqtt.Connect(sendClientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttPassword, base.DefaultConfig.MqttServerAddress, sendOnConnect)
 
 	for {
 		input := <-base.MqttControlCh
