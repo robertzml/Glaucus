@@ -31,7 +31,7 @@ func Store() {
 			continue
 		}
 
-		parseMessage(msg, cell)
+		_ = parseMessage(msg, cell)
 
 		glog.Write(3, packageName, "store", "store finish.")
 	}
@@ -42,6 +42,13 @@ func Store() {
 // cell 报文头
 // msg  报文内容
 func parseType(productType int, message string) (cell tlv.TLV, msg Message, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			glog.Write(1, packageName, "store", fmt.Sprintf("catch runtime panic in parse type: %v", r))
+			err = errors.New("parse type error")
+		}
+	}()
+
 	// read header
 	_, payload, err := tlv.ParseHead(message)
 	if err != nil {
@@ -86,28 +93,31 @@ func parseType(productType int, message string) (cell tlv.TLV, msg Message, err 
 }
 
 // 解析协议内容
-func parseMessage(msg Message, cell tlv.TLV) {
+func parseMessage(msg Message, cell tlv.TLV) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			glog.Write(1, packageName, "store", fmt.Sprintf("catch runtime panic in parse message: %v", r))
+			err = errors.New("parse message error")
 		}
 	}()
 
 	data, err := msg.Parse(cell.Value)
 	if err != nil {
 		glog.Write(1, packageName, "store", "catch error in parse: " + err.Error())
-		return
+		return err
 	}
 
 	pass := msg.Authorize()
 	if !pass {
 		glog.Write(2, packageName, "store", "authorize failed.")
-		return
+		return nil
 	}
 
 	err = msg.Handle(data)
 	if err != nil {
 		glog.Write(1, packageName, "store", "catch error in handle: " + err.Error())
-		return
+		return err
 	}
+
+	return nil
 }

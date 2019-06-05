@@ -212,6 +212,7 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 	whCumulate.CumulateSavePower = whs.CumulateSavePower
 	whCumulate.ColdInTemp = whs.ColdInTemp
 	whCumulate.SetTemp = whs.SetTemp
+	whCumulate.EnergySave = whs.EnergySave
 
 	cumulateChange := false
 
@@ -339,6 +340,8 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 		case 0x23:
 			v, _ := strconv.ParseInt(cell.Value, 16, 0)
 			whs.EnergySave = int(v)
+			whCumulate.EnergySave = whs.EnergySave
+			cumulateChange = true
 		case 0x24:
 			whs.IMSI = cell.Value
 		}
@@ -585,7 +588,7 @@ func (msg *WHStatusMessage) handleSetting() (err error) {
 			glog.Write(3, packageName, "whstatus setting", "lock, mqtt control producer.")
 			base.MqttControlCh <- pak
 		} else {
-			pak.Payload = controlMsg.Unlock(setting.DeadlineTime)
+			pak.Payload = controlMsg.Unlock(1, setting.DeadlineTime)
 
 			glog.Write(3, packageName, "whstatus setting", "unlock, mqtt control producer.")
 			base.MqttControlCh <- pak

@@ -50,11 +50,16 @@ func (msg *WHControlMessage) Lock() string {
 }
 
 // 设备解锁报文
-func (msg *WHControlMessage) Unlock(deadline int64) string {
+func (msg *WHControlMessage) Unlock(option int, deadline int64) string {
 	unlock := tlv.Splice(0x1a, strconv.Itoa(1))
-	dl := tlv.ParseTimestampToString(deadline)
 
-	msg.ControlAction = unlock + tlv.Splice(0x20, dl)
+	if option == 1 {
+		dl := tlv.ParseTimestampToString(deadline)
+		msg.ControlAction = unlock + tlv.Splice(0x20, dl)
+	} else {
+		msg.ControlAction = unlock
+	}
+
 	return msg.splice()
 }
 

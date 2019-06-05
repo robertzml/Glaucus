@@ -178,9 +178,11 @@ func (handler *RestHandler) waterHeaterControl(param ControlParam) (status int, 
 			pak.Payload = controlMsg.Lock()
 			set.Unlock = 0
 		case 4:
-			pak.Payload = controlMsg.Unlock(param.Deadline)
+			pak.Payload = controlMsg.Unlock(param.Option, param.Deadline)
 			set.Unlock = 1
-			set.DeadlineTime = param.Deadline
+			if param.Option == 1 {
+				set.DeadlineTime = param.Deadline
+			}
 		case 5:
 			pak.Payload = controlMsg.SetDeadline(param.Deadline)
 			set.DeadlineTime = param.Deadline

@@ -98,6 +98,7 @@ type WaterHeaterCumulate struct {
 	CumulateSavePower int
 	ColdInTemp        int
 	SetTemp           int
+	EnergySave		  int
 }
 
 // 热水器登录数据
