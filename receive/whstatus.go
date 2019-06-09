@@ -485,6 +485,21 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 		waterHeaterStatus.PushKey(whKey)
 	}
 
+	// 推送累计数据
+	whCumulate := new(equipment.WaterHeaterCumulate)
+	whCumulate.SerialNumber = waterHeaterStatus.SerialNumber
+	whCumulate.MainboardNumber = waterHeaterStatus.MainboardNumber
+	whCumulate.Logtime = waterHeaterStatus.Logtime
+	whCumulate.CumulateHeatTime = waterHeaterStatus.CumulateHeatTime
+	whCumulate.CumulateHotWater = waterHeaterStatus.CumulateHotWater
+	whCumulate.CumulateWorkTime = waterHeaterStatus.CumulateWorkTime
+	whCumulate.CumulateUsedPower = waterHeaterStatus.CumulateUsedPower
+	whCumulate.CumulateSavePower = waterHeaterStatus.CumulateSavePower
+	whCumulate.ColdInTemp = waterHeaterStatus.ColdInTemp
+	whCumulate.SetTemp = waterHeaterStatus.SetTemp
+	whCumulate.EnergySave = waterHeaterStatus.EnergySave
+	waterHeaterStatus.PushCumulate(whCumulate)
+
 	// 全新设备，推送 wh_login list
 	if !exists {
 		whLogin := new(equipment.WaterHeaterLogin)
