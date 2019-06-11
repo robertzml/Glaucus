@@ -590,6 +590,7 @@ func (msg *WHStatusMessage) handleSetting() (err error) {
 	if whs.Activate == 1 && whs.ActivationTime+60*1000 < setting.SetActivateTime {
 		pak.Payload = controlMsg.Activate(0)
 
+		glog.Write(4, packageName, "whstatus setting", fmt.Sprintf("activation time: %d, set activate time: %d", whs.ActivationTime, setting.SetActivateTime))
 		glog.Write(3, packageName, "whstatus setting", "inactivate, mqtt control producer.")
 		base.MqttControlCh <- pak
 
