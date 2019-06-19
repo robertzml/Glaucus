@@ -385,6 +385,7 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 
 	preErrorCode := waterHeaterStatus.ErrorCode
 	preActivation := waterHeaterStatus.Activate
+	cumulateChange := false
 
 	index := 0
 	length := len(payload)
@@ -408,6 +409,9 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 			waterHeaterStatus.OutFlow = int(v)
 		case 0x05:
 			v, _ := strconv.ParseInt(cell.Value, 16, 0)
+			if int(v) != waterHeaterStatus.ColdInTemp {
+				cumulateChange = true
+			}
 			waterHeaterStatus.ColdInTemp = int(v)
 		case 0x06:
 			v, _ := strconv.ParseInt(cell.Value, 16, 0)
@@ -419,18 +423,33 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 			waterHeaterStatus.WifiVersion = cell.Value
 		case 0x09:
 			v, _ := tlv.ParseTime(cell.Value)
+			if v != waterHeaterStatus.CumulateHeatTime {
+				cumulateChange = true
+			}
 			waterHeaterStatus.CumulateHeatTime = v
 		case 0x0a:
 			v, _ := tlv.ParseCumulate(cell.Value, 8)
+			if v != waterHeaterStatus.CumulateHotWater {
+				cumulateChange = true
+			}
 			waterHeaterStatus.CumulateHotWater = v
 		case 0x0b:
 			v, _ := tlv.ParseTime(cell.Value)
+			if v != waterHeaterStatus.CumulateWorkTime {
+				cumulateChange = true
+			}
 			waterHeaterStatus.CumulateWorkTime = v
 		case 0x0c:
 			v, _ := tlv.ParseCumulate(cell.Value, 8)
+			if v != waterHeaterStatus.CumulateUsedPower {
+				cumulateChange = true
+			}
 			waterHeaterStatus.CumulateUsedPower = v
 		case 0x0d:
 			v, _ := tlv.ParseCumulate(cell.Value, 8)
+			if v != waterHeaterStatus.CumulateSavePower {
+				cumulateChange = true
+			}
 			waterHeaterStatus.CumulateSavePower = v
 		case 0x1a:
 			v, _ := strconv.Atoi(cell.Value)
@@ -440,6 +459,9 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 			waterHeaterStatus.Activate = int8(v)
 		case 0x1c:
 			v, _ := strconv.ParseInt(cell.Value, 16, 0)
+			if int(v) != waterHeaterStatus.SetTemp {
+				cumulateChange = true
+			}
 			waterHeaterStatus.SetTemp = int(v)
 		case 0x1d:
 			waterHeaterStatus.SoftwareFunction = cell.Value
@@ -459,6 +481,9 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 			waterHeaterStatus.SpecialParameter = cell.Value
 		case 0x23:
 			v, _ := strconv.ParseInt(cell.Value, 16, 0)
+			if int(v) != waterHeaterStatus.EnergySave {
+				cumulateChange = true
+			}
 			waterHeaterStatus.EnergySave = int(v)
 		case 0x24:
 			waterHeaterStatus.IMSI = cell.Value
@@ -486,19 +511,21 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 	}
 
 	// 推送累计数据
-	whCumulate := new(equipment.WaterHeaterCumulate)
-	whCumulate.SerialNumber = waterHeaterStatus.SerialNumber
-	whCumulate.MainboardNumber = waterHeaterStatus.MainboardNumber
-	whCumulate.Logtime = waterHeaterStatus.Logtime
-	whCumulate.CumulateHeatTime = waterHeaterStatus.CumulateHeatTime
-	whCumulate.CumulateHotWater = waterHeaterStatus.CumulateHotWater
-	whCumulate.CumulateWorkTime = waterHeaterStatus.CumulateWorkTime
-	whCumulate.CumulateUsedPower = waterHeaterStatus.CumulateUsedPower
-	whCumulate.CumulateSavePower = waterHeaterStatus.CumulateSavePower
-	whCumulate.ColdInTemp = waterHeaterStatus.ColdInTemp
-	whCumulate.SetTemp = waterHeaterStatus.SetTemp
-	whCumulate.EnergySave = waterHeaterStatus.EnergySave
-	waterHeaterStatus.PushCumulate(whCumulate)
+	if cumulateChange {
+		whCumulate := new(equipment.WaterHeaterCumulate)
+		whCumulate.SerialNumber = waterHeaterStatus.SerialNumber
+		whCumulate.MainboardNumber = waterHeaterStatus.MainboardNumber
+		whCumulate.Logtime = waterHeaterStatus.Logtime
+		whCumulate.CumulateHeatTime = waterHeaterStatus.CumulateHeatTime
+		whCumulate.CumulateHotWater = waterHeaterStatus.CumulateHotWater
+		whCumulate.CumulateWorkTime = waterHeaterStatus.CumulateWorkTime
+		whCumulate.CumulateUsedPower = waterHeaterStatus.CumulateUsedPower
+		whCumulate.CumulateSavePower = waterHeaterStatus.CumulateSavePower
+		whCumulate.ColdInTemp = waterHeaterStatus.ColdInTemp
+		whCumulate.SetTemp = waterHeaterStatus.SetTemp
+		whCumulate.EnergySave = waterHeaterStatus.EnergySave
+		waterHeaterStatus.PushCumulate(whCumulate)
+	}
 
 	// 全新设备，推送 wh_login list
 	if !exists {

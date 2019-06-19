@@ -206,6 +206,31 @@ func (handler *RestHandler) waterHeaterControl(param ControlParam) (status int, 
 
 		return 0, "ok", 200
 	} else {
+		set := new(equipment.WaterHeaterSetting)
+		set.SerialNumber = param.SerialNumber
+
+		switch param.ControlType {
+		case 2:
+			set.Activate = int8(param.Option)
+			if param.Option == 1 {
+				set.SetActivateTime = time.Now().Unix() * 1000
+			}
+		case 3:
+			set.Unlock = 0
+		case 4:
+			set.Unlock = 1
+			if param.Option == 1 {
+				set.DeadlineTime = param.Deadline
+			}
+		case 5:
+			set.DeadlineTime = param.Deadline
+		default:
+			return -1, "", 400
+		}
+
+		set.SaveSetting()
+		glog.Write(3, packageName, "control", "save setting for not found equipment.")
+
 		return 1, "equipment not found.", 200
 	}
 }
