@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/robertzml/Glaucus/base"
 	"github.com/robertzml/Glaucus/equipment"
 	"github.com/robertzml/Glaucus/glog"
@@ -52,6 +53,9 @@ func (handler *RestHandler) control(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		glog.Write(3, packageName, "control", fmt.Sprintf("sn: %s. device: %d, control type: %d, option: %d. deadline: %d.",
+			param.SerialNumber, param.Device, param.ControlType, param.Option, param.Deadline))
+
 		if param.Device == 1 { // 热水器
 			status, msg, httpCode := handler.waterHeaterControl(param)
 
@@ -84,6 +88,9 @@ func (handler *RestHandler) result(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		glog.Write(3, packageName, "result", fmt.Sprintf("sn: %s. device: %d, control type: %d, option: %d.",
+			param.SerialNumber, param.Device, param.ControlType, param.Option))
+
 		if param.Device == 1 { // 热水器
 			status, msg, httpCode := handler.waterHeaterResult(param)
 
@@ -115,6 +122,9 @@ func (handler *RestHandler) special(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		glog.Write(3, packageName, "special", fmt.Sprintf("sn: %s. device: %d, control type: %d, option: %s.",
+			param.SerialNumber, param.Device, param.ControlType, param.Option))
+
 		if param.Device == 1 {
 			waterHeater := new(equipment.WaterHeater)
 			if mainboardNumber, exist := waterHeater.GetMainboardNumber(param.SerialNumber); exist {
@@ -133,7 +143,7 @@ func (handler *RestHandler) special(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-				glog.Write(1, packageName, "special", "mqtt control producer.")
+				glog.Write(3, packageName, "special", "mqtt control producer.")
 				base.MqttControlCh <- pak
 
 				response(w, 0, "ok")
@@ -229,7 +239,7 @@ func (handler *RestHandler) waterHeaterControl(param ControlParam) (status int, 
 		}
 
 		set.SaveSetting()
-		glog.Write(3, packageName, "control", "save setting for not found equipment.")
+		glog.Write(3, packageName, "control", fmt.Sprintf("sn: %s. save setting for not found equipment.", param.SerialNumber))
 
 		return 1, "equipment not found.", 200
 	}

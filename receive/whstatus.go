@@ -80,7 +80,7 @@ func (msg *WHStatusMessage) Authorize() (pass bool) {
 			pak.SerialNumber = msg.SerialNumber
 			pak.Payload = resMsg.Duplicate("D8")
 
-			glog.Write(3, packageName, "whstatus authorize", "d8, mqtt control producer.")
+			glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s. d8, mqtt control producer.", msg.SerialNumber))
 			base.MqttControlCh <- pak
 
 			return false
@@ -94,17 +94,17 @@ func (msg *WHStatusMessage) Authorize() (pass bool) {
 			pak.SerialNumber = msg.SerialNumber
 			pak.Payload = resMsg.Duplicate("D7")
 
-			glog.Write(3, packageName, "whstatus authorize", "d7, mqtt control producer.")
+			glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s. d7, mqtt control producer.", msg.SerialNumber))
 			base.MqttControlCh <- pak
 
 			return false
 		}
 	} else {
-		glog.Write(3, packageName, "whstatus authorize", "new equipment found.")
+		glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s. new equipment found.", msg.SerialNumber))
 		return true
 	}
 
-	glog.Write(3, packageName, "whstatus authorize", "pass.")
+	glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s. pass.", msg.SerialNumber))
 	return true
 }
 
@@ -118,14 +118,14 @@ func (msg *WHStatusMessage) Handle(data interface{}) (err error) {
 			if err = msg.handleWaterHeaterChange(cell.Value); err != nil {
 				return err
 			}
-			glog.Write(3, packageName, "whstatus handle", "finish partial update.")
+			glog.Write(3, packageName, "whstatus handle", fmt.Sprintf("sn: %s. finish partial update.", msg.SerialNumber))
 		} else if cell.Tag == 0x12e {
 			// 整体更新
 			if err := msg.handleWaterHeaterTotal(cell.Value); err != nil {
 				return err
 			}
 			msg.timing()
-			glog.Write(3, packageName, "whstatus handle", "finish total update.")
+			glog.Write(3, packageName, "whstatus handle", fmt.Sprintf("sn: %s. finish total update.", msg.SerialNumber))
 		}
 	}
 
@@ -133,7 +133,7 @@ func (msg *WHStatusMessage) Handle(data interface{}) (err error) {
 	if err := msg.handleSetting(); err != nil {
 		return err
 	}
-	glog.Write(3, packageName, "whstatus handle", "setting compare pass.")
+	glog.Write(3, packageName, "whstatus handle", fmt.Sprintf("sn: %s. setting compare pass.", msg.SerialNumber))
 
 	return nil
 }
@@ -144,10 +144,11 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 
 	exists := whs.LoadStatus(msg.SerialNumber)
 	if !exists {
-		glog.Write(2, packageName, "whstatus handle", "cannot update partial for new equipment.")
+		glog.Write(2, packageName, "whstatus partial", fmt.Sprintf("sn: %s. cannot update partial for new equipment.", msg.SerialNumber))
 		return nil
 	}
 
+	glog.Write(4, packageName, "whstatus partial", fmt.Sprintf("sn: %s. pre-active: %d, pre-online: %d, pre-unlock: %d.", msg.SerialNumber, whs.Activate, whs.Online, whs.Unlock))
 	whs.Logtime = time.Now().Unix() * 1000
 
 	preActivation := whs.Activate
@@ -393,7 +394,7 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 	for index < length {
 		cell, err := tlv.ParseTLV(payload, index)
 		if err != nil {
-			glog.Write(1, packageName, "whstatus handle", fmt.Sprintf("error in parse tlv: %s", err.Error()))
+			glog.Write(1, packageName, "whstatus total", fmt.Sprintf("sn: %s. error in parse tlv: %s", msg.SerialNumber, err.Error()))
 			return err
 		}
 
@@ -494,6 +495,8 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 
 	// 在线状态变化，推送 wh_key list
 	if !exists || waterHeaterStatus.Online == 0 {
+		glog.Write(3, packageName, "whstatus total", fmt.Sprintf("sn: %s. online change. exists: %s, online: %d", msg.SerialNumber, exists, waterHeaterStatus.Online))
+
 		waterHeaterStatus.LineTime = now
 
 		whKey := new(equipment.WaterHeaterKey)
@@ -512,6 +515,8 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 
 	// 推送累计数据
 	if cumulateChange {
+		glog.Write(4, packageName, "whstatus total", fmt.Sprintf("sn: %s. push cumulative", msg.SerialNumber))
+
 		whCumulate := new(equipment.WaterHeaterCumulate)
 		whCumulate.SerialNumber = waterHeaterStatus.SerialNumber
 		whCumulate.MainboardNumber = waterHeaterStatus.MainboardNumber
@@ -529,6 +534,7 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 
 	// 全新设备，推送 wh_login list
 	if !exists {
+		glog.Write(3, packageName, "whstatus total", fmt.Sprintf("sn: %s. new equipment, push login", msg.SerialNumber))
 		whLogin := new(equipment.WaterHeaterLogin)
 		whLogin.SerialNumber = waterHeaterStatus.SerialNumber
 		whLogin.MainboardNumber = waterHeaterStatus.MainboardNumber
@@ -584,56 +590,96 @@ func (msg *WHStatusMessage) handleSetting() (err error) {
 
 	exists := whs.LoadStatus(msg.SerialNumber)
 	if !exists {
-		glog.Write(2, packageName, "whstatus setting", "cannot compare setting for new equipment.")
+		glog.Write(2, packageName, "whstatus setting", fmt.Sprintf("sn: %s. cannot compare setting for new equipment.", msg.SerialNumber))
 		return nil
 	}
 
 	setting := new(equipment.WaterHeaterSetting)
 	exists = setting.LoadSetting(msg.SerialNumber)
 	if !exists {
-		glog.Write(2, packageName, "whstatus setting", "setting is empty.")
+		glog.Write(2, packageName, "whstatus setting", fmt.Sprintf("sn: %s. setting is empty.", msg.SerialNumber))
 		return nil
 	}
+
+	glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. set-active:%d, set-unlock:%d. status-active:%d, status-unlock:%d.",
+		msg.SerialNumber, setting.Activate, setting.Unlock, whs.Activate, whs.Unlock))
 
 	controlMsg := send.NewWHControlMessage(whs.SerialNumber, whs.MainboardNumber)
 
 	pak := new(base.SendPacket)
 	pak.SerialNumber = whs.SerialNumber
 
-	if whs.Activate != setting.Activate {
-		pak.Payload = controlMsg.Activate(int(setting.Activate))
-
-		glog.Write(3, packageName, "whstatus setting", "activate, mqtt control producer.")
-		base.MqttControlCh <- pak
-
-		return nil
-	}
-
 	if setting.Activate == 0 {
-		return nil
+		if whs.Activate == 1 {
+			pak.Payload = controlMsg.Activate(0)
+
+			glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. send inactivate, mqtt control producer.", msg.SerialNumber))
+			base.MqttControlCh <- pak
+
+			return nil
+		}
+	} else { // setting.Activate == 1
+		if whs.Activate == 0 {
+			pak.Payload = controlMsg.Activate(1)
+
+			glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. send activate, mqtt control producer.", msg.SerialNumber))
+			base.MqttControlCh <- pak
+
+			return nil
+		} else {
+			// 比较设备记录时间和设置激活时间，补发注销命令
+			if whs.ActivationTime+60*1000 < setting.SetActivateTime && whs.ActivationTime != 946656000000 {
+				pak.Payload = controlMsg.Activate(0)
+
+				glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. status activate time: %d, set activate time: %d",
+					msg.SerialNumber, whs.ActivationTime, setting.SetActivateTime))
+				glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. inactivate, mqtt control producer.", msg.SerialNumber))
+				base.MqttControlCh <- pak
+
+				return nil
+			}
+		}
 	}
 
-	// 比较设备记录时间和设置激活时间，补发注销命令
-	if whs.Activate == 1 && whs.ActivationTime+60*1000 < setting.SetActivateTime {
-		pak.Payload = controlMsg.Activate(0)
-
-		glog.Write(4, packageName, "whstatus setting", fmt.Sprintf("activation time: %d, set activate time: %d", whs.ActivationTime, setting.SetActivateTime))
-		glog.Write(3, packageName, "whstatus setting", "inactivate, mqtt control producer.")
-		base.MqttControlCh <- pak
-
-		return nil
-	}
+	//if whs.Activate != setting.Activate {
+	//
+	//	pak.Payload = controlMsg.Activate(int(setting.Activate))
+	//
+	//	glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. activate, mqtt control producer.", msg.SerialNumber))
+	//	base.MqttControlCh <- pak
+	//
+	//	return nil
+	//}
+	//
+	//if setting.Activate == 0 {
+	//	glog.Write(4, packageName, "whstatus setting", fmt.Sprintf("sn: %s. set-inactive, return.", msg.SerialNumber))
+	//
+	//	return nil
+	//}
+	//
+	//// 比较设备记录时间和设置激活时间，补发注销命令
+	//if whs.Activate == 1 && whs.ActivationTime+60*1000 < setting.SetActivateTime {
+	//	pak.Payload = controlMsg.Activate(0)
+	//
+	//	glog.Write(4, packageName, "whstatus setting", fmt.Sprintf("sn: %s. activation time: %d, set activate time: %d", msg.SerialNumber, whs.ActivationTime, setting.SetActivateTime))
+	//	glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. inactivate, mqtt control producer.", msg.SerialNumber))
+	//	base.MqttControlCh <- pak
+	//
+	//	return nil
+	//}
 
 	if whs.Unlock != setting.Unlock {
+		glog.Write(4, packageName, "whstatus setting", fmt.Sprintf("sn: %s. set-unlock:%d, status-unlock:%d.", msg.SerialNumber, setting.Unlock, whs.Unlock))
+
 		if setting.Unlock == 0 {
 			pak.Payload = controlMsg.Lock()
 
-			glog.Write(3, packageName, "whstatus setting", "lock, mqtt control producer.")
+			glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. lock, mqtt control producer.", msg.SerialNumber))
 			base.MqttControlCh <- pak
 		} else {
 			pak.Payload = controlMsg.Unlock(1, setting.DeadlineTime)
 
-			glog.Write(3, packageName, "whstatus setting", "unlock, mqtt control producer.")
+			glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. unlock, mqtt control producer.", msg.SerialNumber))
 			base.MqttControlCh <- pak
 		}
 
@@ -641,9 +687,11 @@ func (msg *WHStatusMessage) handleSetting() (err error) {
 	}
 
 	if whs.DeadlineTime != setting.DeadlineTime {
+		glog.Write(4, packageName, "whstatus setting", fmt.Sprintf("sn: %s. set-deadline:%d, status-deadline:%d.", msg.SerialNumber, setting.DeadlineTime, whs.DeadlineTime))
+
 		pak.Payload = controlMsg.SetDeadline(setting.DeadlineTime)
 
-		glog.Write(3, packageName, "whstatus setting", "deadline, mqtt control producer.")
+		glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. deadline, mqtt control producer.", msg.SerialNumber))
 		base.MqttControlCh <- pak
 
 		return nil
@@ -661,6 +709,6 @@ func (msg *WHStatusMessage) timing() {
 	pak.SerialNumber = msg.SerialNumber
 	pak.Payload = payload
 
-	glog.Write(3, packageName, "whstatus timing", "send timing, mqtt control producer.")
+	glog.Write(3, packageName, "whstatus timing", fmt.Sprintf("sn: %s. send timing, mqtt control producer.", msg.SerialNumber))
 	base.MqttControlCh <- pak
 }
