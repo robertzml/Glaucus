@@ -641,33 +641,6 @@ func (msg *WHStatusMessage) handleSetting() (err error) {
 		}
 	}
 
-	//if whs.Activate != setting.Activate {
-	//
-	//	pak.Payload = controlMsg.Activate(int(setting.Activate))
-	//
-	//	glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. activate, mqtt control producer.", msg.SerialNumber))
-	//	base.MqttControlCh <- pak
-	//
-	//	return nil
-	//}
-	//
-	//if setting.Activate == 0 {
-	//	glog.Write(4, packageName, "whstatus setting", fmt.Sprintf("sn: %s. set-inactive, return.", msg.SerialNumber))
-	//
-	//	return nil
-	//}
-	//
-	//// 比较设备记录时间和设置激活时间，补发注销命令
-	//if whs.Activate == 1 && whs.ActivationTime+60*1000 < setting.SetActivateTime {
-	//	pak.Payload = controlMsg.Activate(0)
-	//
-	//	glog.Write(4, packageName, "whstatus setting", fmt.Sprintf("sn: %s. activation time: %d, set activate time: %d", msg.SerialNumber, whs.ActivationTime, setting.SetActivateTime))
-	//	glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. inactivate, mqtt control producer.", msg.SerialNumber))
-	//	base.MqttControlCh <- pak
-	//
-	//	return nil
-	//}
-
 	if whs.Unlock != setting.Unlock {
 		glog.Write(4, packageName, "whstatus setting", fmt.Sprintf("sn: %s. set-unlock:%d, status-unlock:%d.", msg.SerialNumber, setting.Unlock, whs.Unlock))
 
@@ -688,6 +661,11 @@ func (msg *WHStatusMessage) handleSetting() (err error) {
 
 	if whs.DeadlineTime != setting.DeadlineTime {
 		glog.Write(4, packageName, "whstatus setting", fmt.Sprintf("sn: %s. set-deadline:%d, status-deadline:%d.", msg.SerialNumber, setting.DeadlineTime, whs.DeadlineTime))
+
+		if setting.DeadlineTime == 0 {
+			glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. deadline is 0.", msg.SerialNumber))
+			return nil
+		}
 
 		pak.Payload = controlMsg.SetDeadline(setting.DeadlineTime)
 

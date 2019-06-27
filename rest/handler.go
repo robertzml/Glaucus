@@ -217,6 +217,8 @@ func (handler *RestHandler) waterHeaterControl(param ControlParam) (status int, 
 		return 0, "ok", 200
 	} else {
 		set := new(equipment.WaterHeaterSetting)
+		_ = set.LoadSetting(param.SerialNumber)
+
 		set.SerialNumber = param.SerialNumber
 
 		switch param.ControlType {
