@@ -62,7 +62,7 @@ func Read() {
 		path, _ := filepath.Abs(filename)
 
 		text := fmt.Sprintf("[%s][%s]-[%s]:[%s]\t%s\n",
-			levels[packet.Level], now.Format("2006-01-02 15:04:05"), packet.PackageName, packet.Title, packet.Message)
+			levels[packet.Level], now.Format("2006-01-02 15:04:05.000"), packet.PackageName, packet.Title, packet.Message)
 
 		if err := writeFile(path, []byte(text)); err != nil {
 			fmt.Println(err)

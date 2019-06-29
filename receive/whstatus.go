@@ -100,6 +100,20 @@ func (msg *WHStatusMessage) Authorize() (pass bool) {
 			return false
 		}
 	} else {
+		sn := equipment.GetMainboardString(msg.MainboardNumber)
+		if len(sn) > 0 && sn != msg.SerialNumber { // 主板序列号已存在
+			resMsg := send.NewWHResultMessage(msg.SerialNumber, msg.MainboardNumber)
+
+			pak := new(base.SendPacket)
+			pak.SerialNumber = msg.SerialNumber
+			pak.Payload = resMsg.Duplicate("D7")
+
+			glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s. d7 for new equipment, mqtt control producer.", msg.SerialNumber))
+			base.MqttControlCh <- pak
+
+			return false
+		}
+
 		glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s. new equipment found.", msg.SerialNumber))
 		return true
 	}
@@ -495,7 +509,7 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 
 	// 在线状态变化，推送 wh_key list
 	if !exists || waterHeaterStatus.Online == 0 {
-		glog.Write(3, packageName, "whstatus total", fmt.Sprintf("sn: %s. online change. exists: %s, online: %d", msg.SerialNumber, exists, waterHeaterStatus.Online))
+		glog.Write(3, packageName, "whstatus total", fmt.Sprintf("sn: %s. online change. exists: %t, online: %d", msg.SerialNumber, exists, waterHeaterStatus.Online))
 
 		waterHeaterStatus.LineTime = now
 
