@@ -359,6 +359,8 @@ func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) 
 			cumulateChange = true
 		case 0x24:
 			whs.IMSI = cell.Value
+		case 0x25:
+			whs.ICCID = cell.Value
 		}
 
 		index += cell.Length + 8
@@ -502,6 +504,8 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 			waterHeaterStatus.EnergySave = int(v)
 		case 0x24:
 			waterHeaterStatus.IMSI = cell.Value
+		case 0x25:
+			waterHeaterStatus.ICCID = cell.Value
 		}
 
 		index += cell.Length + 8
@@ -623,41 +627,40 @@ func (msg *WHStatusMessage) handleSetting() (err error) {
 	pak := new(base.SendPacket)
 	pak.SerialNumber = whs.SerialNumber
 
-	if setting.Activate == 0 {
-		if whs.Activate == 1 {
+	if setting.Activate != whs.Activate {
+		if setting.Activate == 0 { // whs.Activate == 1
 			pak.Payload = controlMsg.Activate(0)
 
 			glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. send inactivate, mqtt control producer.", msg.SerialNumber))
 			base.MqttControlCh <- pak
 
-			return nil
-		}
-	} else { // setting.Activate == 1
-		if whs.Activate == 0 {
+		} else {	// setting.Activate == 1 && whs.Activate == 0
 			pak.Payload = controlMsg.Activate(1)
 
 			glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. send activate, mqtt control producer.", msg.SerialNumber))
 			base.MqttControlCh <- pak
-
-			return nil
-		} else {
-			// 比较设备记录时间和设置激活时间，补发注销命令
-			if whs.ActivationTime+60*1000 < setting.SetActivateTime && whs.ActivationTime != 946656000000 {
-				pak.Payload = controlMsg.Activate(0)
-
-				glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. status activate time: %d, set activate time: %d",
-					msg.SerialNumber, whs.ActivationTime, setting.SetActivateTime))
-				glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. inactivate, mqtt control producer.", msg.SerialNumber))
-				base.MqttControlCh <- pak
-
-				return nil
-			}
 		}
+
+		return nil
+	}
+
+	// 比较设备记录时间和设置激活时间，补发注销命令
+	if setting.Activate == 1 && whs.ActivationTime+60*1000 < setting.SetActivateTime {
+		pak.Payload = controlMsg.Activate(0)
+
+		glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. status activate time: %d, set activate time: %d",
+			msg.SerialNumber, whs.ActivationTime, setting.SetActivateTime))
+		glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. inactivate, mqtt control producer.", msg.SerialNumber))
+		base.MqttControlCh <- pak
+
+		return nil
+	}
+
+	if setting.Activate == 0 && whs.Activate == 0 {
+		return nil
 	}
 
 	if whs.Unlock != setting.Unlock {
-		glog.Write(4, packageName, "whstatus setting", fmt.Sprintf("sn: %s. set-unlock:%d, status-unlock:%d.", msg.SerialNumber, setting.Unlock, whs.Unlock))
-
 		if setting.Unlock == 0 {
 			pak.Payload = controlMsg.Lock()
 

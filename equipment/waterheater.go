@@ -38,6 +38,7 @@ type WaterHeater struct {
 	LineTime          int64
 	EnergySave		  int
 	IMSI			  string
+	ICCID			  string
 }
 
 // 热水器设置状态
