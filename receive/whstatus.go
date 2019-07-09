@@ -634,7 +634,7 @@ func (msg *WHStatusMessage) handleSetting() (err error) {
 			glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. send inactivate, mqtt control producer.", msg.SerialNumber))
 			base.MqttControlCh <- pak
 
-		} else {	// setting.Activate == 1 && whs.Activate == 0
+		} else { // setting.Activate == 1 && whs.Activate == 0
 			pak.Payload = controlMsg.Activate(1)
 
 			glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. send activate, mqtt control producer.", msg.SerialNumber))
@@ -645,7 +645,7 @@ func (msg *WHStatusMessage) handleSetting() (err error) {
 	}
 
 	// 比较设备记录时间和设置激活时间，补发注销命令
-	if setting.Activate == 1 && whs.ActivationTime+60*1000 < setting.SetActivateTime {
+	if setting.Activate == 1 && whs.ActivationTime+360*1000 < setting.SetActivateTime {
 		pak.Payload = controlMsg.Activate(0)
 
 		glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. status activate time: %d, set activate time: %d",
