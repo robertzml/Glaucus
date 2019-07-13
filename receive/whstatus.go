@@ -511,6 +511,21 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 		index += cell.Length + 8
 	}
 
+	// 全新设备，推送 wh_login list
+	if !exists {
+		glog.Write(3, packageName, "whstatus total", fmt.Sprintf("sn: %s. new equipment, push login", msg.SerialNumber))
+		whLogin := new(equipment.WaterHeaterLogin)
+		whLogin.SerialNumber = waterHeaterStatus.SerialNumber
+		whLogin.MainboardNumber = waterHeaterStatus.MainboardNumber
+		whLogin.Logtime = now
+		whLogin.DeviceType = waterHeaterStatus.DeviceType
+		whLogin.ControllerType = waterHeaterStatus.ControllerType
+		whLogin.WifiVersion = waterHeaterStatus.WifiVersion
+		whLogin.SoftwareFunction = waterHeaterStatus.SoftwareFunction
+
+		waterHeaterStatus.PushLogin(whLogin)
+	}
+
 	// 在线状态变化，推送 wh_key list
 	if !exists || waterHeaterStatus.Online == 0 {
 		glog.Write(3, packageName, "whstatus total", fmt.Sprintf("sn: %s. online change. exists: %t, online: %d", msg.SerialNumber, exists, waterHeaterStatus.Online))
@@ -550,26 +565,12 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 		waterHeaterStatus.PushCumulate(whCumulate)
 	}
 
-	// 全新设备，推送 wh_login list
-	if !exists {
-		glog.Write(3, packageName, "whstatus total", fmt.Sprintf("sn: %s. new equipment, push login", msg.SerialNumber))
-		whLogin := new(equipment.WaterHeaterLogin)
-		whLogin.SerialNumber = waterHeaterStatus.SerialNumber
-		whLogin.MainboardNumber = waterHeaterStatus.MainboardNumber
-		whLogin.Logtime = now
-		whLogin.DeviceType = waterHeaterStatus.DeviceType
-		whLogin.ControllerType = waterHeaterStatus.ControllerType
-		whLogin.WifiVersion = waterHeaterStatus.WifiVersion
-		whLogin.SoftwareFunction = waterHeaterStatus.SoftwareFunction
-
-		waterHeaterStatus.PushLogin(whLogin)
-	}
-
 	if preErrorCode != waterHeaterStatus.ErrorCode {
 		waterHeaterStatus.ErrorTime = now
 	}
 
-	if preActivation == 0 && waterHeaterStatus.Activate == 1 {
+	// 已有设备从非激活态变为激活态，补零
+	if exists && preActivation == 0 && waterHeaterStatus.Activate == 1 {
 		msg.saveZeroCumulate()
 	}
 
