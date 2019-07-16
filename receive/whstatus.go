@@ -565,8 +565,16 @@ func (msg *WHStatusMessage) handleWaterHeaterTotal(payload string) (err error) {
 		waterHeaterStatus.PushCumulate(whCumulate)
 	}
 
+	// 推送报警数据
 	if preErrorCode != waterHeaterStatus.ErrorCode {
-		waterHeaterStatus.ErrorTime = now
+		whAlarm := new(equipment.WaterHeaterAlarm)
+		whAlarm.SerialNumber = waterHeaterStatus.SerialNumber
+		whAlarm.MainboardNumber = waterHeaterStatus.MainboardNumber
+		whAlarm.Logtime = waterHeaterStatus.Logtime
+		whAlarm.ErrorCode = waterHeaterStatus.ErrorCode
+		whAlarm.ErrorTime = now
+
+		waterHeaterStatus.PushAlarm(whAlarm)
 	}
 
 	// 已有设备从非激活态变为激活态，补零
