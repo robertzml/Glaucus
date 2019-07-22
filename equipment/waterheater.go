@@ -12,10 +12,10 @@ type WaterHeater struct {
 	Logtime           int64
 	DeviceType        string
 	ControllerType    string
-	Power             int8 // 开关状态
-	OutTemp           int  // 出水温度
-	OutFlow           int  // 出水流量
-	ColdInTemp        int
+	Power             int8 // 开关状态 0x01
+	OutTemp           int  // 出水温度 0x02
+	OutFlow           int  // 出水流量 0x04
+	ColdInTemp        int  // 0x08
 	HotInTemp         int
 	ErrorCode         int
 	ErrorTime		  int64

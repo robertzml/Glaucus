@@ -1,6 +1,7 @@
 package receive
 
 import (
+	"errors"
 	"fmt"
 	"github.com/robertzml/Glaucus/base"
 	"github.com/robertzml/Glaucus/equipment"
@@ -124,33 +125,200 @@ func (msg *WHStatusMessage) Authorize() (pass bool) {
 
 // 报文后续处理
 func (msg *WHStatusMessage) Handle(data interface{}) (err error) {
+	var change int
+	var whs *equipment.WaterHeater
+	var isFull bool
+
 	switch data.(type) {
 	case tlv.TLV:
 		cell := data.(tlv.TLV)
 		if cell.Tag == 0x128 {
 			// 局部更新
-			if err = msg.handleWaterHeaterChange(cell.Value); err != nil {
-				return err
-			}
-			glog.Write(3, packageName, "whstatus handle", fmt.Sprintf("sn: %s. finish partial update.", msg.SerialNumber))
+			isFull = false
+			//if err = msg.handleWaterHeaterChange(cell.Value); err != nil {
+			//	return err
+			//}
+			//glog.Write(3, packageName, "whstatus handle", fmt.Sprintf("sn: %s. finish partial update.", msg.SerialNumber))
 		} else if cell.Tag == 0x12e {
 			// 整体更新
-			if err := msg.handleWaterHeaterTotal(cell.Value); err != nil {
-				return err
-			}
-			msg.timing()
-			glog.Write(3, packageName, "whstatus handle", fmt.Sprintf("sn: %s. finish total update.", msg.SerialNumber))
+			isFull = true
+			//if err := msg.handleWaterHeaterTotal(cell.Value); err != nil {
+			//	return err
+			//}
+			//msg.timing()
+			//glog.Write(3, packageName, "whstatus handle", fmt.Sprintf("sn: %s. finish total update.", msg.SerialNumber))
+		} else {
+			return errors.New("unknown tlv tag")
+		}
+
+		err, whs, change = msg.handleParseStatus(cell.Value)
+		if err != nil {
+			return err
 		}
 	}
+
+	// 业务逻辑处理
+	msg.handleLogic(whs, change, isFull)
 
 	// 比较设备设置状态
 	if err := msg.handleSetting(); err != nil {
 		return err
 	}
+
+	if isFull {
+		msg.timing()
+	}
+
 	glog.Write(3, packageName, "whstatus handle", fmt.Sprintf("sn: %s. setting compare pass.", msg.SerialNumber))
 
 	return nil
 }
+
+// 解析状态数据
+// 返回：热水器状态, 变化字段位标识
+func (msg* WHStatusMessage) handleParseStatus(payload string) (err error, whs *equipment.WaterHeater, change int) {
+	whs = new(equipment.WaterHeater)
+	change = 0
+
+	index := 0
+	length := len(payload)
+
+	for index < length {
+		cell, err := tlv.ParseTLV(payload, index)
+		if err != nil {
+			glog.Write(1, packageName, "whstatus parse status", fmt.Sprintf("sn: %s. error in parse tlv: %s", msg.SerialNumber, err.Error()))
+			return err, nil, 0
+		}
+
+		switch cell.Tag {
+		case 0x01:
+			v, _ := strconv.Atoi(cell.Value)
+			whs.Power = int8(v)
+			change &= 0x01;
+		case 0x03:
+			v, _ := strconv.ParseInt(cell.Value, 16, 0)
+			whs.OutTemp = int(v)
+			change &= 0x02;
+		case 0x04:
+			v, _ := strconv.ParseInt(cell.Value, 16, 0)
+			whs.OutFlow = int(v)
+			change &= 0x04;
+		case 0x05:
+			v, _ := strconv.ParseInt(cell.Value, 16, 0)
+			whs.ColdInTemp = int(v)
+			change &= 0x08;
+		case 0x06:
+			v, _ := strconv.ParseInt(cell.Value, 16, 0)
+			whs.HotInTemp = int(v)
+			change &= 0x10;
+		case 0x07:
+			v, _ := strconv.ParseInt(cell.Value, 16, 0)
+			whs.ErrorCode = int(v)
+			change &= 0x20;
+		case 0x08:
+			whs.WifiVersion = cell.Value
+			change &= 0x40;
+		case 0x09:
+			v, _ := tlv.ParseTime(cell.Value)
+			whs.CumulateHeatTime = v
+			change &= 0x80;
+		case 0x0a:
+			v, _ := tlv.ParseCumulate(cell.Value, 8)
+			whs.CumulateHotWater = v
+			change &= 0x100;
+		case 0x0b:
+			v, _ := tlv.ParseTime(cell.Value)
+			whs.CumulateWorkTime = v
+			change &= 0x200;
+		case 0x0c:
+			v, _ := tlv.ParseCumulate(cell.Value, 8)
+			whs.CumulateUsedPower = v
+			change &= 0x400;
+		case 0x0d:
+			v, _ := tlv.ParseCumulate(cell.Value, 8)
+			whs.CumulateSavePower = v
+			change &= 0x800;
+		case 0x1a:
+			v, _ := strconv.Atoi(cell.Value)
+			whs.Unlock = int8(v)
+			change &= 0x1000;
+		case 0x1b:
+			v, _ := strconv.Atoi(cell.Value)
+			whs.Activate = int8(v)
+			change &= 0x2000;
+		case 0x1c:
+			v, _ := strconv.ParseInt(cell.Value, 16, 0)
+			whs.SetTemp = int(v)
+			change &= 0x4000;
+		case 0x1d:
+			whs.SoftwareFunction = cell.Value
+			change &= 0x8000;
+		case 0x1e:
+			v, _ := tlv.ParseCumulate(cell.Value, 4)
+			whs.OutputPower = v
+			change &= 0x10000;
+		case 0x1f:
+			v, _ := strconv.Atoi(cell.Value)
+			whs.ManualClean = int8(v)
+			change &= 0x20000;
+		case 0x20:
+			v, _ := tlv.ParseDateToTimestamp(cell.Value)
+			whs.DeadlineTime = v
+			change &= 0x40000;
+		case 0x21:
+			v, _ := tlv.ParseDateToTimestamp(cell.Value)
+			whs.ActivationTime = v
+			change &= 0x80000;
+		case 0x22:
+			whs.SpecialParameter = cell.Value
+			change &= 0x100000;
+		case 0x23:
+			v, _ := strconv.ParseInt(cell.Value, 16, 0)
+			whs.EnergySave = int(v)
+			change &= 0x200000;
+		case 0x24:
+			whs.IMSI = cell.Value
+			change &= 0x400000;
+		case 0x25:
+			whs.ICCID = cell.Value
+			change &= 0x800000;
+		}
+
+		index += cell.Length + 8
+	}
+
+	return nil, whs, change
+}
+
+// 业务逻辑处理
+func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, change int, isFull bool) {
+	existsStatus := new(equipment.WaterHeater)
+
+	exists := existsStatus.LoadStatus(msg.SerialNumber)
+	now := time.Now().Unix() * 1000
+
+	// 全新设备局部上报不处理
+	if !exists && !isFull {
+		glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s. cannot handle partial for new equipment.", msg.SerialNumber))
+		return
+	}
+
+	// 全新设备 推送login
+	if !exists {
+		glog.Write(3, packageName, "whstatus total", fmt.Sprintf("sn: %s. new equipment, push login", msg.SerialNumber))
+		whLogin := new(equipment.WaterHeaterLogin)
+		whLogin.SerialNumber = whs.SerialNumber
+		whLogin.MainboardNumber = whs.MainboardNumber
+		whLogin.Logtime = now
+		whLogin.DeviceType = whs.DeviceType
+		whLogin.ControllerType = whs.ControllerType
+		whLogin.WifiVersion = whs.WifiVersion
+		whLogin.SoftwareFunction = whs.SoftwareFunction
+
+		whs.PushLogin(whLogin)
+	}
+}
+
 
 // 处理热水器变化状态，并局部更新
 func (msg *WHStatusMessage) handleWaterHeaterChange(payload string) (err error) {
