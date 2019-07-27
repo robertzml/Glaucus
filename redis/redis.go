@@ -200,6 +200,4 @@ func (r *RedisClient) Rpush(key string, val string) {
 		glog.Write(0, packageName, "rpush", err.Error())
 		panic(err)
 	}
-
-	glog.Write(3, packageName, "rpush", "rpush key: " + key)
 }
