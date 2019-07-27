@@ -125,59 +125,57 @@ func (msg *WHStatusMessage) Authorize() (pass bool) {
 
 // 报文后续处理
 func (msg *WHStatusMessage) Handle(data interface{}) (err error) {
-	var change int
-	var whs *equipment.WaterHeater
-	var isFull bool
-
 	switch data.(type) {
 	case tlv.TLV:
+		var isFull bool
 		cell := data.(tlv.TLV)
 		if cell.Tag == 0x128 {
 			// 局部更新
 			isFull = false
-			//if err = msg.handleWaterHeaterChange(cell.Value); err != nil {
-			//	return err
-			//}
-			//glog.Write(3, packageName, "whstatus handle", fmt.Sprintf("sn: %s. finish partial update.", msg.SerialNumber))
 		} else if cell.Tag == 0x12e {
 			// 整体更新
 			isFull = true
-			//if err := msg.handleWaterHeaterTotal(cell.Value); err != nil {
-			//	return err
-			//}
-			//msg.timing()
-			//glog.Write(3, packageName, "whstatus handle", fmt.Sprintf("sn: %s. finish total update.", msg.SerialNumber))
 		} else {
-			return errors.New("unknown tlv tag")
+			return errors.New("unknown tlv tag.")
 		}
 
-		err, whs, change = msg.handleParseStatus(cell.Value)
+		// 解析状态
+		err, whs, change := msg.handleParseStatus(cell.Value)
 		if err != nil {
 			return err
 		}
+
+		// 业务逻辑处理
+		msg.handleLogic(whs, change, isFull)
+
+		// 比较设备设置状态
+		if err := msg.handleSetting(); err != nil {
+			return err
+		}
+
+		if isFull {
+			// 设置 {主板序列号 - 设备序列号}
+			equipment.SetMainboardString(msg.MainboardNumber, msg.SerialNumber)
+
+			//校时
+			msg.timing()
+		}
+
+		glog.Write(3, packageName, "whstatus handle", fmt.Sprintf("sn: %s. setting compare pass.", msg.SerialNumber))
+		return nil
+
+	default:
+		// 无法进行后续处理
+		return errors.New("wrong handle type.")
 	}
-
-	// 业务逻辑处理
-	msg.handleLogic(whs, change, isFull)
-
-	// 比较设备设置状态
-	if err := msg.handleSetting(); err != nil {
-		return err
-	}
-
-	if isFull {
-		msg.timing()
-	}
-
-	glog.Write(3, packageName, "whstatus handle", fmt.Sprintf("sn: %s. setting compare pass.", msg.SerialNumber))
-
-	return nil
 }
 
 // 解析状态数据
 // 返回：热水器状态, 变化字段位标识
-func (msg* WHStatusMessage) handleParseStatus(payload string) (err error, whs *equipment.WaterHeater, change int) {
+func (msg* WHStatusMessage) handleParseStatus(payload string) (err error, whs *equipment.WaterHeater, change StatusChange) {
 	whs = new(equipment.WaterHeater)
+	_ = whs.LoadStatus(msg.SerialNumber)
+
 	change = 0
 
 	index := 0
@@ -194,94 +192,94 @@ func (msg* WHStatusMessage) handleParseStatus(payload string) (err error, whs *e
 		case 0x01:
 			v, _ := strconv.Atoi(cell.Value)
 			whs.Power = int8(v)
-			change &= 0x01;
+			change |= IhPower;
 		case 0x03:
 			v, _ := strconv.ParseInt(cell.Value, 16, 0)
 			whs.OutTemp = int(v)
-			change &= 0x02;
+			change |= IhOutTemp;
 		case 0x04:
 			v, _ := strconv.ParseInt(cell.Value, 16, 0)
 			whs.OutFlow = int(v)
-			change &= 0x04;
+			change |= IhOutFlow;
 		case 0x05:
 			v, _ := strconv.ParseInt(cell.Value, 16, 0)
 			whs.ColdInTemp = int(v)
-			change &= 0x08;
+			change |= IhColdInTemp;
 		case 0x06:
 			v, _ := strconv.ParseInt(cell.Value, 16, 0)
 			whs.HotInTemp = int(v)
-			change &= 0x10;
+			change |= IhHotInTemp;
 		case 0x07:
 			v, _ := strconv.ParseInt(cell.Value, 16, 0)
 			whs.ErrorCode = int(v)
-			change &= 0x20;
+			change |= IhErrorCode;
 		case 0x08:
 			whs.WifiVersion = cell.Value
-			change &= 0x40;
+			change |= IhWifiVersion;
 		case 0x09:
 			v, _ := tlv.ParseTime(cell.Value)
 			whs.CumulateHeatTime = v
-			change &= 0x80;
+			change |= IhCumulateHeatTime;
 		case 0x0a:
 			v, _ := tlv.ParseCumulate(cell.Value, 8)
 			whs.CumulateHotWater = v
-			change &= 0x100;
+			change |= IhCumulateHotWater;
 		case 0x0b:
 			v, _ := tlv.ParseTime(cell.Value)
 			whs.CumulateWorkTime = v
-			change &= 0x200;
+			change |= IhCumulateWorkTime;
 		case 0x0c:
 			v, _ := tlv.ParseCumulate(cell.Value, 8)
 			whs.CumulateUsedPower = v
-			change &= 0x400;
+			change |= IhCumulateUsedPower;
 		case 0x0d:
 			v, _ := tlv.ParseCumulate(cell.Value, 8)
 			whs.CumulateSavePower = v
-			change &= 0x800;
+			change |= IhCumulateSavePower;
 		case 0x1a:
 			v, _ := strconv.Atoi(cell.Value)
 			whs.Unlock = int8(v)
-			change &= 0x1000;
+			change |= IhUnlock;
 		case 0x1b:
 			v, _ := strconv.Atoi(cell.Value)
 			whs.Activate = int8(v)
-			change &= 0x2000;
+			change |= IhActivate;
 		case 0x1c:
 			v, _ := strconv.ParseInt(cell.Value, 16, 0)
 			whs.SetTemp = int(v)
-			change &= 0x4000;
+			change |= IhSetTemp;
 		case 0x1d:
 			whs.SoftwareFunction = cell.Value
-			change &= 0x8000;
+			change |= IhSoftwareFunction;
 		case 0x1e:
 			v, _ := tlv.ParseCumulate(cell.Value, 4)
 			whs.OutputPower = v
-			change &= 0x10000;
+			change |= IhOutputPower;
 		case 0x1f:
 			v, _ := strconv.Atoi(cell.Value)
 			whs.ManualClean = int8(v)
-			change &= 0x20000;
+			change |= IhManualClean;
 		case 0x20:
 			v, _ := tlv.ParseDateToTimestamp(cell.Value)
 			whs.DeadlineTime = v
-			change &= 0x40000;
+			change |= IhDeadlineTime;
 		case 0x21:
 			v, _ := tlv.ParseDateToTimestamp(cell.Value)
 			whs.ActivationTime = v
-			change &= 0x80000;
+			change |= IhActivationTime;
 		case 0x22:
 			whs.SpecialParameter = cell.Value
-			change &= 0x100000;
+			change |= IhSpecialParameter;
 		case 0x23:
 			v, _ := strconv.ParseInt(cell.Value, 16, 0)
 			whs.EnergySave = int(v)
-			change &= 0x200000;
+			change |= IhEnergySave;
 		case 0x24:
 			whs.IMSI = cell.Value
-			change &= 0x400000;
+			change |= IhIMSI;
 		case 0x25:
 			whs.ICCID = cell.Value
-			change &= 0x800000;
+			change |= IhICCID;
 		}
 
 		index += cell.Length + 8
@@ -291,21 +289,239 @@ func (msg* WHStatusMessage) handleParseStatus(payload string) (err error, whs *e
 }
 
 // 业务逻辑处理
-func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, change int, isFull bool) {
-	existsStatus := new(equipment.WaterHeater)
+// 参数： whs 解析出的新状态，保存whs 到 hash
+func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, change StatusChange, isFull bool) {
+	existsStatus := new(equipment.WaterHeater)	// 原状态
 
 	exists := existsStatus.LoadStatus(msg.SerialNumber)
 	now := time.Now().Unix() * 1000
 
-	// 全新设备局部上报不处理
+	// 全新设备 局部上报不处理
 	if !exists && !isFull {
 		glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s. cannot handle partial for new equipment.", msg.SerialNumber))
 		return
 	}
 
-	// 全新设备 推送login
-	if !exists {
+	whs.SerialNumber = msg.SerialNumber
+	whs.MainboardNumber = msg.MainboardNumber
+	whs.Logtime = now
+	whs.DeviceType = msg.DeviceType
+	whs.ControllerType = msg.ControllerType
+	whs.Online = 1
+
+	// 复制未变化原状态到新状态
+	if exists && !isFull {
+		if change & IhPower == 0 {
+			whs.Power = existsStatus.Power
+		}
+		if change & IhOutTemp == 0 {
+			whs.OutTemp = existsStatus.OutTemp
+		}
+		if change & IhOutFlow == 0 {
+			whs.OutFlow = existsStatus.OutFlow
+		}
+		if change & IhColdInTemp == 0 {
+			whs.ColdInTemp = existsStatus.ColdInTemp
+		}
+		if change & IhHotInTemp == 0 {
+			whs.HotInTemp = existsStatus.HotInTemp
+		}
+		if change & IhErrorCode == 0 {
+			whs.ErrorCode = existsStatus.ErrorCode
+		}
+		if change & IhWifiVersion == 0 {
+			whs.WifiVersion = existsStatus.WifiVersion
+		}
+		if change & IhCumulateHeatTime == 0 {
+			whs.CumulateHeatTime = existsStatus.CumulateHeatTime
+		}
+		if change & IhCumulateHotWater == 0 {
+			whs.CumulateHotWater = existsStatus.CumulateHotWater
+		}
+		if change & IhCumulateWorkTime == 0 {
+			whs.CumulateWorkTime = existsStatus.CumulateWorkTime
+		}
+		if change & IhCumulateUsedPower == 0 {
+			whs.CumulateUsedPower = existsStatus.CumulateUsedPower
+		}
+		if change & IhCumulateSavePower == 0 {
+			whs.CumulateSavePower = existsStatus.CumulateSavePower
+		}
+		if change & IhUnlock == 0 {
+			whs.Unlock = existsStatus.Unlock
+		}
+		if change & IhActivate == 0 {
+			whs.Activate = existsStatus.Activate
+		}
+		if change & IhSetTemp == 0 {
+			whs.SetTemp = existsStatus.SetTemp
+		}
+		if change & IhSoftwareFunction == 0 {
+			whs.SoftwareFunction = existsStatus.SoftwareFunction
+		}
+		if change & IhOutputPower == 0 {
+			whs.OutputPower = existsStatus.OutputPower
+		}
+		if change & IhManualClean == 0 {
+			whs.ManualClean = existsStatus.ManualClean
+		}
+		if change & IhDeadlineTime == 0 {
+			whs.DeadlineTime = existsStatus.DeadlineTime
+		}
+		if change & IhActivationTime == 0 {
+			whs.ActivationTime = existsStatus.ActivationTime
+		}
+		if change & IhSpecialParameter == 0 {
+			whs.SpecialParameter = existsStatus.SpecialParameter
+		}
+		if change & IhEnergySave == 0 {
+			whs.EnergySave = existsStatus.EnergySave
+		}
+		if change & IhIMSI == 0 {
+			whs.IMSI = existsStatus.IMSI
+		}
+		if change & IhICCID == 0 {
+			whs.ICCID = existsStatus.ICCID
+		}
+	}
+
+	// 全新设备整体上报
+	if !exists && isFull {
 		glog.Write(3, packageName, "whstatus total", fmt.Sprintf("sn: %s. new equipment, push login", msg.SerialNumber))
+
+		whs.LineTime = now
+
+		if whs.ErrorCode != 0 {
+			whs.ErrorTime = now
+
+			// 报警数据
+			whAlarm := new(equipment.WaterHeaterAlarm)
+			whAlarm.SerialNumber = whs.SerialNumber
+			whAlarm.MainboardNumber = whs.MainboardNumber
+			whAlarm.Logtime = whs.Logtime
+			whAlarm.ErrorCode = whs.ErrorCode
+			whAlarm.ErrorTime = whs.ErrorTime
+
+			// 推送 alarm list
+			whs.PushAlarm(whAlarm)
+		} else {
+			whs.ErrorTime = 0
+		}
+
+		// 推送 login list
+		whLogin := new(equipment.WaterHeaterLogin)
+		whLogin.SerialNumber = whs.SerialNumber
+		whLogin.MainboardNumber = whs.MainboardNumber
+		whLogin.Logtime = now
+		whLogin.DeviceType = whs.DeviceType
+		whLogin.ControllerType = whs.ControllerType
+		whLogin.WifiVersion = whs.WifiVersion
+		whLogin.SoftwareFunction = whs.SoftwareFunction
+
+		whs.PushLogin(whLogin)
+
+		whs.SaveStatus()
+
+		return
+	}
+
+
+	// 后面开始处理已有设备
+	whs.ErrorTime = existsStatus.ErrorTime
+	whs.LineTime = existsStatus.LineTime
+
+	// 设备重新上线，推送 wh_key list
+	if existsStatus.Online == 0 {
+		glog.Write(3, packageName, "whstatus total", fmt.Sprintf("sn: %s. online change. exists: %t, online: %d", msg.SerialNumber, exists, whs.Online))
+
+		whs.LineTime = now
+
+		whKey := new(equipment.WaterHeaterKey)
+		whKey.SerialNumber = whs.SerialNumber
+		whKey.MainboardNumber = whs.MainboardNumber
+		whKey.Logtime = whs.Logtime
+		whKey.Activate = whs.Activate
+		whKey.ActivationTime = whs.ActivationTime
+		whKey.Unlock = whs.Unlock
+		whKey.DeadlineTime = whs.DeadlineTime
+		whKey.Online = 1
+		whKey.LineTime = whs.LineTime
+
+		whs.PushKey(whKey)
+	}
+
+	// 故障码变化，修改 ErrorTime
+	if existsStatus.ErrorCode != whs.ErrorCode {
+		whs.ErrorTime = now
+	}
+
+	// 推送 wh_alarm list
+	if whs.ErrorCode != 0 || (change & IhErrorCode != 0) {
+		// 报警数据
+		whAlarm := new(equipment.WaterHeaterAlarm)
+		whAlarm.SerialNumber = whs.SerialNumber
+		whAlarm.MainboardNumber = whs.MainboardNumber
+		whAlarm.Logtime = whs.Logtime
+		whAlarm.ErrorCode = whs.ErrorCode
+		whAlarm.ErrorTime = whs.ErrorTime
+
+		whs.PushAlarm(whAlarm)
+	}
+
+	// 推送 running list
+	if change & (IhPower | IhOutTemp  | IhOutFlow | IhColdInTemp | IhHotInTemp | IhSetTemp | IhOutputPower | IhManualClean) != 0 {
+		whRunning := new(equipment.WaterHeaterRunning)
+		whRunning.SerialNumber = whs.SerialNumber
+		whRunning.MainboardNumber = whs.MainboardNumber
+		whRunning.Logtime = whs.Logtime
+		whRunning.Power = whs.Power
+		whRunning.OutTemp = whs.OutTemp
+		whRunning.OutFlow = whs.OutFlow
+		whRunning.ColdInTemp = whs.ColdInTemp
+		whRunning.HotInTemp = whs.HotInTemp
+		whRunning.SetTemp = whs.SetTemp
+		whRunning.OutputPower = whs.OutputPower
+		whRunning.ManualClean = whs.ManualClean
+
+		whs.PushRunning(whRunning)
+	}
+
+	// 推送 key list
+	if change & (IhUnlock | IhActivate | IhActivationTime | IhDeadlineTime) != 0 {
+		whKey := new(equipment.WaterHeaterKey)
+		whKey.SerialNumber = whs.SerialNumber
+		whKey.MainboardNumber = whs.MainboardNumber
+		whKey.Logtime = whs.Logtime
+		whKey.Activate = whs.Activate
+		whKey.ActivationTime = whs.ActivationTime
+		whKey.Unlock = whs.Unlock
+		whKey.DeadlineTime = whs.DeadlineTime
+		whKey.Online = whs.Online
+		whKey.LineTime = whs.LineTime
+
+		whs.PushKey(whKey)
+	}
+
+	// 推送 cumulate list
+	if change & (IhCumulateHeatTime | IhCumulateHotWater | IhCumulateWorkTime | IhCumulateUsedPower | IhCumulateSavePower | IhColdInTemp | IhSetTemp | IhEnergySave) != 0 {
+		whCumulate := new(equipment.WaterHeaterCumulate)
+		whCumulate.SerialNumber = whs.SerialNumber
+		whCumulate.MainboardNumber = whs.MainboardNumber
+		whCumulate.Logtime = whs.Logtime
+		whCumulate.CumulateHeatTime = whs.CumulateHeatTime
+		whCumulate.CumulateHotWater = whs.CumulateHotWater
+		whCumulate.CumulateWorkTime = whs.CumulateWorkTime
+		whCumulate.CumulateUsedPower = whs.CumulateUsedPower
+		whCumulate.CumulateSavePower = whs.CumulateSavePower
+		whCumulate.ColdInTemp = whs.ColdInTemp
+		whCumulate.SetTemp = whs.SetTemp
+		whCumulate.EnergySave = whs.EnergySave
+
+		whs.PushCumulate(whCumulate)
+	}
+
+	// 推送 login list
+	if (change & (IhSoftwareFunction | IhWifiVersion) != 0) || existsStatus.DeviceType != whs.DeviceType || existsStatus.ControllerType != whs.ControllerType {
 		whLogin := new(equipment.WaterHeaterLogin)
 		whLogin.SerialNumber = whs.SerialNumber
 		whLogin.MainboardNumber = whs.MainboardNumber
@@ -317,6 +533,14 @@ func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, change int, 
 
 		whs.PushLogin(whLogin)
 	}
+
+	// 已有设备从非激活态变为激活态，补零
+	if existsStatus.Activate == 0 && whs.Activate == 1 {
+		msg.saveZeroCumulate()
+	}
+
+	// 更新 hash
+	whs.SaveStatus()
 }
 
 

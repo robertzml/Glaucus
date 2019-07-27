@@ -12,13 +12,13 @@ type WaterHeater struct {
 	Logtime           int64
 	DeviceType        string
 	ControllerType    string
-	Power             int8 // 开关状态 0x01
-	OutTemp           int  // 出水温度 0x02
-	OutFlow           int  // 出水流量 0x04
-	ColdInTemp        int  // 0x08
+	Power             int8 // 开关状态
+	OutTemp           int  // 出水温度
+	OutFlow           int  // 出水流量
+	ColdInTemp        int
 	HotInTemp         int
 	ErrorCode         int
-	ErrorTime		  int64
+	ErrorTime		  int64		// 需设定
 	WifiVersion       string
 	CumulateHeatTime  int
 	CumulateHotWater  int
@@ -34,8 +34,8 @@ type WaterHeater struct {
 	DeadlineTime      int64
 	ActivationTime    int64
 	SpecialParameter  string
-	Online            int8
-	LineTime          int64
+	Online            int8		// 需设定
+	LineTime          int64		// 需设定
 	EnergySave		  int
 	IMSI			  string
 	ICCID			  string
