@@ -98,7 +98,7 @@ func (msg *WHOfflineMessage) Handle(data interface{}) (err error) {
 
 	whs.PushKey(whKey)
 
-	glog.Write(3, packageName, "whoffline handle", "save offline will message.")
+	glog.Write(3, packageName, "whoffline handle", fmt.Sprintf("sn: %s. save offline will message.", whs.SerialNumber))
 	return nil
 }
 
