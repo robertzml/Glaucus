@@ -143,7 +143,7 @@ func (handler *RestHandler) special(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-				glog.Write(3, packageName, "special", "mqtt control producer.")
+				glog.Write(3, packageName, "special", fmt.Sprintf("sn: %s. MQTT control producer.", param.SerialNumber))
 				base.MqttControlCh <- pak
 
 				response(w, 0, "ok")
@@ -211,7 +211,7 @@ func (handler *RestHandler) waterHeaterControl(param ControlParam) (status int, 
 			set.SaveSetting()
 		}
 
-		glog.Write(3, packageName, "control", "mqtt control producer.")
+		glog.Write(3, packageName, "control", fmt.Sprintf("sn: %s. MQTT control producer.", param.SerialNumber))
 		base.MqttControlCh <- pak
 
 		return 0, "ok", 200
@@ -267,7 +267,7 @@ func (handler *RestHandler) waterHeaterResult(param ResultParam) (status int, ms
 			return -1, "", 400
 		}
 
-		glog.Write(3, packageName, "result", "mqtt control producer.")
+		glog.Write(3, packageName, "result", fmt.Sprintf("sn: %s. MQTT control producer.", param.SerialNumber))
 		base.MqttControlCh <- pak
 
 		return 0, "ok", 200

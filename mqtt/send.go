@@ -27,7 +27,7 @@ func StartSend() {
 
 	for {
 		input := <-base.MqttControlCh
-		glog.Write(3, packageName, "send", "mqtt control consumer.")
+		glog.Write(3, packageName, "send", fmt.Sprintf("sn: %s. MQTT control consumer.", input.SerialNumber))
 
 		var controlTopic = fmt.Sprintf("server/1/%s/control_info", input.SerialNumber)
 		SendMqtt.Publish(controlTopic, 2, input.Payload)

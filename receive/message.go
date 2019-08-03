@@ -16,5 +16,5 @@ type Message interface {
 	Authorize() (pass bool)
 
 	// 报文后续处理
-	Handle(data interface{}) (err error)
+	Handle(data interface{}, seq string) (err error)
 }

@@ -111,6 +111,7 @@ type WaterHeaterLogin struct {
 	ControllerType    string
 	WifiVersion       string
 	SoftwareFunction  string
+	ICCID			  string
 }
 
 // 获取redis中设备实时状态

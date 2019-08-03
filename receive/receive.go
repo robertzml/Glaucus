@@ -23,15 +23,15 @@ func Store() {
 
 	for {
 		pak := <- base.MqttStatusCh
-		glog.Write(3, packageName, "store", "mqtt status consumer.")
+		glog.Write(3, packageName, "store", fmt.Sprintf("TOPIC: %s. MQTT status consumer.", pak.Topic))
 
-		cell, msg, err := parseType(pak.ProductType, pak.Payload)
+		cell, seq, msg, err := parseType(pak.ProductType, pak.Payload)
 		if err != nil {
 			glog.Write(1, packageName, "store", "catch error in parseType: " + err.Error())
 			continue
 		}
 
-		_ = parseMessage(msg, cell)
+		_ = parseMessage(msg, seq, cell)
 
 		glog.Write(3, packageName, "store", "store finish.")
 	}
@@ -40,8 +40,9 @@ func Store() {
 // 解析协议
 // 根据收到的报文，解析出协议头部，确定协议类型
 // cell 报文头
+// seq 序列号
 // msg  报文内容
-func parseType(productType int, message string) (cell tlv.TLV, msg Message, err error) {
+func parseType(productType int, message string) (cell tlv.TLV, seq string, msg Message, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			glog.Write(1, packageName, "store", fmt.Sprintf("catch runtime panic in parse type: %v", r))
@@ -50,7 +51,7 @@ func parseType(productType int, message string) (cell tlv.TLV, msg Message, err 
 	}()
 
 	// read header
-	_, payload, err := tlv.ParseHead(message)
+	seq, payload, err := tlv.ParseHead(message)
 	if err != nil {
 		return
 	}
@@ -93,7 +94,7 @@ func parseType(productType int, message string) (cell tlv.TLV, msg Message, err 
 }
 
 // 解析协议内容
-func parseMessage(msg Message, cell tlv.TLV) (err error) {
+func parseMessage(msg Message, seq string, cell tlv.TLV) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			glog.Write(1, packageName, "store", fmt.Sprintf("catch runtime panic in parse message: %v", r))
@@ -113,7 +114,7 @@ func parseMessage(msg Message, cell tlv.TLV) (err error) {
 		return nil
 	}
 
-	err = msg.Handle(data)
+	err = msg.Handle(data, seq)
 	if err != nil {
 		glog.Write(1, packageName, "store", "catch error in handle: " + err.Error())
 		return err

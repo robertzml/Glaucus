@@ -70,7 +70,7 @@ func (msg *WHOfflineMessage) Authorize() (pass bool) {
 }
 
 // 报文后续处理
-func (msg *WHOfflineMessage) Handle(data interface{}) (err error) {
+func (msg *WHOfflineMessage) Handle(data interface{}, seq string) (err error) {
 	whs := new(equipment.WaterHeater)
 
 	if exists := whs.LoadStatus(msg.SerialNumber); !exists {
@@ -98,7 +98,7 @@ func (msg *WHOfflineMessage) Handle(data interface{}) (err error) {
 
 	whs.PushKey(whKey)
 
-	glog.Write(3, packageName, "whoffline handle", fmt.Sprintf("sn: %s. save offline will message.", whs.SerialNumber))
+	glog.Write(3, packageName, "whoffline handle", fmt.Sprintf("sn: %s, seq: %s. save offline will message.", whs.SerialNumber, seq))
 	return nil
 }
 
