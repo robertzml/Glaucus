@@ -58,14 +58,14 @@ type Config struct {
 
 // 初始化默认配置
 func InitConfig(channel int) {
-	DefaultConfig.MqttServerAddress = "tcp://192.168.0.120:1883"
-	DefaultConfig.MqttServerHttp = "http://192.168.0.120:18083"
+	DefaultConfig.MqttServerAddress = "tcp://192.168.1.120:1883"
+	DefaultConfig.MqttServerHttp = "http://192.168.1.120:18083"
 	DefaultConfig.MqttChannel = channel
 	DefaultConfig.MqttUsername = "glaucus"
 	DefaultConfig.MqttPassword = "123456"
 	DefaultConfig.RedisDatabase = 0
-	DefaultConfig.RedisServerAddress = "192.168.0.120:6379"
-	DefaultConfig.RedisPersisServerAddress = "192.168.0.120:6380"
+	DefaultConfig.RedisServerAddress = "192.168.1.120:6379"
+	DefaultConfig.RedisPersisServerAddress = "192.168.1.120:6380"
 	DefaultConfig.RedisPassword = "123456"
 	DefaultConfig.HttpListenAddress = ":8181"
 	DefaultConfig.LogLevel = 3

@@ -1,7 +1,5 @@
 # IMAGE
-FROM golang:1.12.1
-# MAINTAINER
-MAINTAINER robertzml
+FROM golang:1.13.0
 
 # SET FILES
 WORKDIR /home/zml/glaucus
@@ -9,8 +7,7 @@ WORKDIR /home/zml/glaucus
 ADD . /home/zml/glaucus/
 
 # SET ENVIROMENT
-ENV GO111MODULE on
-ENV GOPROXY https://goproxy.io
+ENV GOPROXY https://goproxy.cn
 
 # SET TIMEZONE
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
