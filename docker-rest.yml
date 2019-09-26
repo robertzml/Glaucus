@@ -1,0 +1,22 @@
+version: "3.7"
+services:
+  glaucus-rest:
+    image: glaucus-rest:1.1.2
+    container_name: glaucus-rest
+    command: -send
+    ports:
+      - "8181:8181"
+    volumes:
+      - type: bind
+        source: /home/zml/logs
+        target: /home/zml/glaucus/log
+      - type: bind
+        source: /home/zml/config/glaucus.json
+        target: /home/zml/glaucus/conf.json
+        read_only: true
+    networks:
+      glaucus-net:
+
+networks:
+  glaucus-net:
+    name: glaucus-rest-host
