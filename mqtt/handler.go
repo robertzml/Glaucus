@@ -28,5 +28,5 @@ var WaterHeaterStatusHandler paho.MessageHandler = func(client paho.Client, msg 
 	pak.Payload = string(msg.Payload()[:])
 
 	base.MqttStatusCh <- pak
-	glog.Write(3, packageName, "whstatus", "MQTT status producer.")
+	glog.Write(4, packageName, "whstatus", "MQTT status producer.")
 }

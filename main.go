@@ -49,7 +49,7 @@ func main() {
 
 			glog.Write(3, "main", "state", text)
 
-			time.Sleep(10 * 1e9)
+			time.Sleep(100 * 1e9)
 		}
 
 	} else if *receiveMode {
@@ -75,7 +75,7 @@ func main() {
 
 			glog.Write(3, "main", "state", text)
 
-			time.Sleep(10 * 1e9)
+			time.Sleep(100 * 1e9)
 		}
 	}
 }

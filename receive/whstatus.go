@@ -115,7 +115,7 @@ func (msg *WHStatusMessage) Authorize() (pass bool) {
 			return false
 		}
 
-		glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s. new equipment found.", msg.SerialNumber))
+		glog.Write(4, packageName, "whstatus authorize", fmt.Sprintf("sn: %s. new equipment found.", msg.SerialNumber))
 		return true
 	}
 
@@ -272,7 +272,7 @@ func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, seq string, 
 
 	// 全新设备 局部上报不处理
 	if !exists && !isFull {
-		glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. cannot handle partial for new equipment.", msg.SerialNumber, seq))
+		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. cannot handle partial for new equipment.", msg.SerialNumber, seq))
 		return
 	}
 
@@ -568,7 +568,7 @@ func (msg *WHStatusMessage) handleSetting(seq string) (err error) {
 		return nil
 	}
 
-	glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s, seq: %s. setting compare pass.", msg.SerialNumber, seq))
+	glog.Write(4, packageName, "whstatus setting", fmt.Sprintf("sn: %s, seq: %s. setting compare pass.", msg.SerialNumber, seq))
 	return nil
 }
 
@@ -581,6 +581,6 @@ func (msg *WHStatusMessage) timing(seq string) {
 	pak.SerialNumber = msg.SerialNumber
 	pak.Payload = payload
 
-	glog.Write(3, packageName, "whstatus timing", fmt.Sprintf("sn: %s, seq: %s. send timing, MQTT control producer.", msg.SerialNumber, seq))
+	glog.Write(4, packageName, "whstatus timing", fmt.Sprintf("sn: %s, seq: %s. send timing, MQTT control producer.", msg.SerialNumber, seq))
 	base.MqttControlCh <- pak
 }

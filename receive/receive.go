@@ -23,7 +23,7 @@ func Store() {
 
 	for {
 		pak := <- base.MqttStatusCh
-		glog.Write(3, packageName, "store", fmt.Sprintf("TOPIC: %s. MQTT status consumer.", pak.Topic))
+		glog.Write(4, packageName, "store", fmt.Sprintf("TOPIC: %s. MQTT status consumer.", pak.Topic))
 
 		cell, seq, msg, err := parseType(pak.ProductType, pak.Payload)
 		if err != nil {
@@ -33,7 +33,7 @@ func Store() {
 
 		_ = parseMessage(msg, seq, cell)
 
-		glog.Write(3, packageName, "store", "store finish.")
+		glog.Write(4, packageName, "store", "store finish.")
 	}
 }
 

@@ -149,7 +149,7 @@ func (r *RedisClient) Hmset(key string, s interface{}) {
 		panic(err)
 	}
 
-	glog.Write(3, packageName, "hmset", fmt.Sprintf("redis update hash key:%s", key))
+	glog.Write(4, packageName, "hmset", fmt.Sprintf("redis update hash key:%s", key))
 }
 
 // 写入hash 中 某一项数据
@@ -159,7 +159,7 @@ func (r *RedisClient) Hset(key string, field string, val interface{}) {
 		panic(err)
 	}
 
-	glog.Write(3, packageName, "hset", fmt.Sprintf("redis update key:%s, field:%s, val: %v", key, field, val))
+	glog.Write(4, packageName, "hset", fmt.Sprintf("redis update key:%s, field:%s, val: %v", key, field, val))
 }
 
 // 获取hash数据

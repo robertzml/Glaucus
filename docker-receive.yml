@@ -6,7 +6,7 @@ services:
     command: -receive -c 1
     volumes:
       - type: bind
-        source: /home/zml/logr1
+        source: /alidata/glaucus/logr1
         target: /home/zml/glaucus/log
       - type: bind
         source: /home/zml/config/glaucus.json
