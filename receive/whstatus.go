@@ -70,7 +70,7 @@ func (msg *WHStatusMessage) Print(cell tlv.TLV) {
 
 // 安全检查
 // 返回: pass 是否通过
-func (msg *WHStatusMessage) Authorize() (pass bool) {
+func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 	whs := new(equipment.WaterHeater)
 
 	if exists := whs.LoadStatus(msg.SerialNumber); exists {
@@ -81,21 +81,21 @@ func (msg *WHStatusMessage) Authorize() (pass bool) {
 			pak.SerialNumber = msg.SerialNumber
 			pak.Payload = resMsg.Duplicate("D8")
 
-			glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s. d8, MQTT control producer.", msg.SerialNumber))
+			glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d8, MQTT control producer.", msg.SerialNumber, seq))
 			base.MqttControlCh <- pak
 
 			return false
 		}
 
 		sn := equipment.GetMainboardString(whs.MainboardNumber)
-		if (len(sn) > 0 && sn != msg.SerialNumber) { // 设备序列号不一致
+		if len(sn) > 0 && sn != msg.SerialNumber { // 设备序列号不一致
 			resMsg := send.NewWHResultMessage(msg.SerialNumber, msg.MainboardNumber)
 
 			pak := new(base.SendPacket)
 			pak.SerialNumber = msg.SerialNumber
 			pak.Payload = resMsg.Duplicate("D7")
 
-			glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s. d7, MQTT control producer.", msg.SerialNumber))
+			glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d7, MQTT control producer.", msg.SerialNumber, seq))
 			base.MqttControlCh <- pak
 
 			return false
@@ -109,17 +109,17 @@ func (msg *WHStatusMessage) Authorize() (pass bool) {
 			pak.SerialNumber = msg.SerialNumber
 			pak.Payload = resMsg.Duplicate("D7")
 
-			glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s. d7 for new equipment, MQTT control producer.", msg.SerialNumber))
+			glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d7 for new equipment, MQTT control producer.", msg.SerialNumber, seq))
 			base.MqttControlCh <- pak
 
 			return false
 		}
 
-		glog.Write(4, packageName, "whstatus authorize", fmt.Sprintf("sn: %s. new equipment found.", msg.SerialNumber))
+		glog.Write(4, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. new equipment found.", msg.SerialNumber, seq))
 		return true
 	}
 
-	glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s. pass.", msg.SerialNumber))
+	glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. pass.", msg.SerialNumber, seq))
 	return true
 }
 

@@ -110,3 +110,9 @@ func (msg *WHControlMessage) Special(option string) string {
 	msg.ControlAction = tlv.Splice(0x22, option)
 	return msg.splice()
 }
+
+// 热水器手动控制拼写报文
+func (msg *WHControlMessage) Manual(option string) string {
+	msg.ControlAction = option
+	return msg.splice()
+}

@@ -65,7 +65,7 @@ func (msg *WHOfflineMessage) Print(cell tlv.TLV) {
 
 // 安全检查
 // 返回: pass 是否通过
-func (msg *WHOfflineMessage) Authorize() (pass bool) {
+func (msg *WHOfflineMessage) Authorize(seq string) (pass bool) {
 	return true
 }
 

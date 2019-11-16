@@ -138,6 +138,8 @@ func (handler *RestHandler) special(w http.ResponseWriter, r *http.Request) {
 					pak.Payload = controlMsg.SoftFunction(param.Option)
 				case 2:
 					pak.Payload = controlMsg.Special(param.Option)
+				case 3:
+					pak.Payload = controlMsg.Manual(param.Option)
 				default:
 					w.WriteHeader(400)
 					return

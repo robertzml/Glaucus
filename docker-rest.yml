@@ -1,7 +1,7 @@
 version: "3.7"
 services:
   glaucus-rest:
-    image: glaucus-rest:1.1.2
+    image: glaucus-rest:1.1.4
     container_name: glaucus-rest
     command: -send
     ports:

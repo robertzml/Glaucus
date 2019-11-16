@@ -13,7 +13,7 @@ type Message interface {
 	Print(cell tlv.TLV)
 
 	// 安全检查
-	Authorize() (pass bool)
+	Authorize(seq string) (pass bool)
 
 	// 报文后续处理
 	Handle(data interface{}, seq string) (err error)

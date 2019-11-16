@@ -108,7 +108,7 @@ func parseMessage(msg Message, seq string, cell tlv.TLV) (err error) {
 		return err
 	}
 
-	pass := msg.Authorize()
+	pass := msg.Authorize(seq)
 	if !pass {
 		glog.Write(2, packageName, "store", "authorize failed.")
 		return nil
