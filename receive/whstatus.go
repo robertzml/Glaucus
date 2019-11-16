@@ -450,6 +450,22 @@ func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, seq string, 
 		whs.PushLogin(whLogin)
 	}
 
+	// 检查数据异常
+	if isFull && (whs.CumulateHeatTime + 60 < existsStatus.CumulateHeatTime || whs.CumulateHotWater + 120 < existsStatus.CumulateHotWater ||
+		whs.CumulateUsedPower + 200 < existsStatus.CumulateUsedPower || whs.CumulateSavePower + 200 < existsStatus.CumulateSavePower) {
+
+		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push exception.", msg.SerialNumber, seq))
+
+		whException := new(equipment.WaterHeaterException)
+		whException.SerialNumber = whs.SerialNumber
+		whException.MainboardNumber = whs.MainboardNumber
+		whException.Logtime = whs.Logtime
+		whException.Type = 1
+
+		whs.PushException(whException)
+	}
+
+
 	// 已有设备从非激活态变为激活态，补零
 	if existsStatus.Activate == 0 && whs.Activate == 1 {
 		msg.saveZeroCumulate(seq)

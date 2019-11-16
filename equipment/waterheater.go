@@ -114,6 +114,14 @@ type WaterHeaterLogin struct {
 	ICCID			  string
 }
 
+// 热水器数据异常
+type WaterHeaterException struct {
+	SerialNumber      string
+	MainboardNumber   string
+	Logtime           int64
+	Type			  int
+}
+
 // 获取redis中设备实时状态
 // serialNumber: 设备序列号
 // 返回 exists: 设备是否存在redis中
@@ -207,6 +215,17 @@ func (equipment *WaterHeater) PushLogin(login *WaterHeaterLogin) {
 	defer rc.Close()
 
 	rc.Rpush(WaterHeaterPrefix + "login", val)
+}
+
+// 推送异常数据
+func (equipment *WaterHeater) PushException(ex *WaterHeaterException) {
+	val := serialize(ex)
+
+	rc := new(redis.RedisClient)
+	rc.Get(false)
+	defer rc.Close()
+
+	rc.Rpush(WaterHeaterPrefix + "exception", val)
 }
 
 // 获取设置状态
