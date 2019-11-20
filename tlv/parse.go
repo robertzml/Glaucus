@@ -55,7 +55,7 @@ func ParseCumulate(payload string, length int) (total int, err error) {
 // 输出13位
 func ParseDateToTimestamp(payload string) (timestamp int64, err error) {
 	if len(payload) != 10 {
-		err = errors.New("date length is wrong.")
+		err = errors.New("date length is wrong")
 		return
 	}
 

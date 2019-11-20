@@ -136,7 +136,7 @@ func (msg *WHStatusMessage) Handle(data interface{}, seq string) (err error) {
 			// 整体更新
 			isFull = true
 		} else {
-			return errors.New("unknown tlv tag.")
+			return errors.New("unknown tlv tag")
 		}
 
 		// 解析状态
@@ -240,10 +240,16 @@ func (msg* WHStatusMessage) handleParseStatus(payload string) (err error, whs *e
 			v, _ := strconv.Atoi(cell.Value)
 			whs.ManualClean = int8(v)
 		case 0x20:
-			v, _ := tlv.ParseDateToTimestamp(cell.Value)
+			v, err := tlv.ParseDateToTimestamp(cell.Value)
+			if err != nil {
+				return err, nil
+			}
 			whs.DeadlineTime = v
 		case 0x21:
-			v, _ := tlv.ParseDateToTimestamp(cell.Value)
+			 v, err := tlv.ParseDateToTimestamp(cell.Value)
+			 if err != nil {
+				 return err, nil
+			 }
 			whs.ActivationTime = v
 		case 0x22:
 			whs.SpecialParameter = cell.Value
@@ -451,7 +457,7 @@ func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, seq string, 
 	}
 
 	// 检查数据异常
-	if isFull && (whs.CumulateHeatTime + 60 < existsStatus.CumulateHeatTime || whs.CumulateHotWater + 120 < existsStatus.CumulateHotWater ||
+	if isFull && whs.Activate == 1 && (whs.CumulateHeatTime + 60 < existsStatus.CumulateHeatTime || whs.CumulateHotWater + 120 < existsStatus.CumulateHotWater ||
 		whs.CumulateUsedPower + 200 < existsStatus.CumulateUsedPower || whs.CumulateSavePower + 200 < existsStatus.CumulateSavePower) {
 
 		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push exception.", msg.SerialNumber, seq))
