@@ -457,7 +457,7 @@ func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, seq string, 
 	}
 
 	// 检查数据异常
-	if isFull && existsStatus.Activate == 1 && whs.Activate == 1 && (whs.CumulateHeatTime + 60 < existsStatus.CumulateHeatTime ||
+	if isFull && existsStatus.Activate == 1 && whs.Activate == 1 && whs.ActivationTime + 600 *1000 < now && (whs.CumulateHeatTime + 60 < existsStatus.CumulateHeatTime ||
 		whs.CumulateHotWater + 120 < existsStatus.CumulateHotWater || whs.CumulateUsedPower + 200 < existsStatus.CumulateUsedPower ||
 		whs.CumulateSavePower + 200 < existsStatus.CumulateSavePower) {
 
