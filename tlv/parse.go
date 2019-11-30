@@ -1,6 +1,7 @@
 package tlv
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strconv"
@@ -67,6 +68,21 @@ func ParseDateToTimestamp(payload string) (timestamp int64, err error) {
 	hour, _ := strconv.ParseInt(payload[6:8], 16, 0)
 	minute, _ := strconv.ParseInt(payload[8:10], 16, 0)
 
+	if year != 2000 && (year < 2018 || year > 2100) {
+		err = errors.New("year is wrong")
+		return
+	}
+
+	if month > 12 {
+		err = errors.New("month is wrong")
+		return
+	}
+
+	if day > 31 {
+		err = errors.New("day is wrong")
+		return
+	}
+
 	date := time.Date(int(year), time.Month(month), int(day), int(hour), int(minute), 0, 0, time.Local)
 
 	timestamp = date.Unix() * 1000
@@ -97,4 +113,29 @@ func ParseTimestampToString(timestamp int64) (string) {
 	minute := fmt.Sprintf("%02X", date.Minute())
 
 	return year + month + day + hour + minute
+}
+
+func ParseUint64(s string) uint64 {
+	i, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return (uint64)(i)
+}
+
+func GetCurDateTimeByTimestamp(timestamp int64) string {
+	var timeStampLocal = strconv.FormatInt(timestamp, 10)
+	if len(timeStampLocal) == 13 {
+		timeStampLocal = timeStampLocal[:10]
+	}
+	var dateTime = time.Unix((int64)(ParseUint64(timeStampLocal)), 0)
+	var buf bytes.Buffer
+	_, err := fmt.Fprintf(
+		&buf,
+		"%04d-%02d-%02d %02d:%02d:%02d",
+		dateTime.Year(), dateTime.Month(), dateTime.Day(), dateTime.Hour(), dateTime.Minute(), dateTime.Second())
+	if err != nil {
+		return ""
+	}
+	return buf.String()
 }

@@ -310,7 +310,7 @@ func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, seq string, 
 			whs.ErrorTime = 0
 		}
 
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, push login.", msg.SerialNumber, seq))
+		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, push login and cumulate.", msg.SerialNumber, seq))
 		// 推送 login list
 		whLogin := new(equipment.WaterHeaterLogin)
 		whLogin.SerialNumber = whs.SerialNumber
@@ -323,6 +323,22 @@ func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, seq string, 
 		whLogin.ICCID = whs.ICCID
 
 		whs.PushLogin(whLogin)
+
+		// 推送 cumulate list
+		whCumulate := new(equipment.WaterHeaterCumulate)
+		whCumulate.SerialNumber = whs.SerialNumber
+		whCumulate.MainboardNumber = whs.MainboardNumber
+		whCumulate.Logtime = now
+		whCumulate.CumulateHeatTime = whs.CumulateHeatTime
+		whCumulate.CumulateHotWater = whs.CumulateHotWater
+		whCumulate.CumulateWorkTime = whs.CumulateWorkTime
+		whCumulate.CumulateUsedPower = whs.CumulateUsedPower
+		whCumulate.CumulateSavePower = whs.CumulateSavePower
+		whCumulate.ColdInTemp = whs.ColdInTemp
+		whCumulate.SetTemp = whs.SetTemp
+		whCumulate.EnergySave = whs.EnergySave
+
+		whs.PushCumulate(whCumulate)
 
 		whs.SaveStatus()
 
