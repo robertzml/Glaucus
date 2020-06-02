@@ -36,3 +36,14 @@ func TestTimestamp3(t *testing.T) {
 
 	fmt.Println(ts)
 }
+
+func TestParseHourString(t *testing.T) {
+	ts := ParseDateTimeToHourString(12416)
+
+	fmt.Println(ts)
+}
+
+func TestParseCumulateToString(t *testing.T) {
+	cs := ParseCumulateToString(36474)
+	fmt.Println(cs)
+}

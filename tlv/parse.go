@@ -139,3 +139,30 @@ func GetCurDateTimeByTimestamp(timestamp int64) string {
 	}
 	return buf.String()
 }
+
+// 编码日期到TLV FFFFFF小时+FF分钟 格式(2位一转)
+func ParseDateTimeToHourString(totalMin int) (string) {
+	hour := int64(totalMin) / 60
+	sHour := ""
+
+	for i:= 0; i < 3; i++ {
+		sHour = fmt.Sprintf("%02X", hour % 100) + sHour
+		hour = hour / 100
+	}
+
+	minute := fmt.Sprintf("%02X", totalMin % 60)
+
+	return sHour + minute
+}
+
+// 编码累计值到FFFFFFFF 2位一转
+func ParseCumulateToString(total int) (string) {
+	cum := ""
+
+	for i:=0; i < 4; i++ {
+		cum = fmt.Sprintf("%02X", total % 100) + cum
+		total = total / 100
+	}
+
+	return cum
+}
