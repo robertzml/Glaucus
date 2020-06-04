@@ -116,3 +116,14 @@ func (msg *WHControlMessage) Manual(option string) string {
 	msg.ControlAction = option
 	return msg.splice()
 }
+
+// 修订累积值报文
+func (msg *WHControlMessage) Cumulative(heatTime int, hotWater int, workTime int, usedPower int, savePower int) string {
+	msg.ControlAction = tlv.Splice(0x35, tlv.ParseDateTimeToHourString(heatTime))
+	msg.ControlAction += tlv.Splice(0x36, tlv.ParseCumulateToString(hotWater))
+	msg.ControlAction += tlv.Splice(0x37, tlv.ParseDateTimeToHourString(workTime))
+	msg.ControlAction += tlv.Splice(0x38, tlv.ParseCumulateToString(usedPower))
+	msg.ControlAction += tlv.Splice(0x39, tlv.ParseCumulateToString(savePower))
+
+	return msg.splice()
+}

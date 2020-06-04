@@ -81,7 +81,7 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 			pak.SerialNumber = msg.SerialNumber
 			pak.Payload = resMsg.Duplicate("D8")
 
-			glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d8, MQTT control producer.", msg.SerialNumber, seq))
+			glog.Write(2, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d8, MQTT control producer.", msg.SerialNumber, seq))
 			base.MqttControlCh <- pak
 
 			return false
@@ -95,7 +95,7 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 			pak.SerialNumber = msg.SerialNumber
 			pak.Payload = resMsg.Duplicate("D7")
 
-			glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d7, MQTT control producer.", msg.SerialNumber, seq))
+			glog.Write(2, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d7, MQTT control producer.", msg.SerialNumber, seq))
 			base.MqttControlCh <- pak
 
 			return false
@@ -109,13 +109,13 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 			pak.SerialNumber = msg.SerialNumber
 			pak.Payload = resMsg.Duplicate("D7")
 
-			glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d7 for new equipment, MQTT control producer.", msg.SerialNumber, seq))
+			glog.Write(2, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d7 for new equipment, MQTT control producer.", msg.SerialNumber, seq))
 			base.MqttControlCh <- pak
 
 			return false
 		}
 
-		glog.Write(4, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. new equipment found.", msg.SerialNumber, seq))
+		glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. new equipment found.", msg.SerialNumber, seq))
 		return true
 	}
 
@@ -477,7 +477,7 @@ func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, seq string, 
 		whs.CumulateHotWater + 120 < existsStatus.CumulateHotWater || whs.CumulateUsedPower + 200 < existsStatus.CumulateUsedPower ||
 		whs.CumulateSavePower + 200 < existsStatus.CumulateSavePower) {
 
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push exception.", msg.SerialNumber, seq))
+		glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push exception.", msg.SerialNumber, seq))
 
 		whException := new(equipment.WaterHeaterException)
 		whException.SerialNumber = whs.SerialNumber
@@ -486,6 +486,8 @@ func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, seq string, 
 		whException.Type = 1
 
 		whs.PushException(whException)
+
+		msg.setCumulate(existsStatus, seq)
 	}
 
 
@@ -517,6 +519,18 @@ func (msg *WHStatusMessage) saveZeroCumulate(seq string) {
 	whs.PushCumulate(whCumulate)
 
 	glog.Write(3, packageName, "whstatus handle", fmt.Sprintf("sn: %s, seq: %s, save zero cumulate.", msg.SerialNumber, seq))
+}
+
+// 发送修订累计值
+func (msg *WHStatusMessage) setCumulate(whs *equipment.WaterHeater, seq string) {
+	controlMsg := send.NewWHControlMessage(whs.SerialNumber, whs.MainboardNumber)
+
+	pak := new(base.SendPacket)
+	pak.SerialNumber = whs.SerialNumber
+	pak.Payload = controlMsg.Cumulative(whs.CumulateHeatTime, whs.CumulateHotWater, whs.CumulateWorkTime, whs.CumulateUsedPower, whs.CumulateSavePower)
+
+	glog.Write(2, packageName, "whstatus setting", fmt.Sprintf("sn: %s, seq: %s. send cumulate, MQTT control producer.", msg.SerialNumber, seq))
+	base.MqttControlCh <- pak
 }
 
 // 处理比较设置数据
