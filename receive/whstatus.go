@@ -529,7 +529,9 @@ func (msg *WHStatusMessage) setCumulate(whs *equipment.WaterHeater, seq string) 
 	pak.SerialNumber = whs.SerialNumber
 	pak.Payload = controlMsg.Cumulative(whs.CumulateHeatTime, whs.CumulateHotWater, whs.CumulateWorkTime, whs.CumulateUsedPower, whs.CumulateSavePower)
 
-	glog.Write(2, packageName, "whstatus setting", fmt.Sprintf("sn: %s, seq: %s. send cumulate, MQTT control producer.", msg.SerialNumber, seq))
+	glog.Write(2, packageName, "whstatus setting",
+		fmt.Sprintf("sn: %s, seq: %s. send cumulate, MQTT control producer. heat time: %d, hot water: %d, work time: %d, used power: %d, save power: %d",
+			msg.SerialNumber, seq, whs.CumulateHeatTime, whs.CumulateHotWater, whs.CumulateWorkTime, whs.CumulateUsedPower, whs.CumulateSavePower))
 	base.MqttControlCh <- pak
 }
 
