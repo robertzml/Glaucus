@@ -70,7 +70,7 @@ func (msg *WHOfflineMessage) Authorize(seq string) (pass bool) {
 }
 
 // 报文后续处理
-func (msg *WHOfflineMessage) Handle(data interface{}, seq string) (err error) {
+func (msg *WHOfflineMessage) Handle(data interface{}, version float64, seq string) (err error) {
 	whs := new(equipment.WaterHeater)
 
 	if exists := whs.LoadStatus(msg.SerialNumber); !exists {

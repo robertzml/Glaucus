@@ -124,7 +124,7 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 }
 
 // 报文后续处理
-func (msg *WHStatusMessage) Handle(data interface{}, seq string) (err error) {
+func (msg *WHStatusMessage) Handle(data interface{}, version float64, seq string) (err error) {
 	switch data.(type) {
 	case tlv.TLV:
 		var isFull bool
@@ -146,7 +146,7 @@ func (msg *WHStatusMessage) Handle(data interface{}, seq string) (err error) {
 		}
 
 		// 业务逻辑处理
-		msg.handleLogic(whs, seq, isFull)
+		msg.handleLogic(whs, version, seq, isFull)
 
 		// 比较设备设置状态
 		if err := msg.handleSetting(seq); err != nil {
@@ -270,7 +270,7 @@ func (msg* WHStatusMessage) handleParseStatus(payload string) (err error, whs *e
 
 // 业务逻辑处理
 // 参数： whs 解析出的新状态，保存whs 到 hash
-func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, seq string, isFull bool) {
+func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version float64, seq string, isFull bool) {
 	existsStatus := new(equipment.WaterHeater)	// 原状态
 
 	exists := existsStatus.LoadStatus(msg.SerialNumber)
@@ -487,7 +487,9 @@ func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, seq string, 
 
 		whs.PushException(whException)
 
-		msg.setCumulate(existsStatus, seq)
+		if version > 4 {
+			msg.setCumulate(existsStatus, seq)
+		}
 	}
 
 

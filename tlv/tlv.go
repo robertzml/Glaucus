@@ -29,10 +29,10 @@ func (tlv *TLV) Size() int {
 
 // 解析协议头部
 // 返回seq和协议内容
-func ParseHead(message string) (seq string, payload string, err error) {
+func ParseHead(message string) (version float64, seq string, payload string, err error) {
 	vlen := len(HomeConsoleVersion)
 	v := message[0:vlen]
-	version, _ := strconv.ParseFloat(v[11:], 32)
+	version, _ = strconv.ParseFloat(v[11:], 32)
 
 	if version < 4 {
 		err = errors.New("version not match")
