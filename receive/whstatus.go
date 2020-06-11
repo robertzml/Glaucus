@@ -483,7 +483,11 @@ func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whException.SerialNumber = whs.SerialNumber
 		whException.MainboardNumber = whs.MainboardNumber
 		whException.Logtime = whs.Logtime
-		whException.Type = 1
+		if version > 4 {
+			whException.Type = 2
+		} else {
+			whException.Type = 1
+		}
 
 		whs.PushException(whException)
 
