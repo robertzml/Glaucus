@@ -430,10 +430,36 @@ func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whs.PushKey(whKey)
 	}
 
+	cumulateException := false
+	// 检查数据异常
+	if isFull && existsStatus.Activate == 1 && whs.Activate == 1 && whs.ActivationTime + 600 *1000 < now && (whs.CumulateHeatTime + 60 < existsStatus.CumulateHeatTime ||
+		whs.CumulateHotWater + 120 < existsStatus.CumulateHotWater || whs.CumulateUsedPower + 200 < existsStatus.CumulateUsedPower ||
+		whs.CumulateSavePower + 200 < existsStatus.CumulateSavePower) {
+
+		glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push exception.", msg.SerialNumber, seq))
+
+		whException := new(equipment.WaterHeaterException)
+		whException.SerialNumber = whs.SerialNumber
+		whException.MainboardNumber = whs.MainboardNumber
+		whException.Logtime = whs.Logtime
+		if version > 4 {
+			whException.Type = 2
+		} else {
+			whException.Type = 1
+		}
+
+		whs.PushException(whException)
+		cumulateException = true
+
+		if version > 4 {
+			msg.setCumulate(existsStatus, seq)
+		}
+	}
+
 	// 推送 cumulate list
-	if existsStatus.CumulateHeatTime != whs.CumulateHeatTime || existsStatus.CumulateHotWater != whs.CumulateHotWater || existsStatus.CumulateWorkTime != whs.CumulateWorkTime ||
+	if (existsStatus.CumulateHeatTime != whs.CumulateHeatTime || existsStatus.CumulateHotWater != whs.CumulateHotWater || existsStatus.CumulateWorkTime != whs.CumulateWorkTime ||
 		existsStatus.CumulateUsedPower != whs.CumulateUsedPower || existsStatus.CumulateSavePower != whs.CumulateSavePower || existsStatus.ColdInTemp != whs.ColdInTemp ||
-		existsStatus.SetTemp != whs.SetTemp || existsStatus.EnergySave != whs.EnergySave {
+		existsStatus.SetTemp != whs.SetTemp || existsStatus.EnergySave != whs.EnergySave) && !cumulateException {
 
 		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push cumulate.", msg.SerialNumber, seq))
 
@@ -472,38 +498,15 @@ func (msg* WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whs.PushLogin(whLogin)
 	}
 
-	// 检查数据异常
-	if isFull && existsStatus.Activate == 1 && whs.Activate == 1 && whs.ActivationTime + 600 *1000 < now && (whs.CumulateHeatTime + 60 < existsStatus.CumulateHeatTime ||
-		whs.CumulateHotWater + 120 < existsStatus.CumulateHotWater || whs.CumulateUsedPower + 200 < existsStatus.CumulateUsedPower ||
-		whs.CumulateSavePower + 200 < existsStatus.CumulateSavePower) {
-
-		glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push exception.", msg.SerialNumber, seq))
-
-		whException := new(equipment.WaterHeaterException)
-		whException.SerialNumber = whs.SerialNumber
-		whException.MainboardNumber = whs.MainboardNumber
-		whException.Logtime = whs.Logtime
-		if version > 4 {
-			whException.Type = 2
-		} else {
-			whException.Type = 1
-		}
-
-		whs.PushException(whException)
-
-		if version > 4 {
-			msg.setCumulate(existsStatus, seq)
-		}
-	}
-
-
 	// 已有设备从非激活态变为激活态，补零
 	if existsStatus.Activate == 0 && whs.Activate == 1 {
 		msg.saveZeroCumulate(seq)
 	}
 
 	// 更新 hash
-	whs.SaveStatus()
+	if !cumulateException {
+		whs.SaveStatus()
+	}
 }
 
 // 补累计数据清零
