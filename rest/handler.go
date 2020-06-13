@@ -213,7 +213,7 @@ func (handler *RestHandler) waterHeaterControl(param ControlParam) (status int, 
 			set.SaveSetting()
 		}
 
-		glog.Write(3, packageName, "control", fmt.Sprintf("sn: %s. MQTT control producer.", param.SerialNumber))
+		glog.Write(4, packageName, "control", fmt.Sprintf("sn: %s. MQTT control producer.", param.SerialNumber))
 		base.MqttControlCh <- pak
 
 		return 0, "ok", 200
@@ -269,7 +269,7 @@ func (handler *RestHandler) waterHeaterResult(param ResultParam) (status int, ms
 			return -1, "", 400
 		}
 
-		glog.Write(3, packageName, "result", fmt.Sprintf("sn: %s. MQTT control producer.", param.SerialNumber))
+		glog.Write(4, packageName, "result", fmt.Sprintf("sn: %s. MQTT control producer.", param.SerialNumber))
 		base.MqttControlCh <- pak
 
 		return 0, "ok", 200

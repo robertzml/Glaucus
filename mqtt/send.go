@@ -32,7 +32,7 @@ func StartSend() {
 		var controlTopic = fmt.Sprintf("server/1/%s/control_info", input.SerialNumber)
 		SendMqtt.Publish(controlTopic, 2, input.Payload)
 
-		glog.Write(3, packageName, "send", fmt.Sprintf("PUBLISH Topic:%s, Payload: %s", controlTopic, input.Payload))
+		glog.Write(4, packageName, "send", fmt.Sprintf("PUBLISH Topic:%s, Payload: %s", controlTopic, input.Payload))
 	}
 }
 

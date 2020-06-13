@@ -13,13 +13,13 @@ import (
 
 // 默认订阅消息处理方法
 func defaultHandler(client paho.Client, msg paho.Message) {
-	glog.Write(3, packageName, "defaultHandler", fmt.Sprintln("TOPIC: %s, Id: %d, QoS: %d\tMSG: %s",
+	glog.Write(4, packageName, "defaultHandler", fmt.Sprintln("TOPIC: %s, Id: %d, QoS: %d\tMSG: %s",
 		msg.Topic(), msg.MessageID(), msg.Qos(), msg.Payload()))
 }
 
 // 热水器状态消息订阅处理方法
 var WaterHeaterStatusHandler paho.MessageHandler = func(client paho.Client, msg paho.Message) {
-	glog.Write(3, packageName, "whstatus",
+	glog.Write(4, packageName, "whstatus",
 		fmt.Sprintf("TOPIC: %s, Id: %d, QoS: %d\tMSG: %s", msg.Topic(), msg.MessageID(), msg.Qos(), msg.Payload()))
 
 	pak := new(base.ReceivePacket)
