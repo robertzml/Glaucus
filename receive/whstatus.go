@@ -474,7 +474,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	// 检查数据异常
 	if isFull && existsStatus.Activate == 1 && whs.Activate == 1 && whs.ActivationTime+600*1000 < now && (whs.CumulateHeatTime+60 < existsStatus.CumulateHeatTime ||
 		whs.CumulateHotWater+120 < existsStatus.CumulateHotWater || whs.CumulateUsedPower+200 < existsStatus.CumulateUsedPower ||
-		whs.CumulateSavePower+200 < existsStatus.CumulateSavePower) {
+		whs.CumulateSavePower+200 < existsStatus.CumulateSavePower || whs.CumulateWorkTime+60 < existsStatus.CumulateWorkTime) {
 
 		glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push exception.", msg.SerialNumber, seq))
 
@@ -493,6 +493,13 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		if version > 4 {
 			msg.setCumulate(existsStatus, seq)
 		}
+
+		// 异常减小后使用redis的值
+		whs.CumulateHeatTime = existsStatus.CumulateHeatTime
+		whs.CumulateHotWater = existsStatus.CumulateHotWater
+		whs.CumulateWorkTime = existsStatus.CumulateWorkTime
+		whs.CumulateUsedPower = existsStatus.CumulateUsedPower
+		whs.CumulateSavePower = existsStatus.CumulateSavePower
 	}
 
 	// 已有设备从非激活态变为激活态，补零
