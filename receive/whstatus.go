@@ -474,7 +474,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	// 检查数据异常
 	if isFull && existsStatus.Activate == 1 && whs.Activate == 1 && whs.ActivationTime+600*1000 < now && (whs.CumulateHeatTime+60 < existsStatus.CumulateHeatTime ||
 		whs.CumulateHotWater+120 < existsStatus.CumulateHotWater || whs.CumulateUsedPower+200 < existsStatus.CumulateUsedPower ||
-		whs.CumulateSavePower+200 < existsStatus.CumulateSavePower || whs.CumulateWorkTime+60 < existsStatus.CumulateWorkTime) {
+		whs.CumulateSavePower+200 < existsStatus.CumulateSavePower) {
 
 		glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push exception.", msg.SerialNumber, seq))
 
