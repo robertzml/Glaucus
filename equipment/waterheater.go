@@ -39,6 +39,8 @@ type WaterHeater struct {
 	EnergySave		  int
 	IMSI			  string
 	ICCID			  string
+	Coordinate		  string
+	Csq				  string
 }
 
 // 热水器设置状态

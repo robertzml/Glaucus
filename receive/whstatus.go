@@ -260,6 +260,10 @@ func (msg *WHStatusMessage) handleParseStatus(payload string) (err error, whs *e
 			whs.IMSI = cell.Value
 		case 0x25:
 			whs.ICCID = cell.Value
+		case 0x26:
+			whs.Coordinate = cell.Value
+		case 0x27:
+			whs.Csq = cell.Value
 		}
 
 		index += cell.Length + 8
