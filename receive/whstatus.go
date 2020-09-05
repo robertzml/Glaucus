@@ -3,11 +3,10 @@ package receive
 import (
 	"errors"
 	"fmt"
-	"github.com/robertzml/Glaucus/base"
 	"github.com/robertzml/Glaucus/equipment"
 	"github.com/robertzml/Glaucus/glog"
-	"github.com/robertzml/Glaucus/send"
 	"github.com/robertzml/Glaucus/tlv"
+	"github.com/robertzml/Glaucus/influx"
 	"strconv"
 	"time"
 )
@@ -71,55 +70,6 @@ func (msg *WHStatusMessage) Print(cell tlv.TLV) {
 // 安全检查
 // 返回: pass 是否通过
 func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
-	whs := new(equipment.WaterHeater)
-
-	if exists := whs.LoadStatus(msg.SerialNumber); exists {
-		if whs.MainboardNumber != msg.MainboardNumber { // 主板序列号不一致
-			resMsg := send.NewWHResultMessage(msg.SerialNumber, msg.MainboardNumber)
-
-			pak := new(base.SendPacket)
-			pak.SerialNumber = msg.SerialNumber
-			pak.Payload = resMsg.Duplicate("D8")
-
-			glog.Write(2, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d8, MQTT control producer.", msg.SerialNumber, seq))
-			base.MqttControlCh <- pak
-
-			return false
-		}
-
-		sn := equipment.GetMainboardString(whs.MainboardNumber)
-		if len(sn) > 0 && sn != msg.SerialNumber { // 设备序列号不一致
-			resMsg := send.NewWHResultMessage(msg.SerialNumber, msg.MainboardNumber)
-
-			pak := new(base.SendPacket)
-			pak.SerialNumber = msg.SerialNumber
-			pak.Payload = resMsg.Duplicate("D7")
-
-			glog.Write(2, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d7, MQTT control producer.", msg.SerialNumber, seq))
-			base.MqttControlCh <- pak
-
-			return false
-		}
-	} else {
-		sn := equipment.GetMainboardString(msg.MainboardNumber)
-		if len(sn) > 0 && sn != msg.SerialNumber { // 主板序列号已存在
-			resMsg := send.NewWHResultMessage(msg.SerialNumber, msg.MainboardNumber)
-
-			pak := new(base.SendPacket)
-			pak.SerialNumber = msg.SerialNumber
-			pak.Payload = resMsg.Duplicate("D7")
-
-			glog.Write(2, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d7 for new equipment, MQTT control producer.", msg.SerialNumber, seq))
-			base.MqttControlCh <- pak
-
-			return false
-		}
-
-		glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. new equipment found.", msg.SerialNumber, seq))
-		return true
-	}
-
-	glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. pass.", msg.SerialNumber, seq))
 	return true
 }
 
@@ -148,20 +98,8 @@ func (msg *WHStatusMessage) Handle(data interface{}, version float64, seq string
 		// 业务逻辑处理
 		msg.handleLogic(whs, version, seq, isFull)
 
-		// 比较设备设置状态
-		if err := msg.handleSetting(seq); err != nil {
-			return err
-		}
 
-		if isFull {
-			// 设置 {主板序列号 - 设备序列号}
-			equipment.SetMainboardString(msg.MainboardNumber, msg.SerialNumber)
-
-			//校时
-			msg.timing(seq)
-		}
-
-		glog.Write(3, packageName, "whstatus handle", fmt.Sprintf("sn: %s, seq: %s. handle finish.", msg.SerialNumber, seq))
+		glog.Write(4, packageName, "whstatus handle", fmt.Sprintf("sn: %s, seq: %s. handle finish.", msg.SerialNumber, seq))
 		return nil
 
 	default:
@@ -174,7 +112,6 @@ func (msg *WHStatusMessage) Handle(data interface{}, version float64, seq string
 // 返回：热水器状态
 func (msg *WHStatusMessage) handleParseStatus(payload string) (err error, whs *equipment.WaterHeater) {
 	whs = new(equipment.WaterHeater)
-	_ = whs.LoadStatus(msg.SerialNumber)
 
 	index := 0
 	length := len(payload)
@@ -293,63 +230,24 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	whs.ControllerType = msg.ControllerType
 	whs.Online = 1
 
-	// 记录全上报时间
+	// 整体上报
 	if isFull {
+
+		// 记录全上报时间
 		whs.Fulltime = now
+
+		glog.Write(3, packageName, "whstatus handle logic",
+			fmt.Sprintf("sn: %s, seq: %s. full report, heat time: %d, hot water: %d, work time: %d, used power: %d, saved power: %d.",
+				msg.SerialNumber, seq, whs.CumulateHeatTime, whs.CumulateHotWater, whs.CumulateWorkTime, whs.CumulateUsedPower, whs.CumulateSavePower))
+
+		influx.Write(whs.SerialNumber, whs.CumulateHeatTime, whs.CumulateHotWater, whs.CumulateWorkTime, whs.CumulateUsedPower, whs.CumulateSavePower)
 	}
 
 	// 全新设备整体上报
 	if !exists && isFull {
 		whs.LineTime = now
 
-		if whs.ErrorCode != 0 {
-			whs.ErrorTime = now
-
-			glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, push alarm.", msg.SerialNumber, seq))
-			// 报警数据 推送 alarm list
-			whAlarm := new(equipment.WaterHeaterAlarm)
-			whAlarm.SerialNumber = whs.SerialNumber
-			whAlarm.MainboardNumber = whs.MainboardNumber
-			whAlarm.Logtime = whs.Logtime
-			whAlarm.ErrorCode = whs.ErrorCode
-			whAlarm.ErrorTime = whs.ErrorTime
-
-			whs.PushAlarm(whAlarm)
-		} else {
-			whs.ErrorTime = 0
-		}
-
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, push login and cumulate.", msg.SerialNumber, seq))
-		// 推送 login list
-		whLogin := new(equipment.WaterHeaterLogin)
-		whLogin.SerialNumber = whs.SerialNumber
-		whLogin.MainboardNumber = whs.MainboardNumber
-		whLogin.Logtime = now
-		whLogin.DeviceType = whs.DeviceType
-		whLogin.ControllerType = whs.ControllerType
-		whLogin.WifiVersion = whs.WifiVersion
-		whLogin.SoftwareFunction = whs.SoftwareFunction
-		whLogin.ICCID = whs.ICCID
-
-		whs.PushLogin(whLogin)
-
-		// 推送 cumulate list
-		whCumulate := new(equipment.WaterHeaterCumulate)
-		whCumulate.SerialNumber = whs.SerialNumber
-		whCumulate.MainboardNumber = whs.MainboardNumber
-		whCumulate.Logtime = now
-		whCumulate.CumulateHeatTime = whs.CumulateHeatTime
-		whCumulate.CumulateHotWater = whs.CumulateHotWater
-		whCumulate.CumulateWorkTime = whs.CumulateWorkTime
-		whCumulate.CumulateUsedPower = whs.CumulateUsedPower
-		whCumulate.CumulateSavePower = whs.CumulateSavePower
-		whCumulate.ColdInTemp = whs.ColdInTemp
-		whCumulate.SetTemp = whs.SetTemp
-		whCumulate.EnergySave = whs.EnergySave
-
-		whs.PushCumulate(whCumulate)
-
-		whs.SaveStatus()
+		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment find.", msg.SerialNumber, seq))
 
 		return
 	}
@@ -357,364 +255,6 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	// 后面开始处理已有设备
 	whs.ErrorTime = existsStatus.ErrorTime
 	whs.LineTime = existsStatus.LineTime
-
-	// 设备重新上线，推送 wh_key list
-	if existsStatus.Online == 0 {
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. online, push key.", msg.SerialNumber, seq))
-
-		whs.LineTime = now
-
-		whKey := new(equipment.WaterHeaterKey)
-		whKey.SerialNumber = whs.SerialNumber
-		whKey.MainboardNumber = whs.MainboardNumber
-		whKey.Logtime = whs.Logtime
-		whKey.Activate = whs.Activate
-		whKey.ActivationTime = whs.ActivationTime
-		whKey.Unlock = whs.Unlock
-		whKey.DeadlineTime = whs.DeadlineTime
-		whKey.Online = 1
-		whKey.LineTime = whs.LineTime
-
-		whs.PushKey(whKey)
-	}
-
-	// 推送 wh_alarm list
-	if whs.ErrorCode != 0 || existsStatus.ErrorCode != whs.ErrorCode {
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push alarm.", msg.SerialNumber, seq))
-
-		// 故障码变化，修改 ErrorTime
-		if existsStatus.ErrorCode != whs.ErrorCode {
-			whs.ErrorTime = now
-		}
-
-		whAlarm := new(equipment.WaterHeaterAlarm)
-		whAlarm.SerialNumber = whs.SerialNumber
-		whAlarm.MainboardNumber = whs.MainboardNumber
-		whAlarm.Logtime = whs.Logtime
-		whAlarm.ErrorCode = whs.ErrorCode
-		whAlarm.ErrorTime = whs.ErrorTime
-
-		whs.PushAlarm(whAlarm)
-	}
-
-	// 推送 running list
-	if existsStatus.Power != whs.Power || existsStatus.OutTemp != whs.OutTemp || existsStatus.OutFlow != whs.OutFlow || existsStatus.ColdInTemp != whs.ColdInTemp ||
-		existsStatus.HotInTemp != whs.HotInTemp || existsStatus.SetTemp != whs.SetTemp || existsStatus.OutputPower != whs.OutputPower ||
-		existsStatus.ManualClean != whs.ManualClean {
-
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push running.", msg.SerialNumber, seq))
-
-		whRunning := new(equipment.WaterHeaterRunning)
-		whRunning.SerialNumber = whs.SerialNumber
-		whRunning.MainboardNumber = whs.MainboardNumber
-		whRunning.Logtime = whs.Logtime
-		whRunning.Power = whs.Power
-		whRunning.OutTemp = whs.OutTemp
-		whRunning.OutFlow = whs.OutFlow
-		whRunning.ColdInTemp = whs.ColdInTemp
-		whRunning.HotInTemp = whs.HotInTemp
-		whRunning.SetTemp = whs.SetTemp
-		whRunning.OutputPower = whs.OutputPower
-		whRunning.ManualClean = whs.ManualClean
-
-		whs.PushRunning(whRunning)
-	}
-
-	// 推送 key list
-	if existsStatus.Unlock != whs.Unlock || existsStatus.Activate != whs.Activate || existsStatus.ActivationTime != whs.ActivationTime || existsStatus.DeadlineTime != whs.DeadlineTime {
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push key.", msg.SerialNumber, seq))
-
-		whKey := new(equipment.WaterHeaterKey)
-		whKey.SerialNumber = whs.SerialNumber
-		whKey.MainboardNumber = whs.MainboardNumber
-		whKey.Logtime = whs.Logtime
-		whKey.Activate = whs.Activate
-		whKey.ActivationTime = whs.ActivationTime
-		whKey.Unlock = whs.Unlock
-		whKey.DeadlineTime = whs.DeadlineTime
-		whKey.Online = whs.Online
-		whKey.LineTime = whs.LineTime
-
-		whs.PushKey(whKey)
-	}
-
-	// 推送 cumulate list
-	if existsStatus.CumulateHeatTime != whs.CumulateHeatTime || existsStatus.CumulateHotWater != whs.CumulateHotWater || existsStatus.CumulateWorkTime != whs.CumulateWorkTime ||
-		existsStatus.CumulateUsedPower != whs.CumulateUsedPower || existsStatus.CumulateSavePower != whs.CumulateSavePower || existsStatus.ColdInTemp != whs.ColdInTemp ||
-		existsStatus.SetTemp != whs.SetTemp || existsStatus.EnergySave != whs.EnergySave {
-
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push cumulate.", msg.SerialNumber, seq))
-
-		whCumulate := new(equipment.WaterHeaterCumulate)
-		whCumulate.SerialNumber = whs.SerialNumber
-		whCumulate.MainboardNumber = whs.MainboardNumber
-		whCumulate.Logtime = whs.Logtime
-		whCumulate.CumulateHeatTime = whs.CumulateHeatTime
-		whCumulate.CumulateHotWater = whs.CumulateHotWater
-		whCumulate.CumulateWorkTime = whs.CumulateWorkTime
-		whCumulate.CumulateUsedPower = whs.CumulateUsedPower
-		whCumulate.CumulateSavePower = whs.CumulateSavePower
-		whCumulate.ColdInTemp = whs.ColdInTemp
-		whCumulate.SetTemp = whs.SetTemp
-		whCumulate.EnergySave = whs.EnergySave
-
-		whs.PushCumulate(whCumulate)
-	}
-
-	// 推送 login list
-	if existsStatus.SoftwareFunction != whs.SoftwareFunction || existsStatus.WifiVersion != whs.WifiVersion || existsStatus.ICCID != whs.ICCID ||
-		existsStatus.DeviceType != whs.DeviceType || existsStatus.ControllerType != whs.ControllerType {
-
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push login.", msg.SerialNumber, seq))
-
-		whLogin := new(equipment.WaterHeaterLogin)
-		whLogin.SerialNumber = whs.SerialNumber
-		whLogin.MainboardNumber = whs.MainboardNumber
-		whLogin.Logtime = now
-		whLogin.DeviceType = whs.DeviceType
-		whLogin.ControllerType = whs.ControllerType
-		whLogin.WifiVersion = whs.WifiVersion
-		whLogin.SoftwareFunction = whs.SoftwareFunction
-		whLogin.ICCID = whs.ICCID
-
-		whs.PushLogin(whLogin)
-	}
-
-	// 检查数据异常
-	if isFull && existsStatus.Activate == 1 && whs.Activate == 1 && whs.ActivationTime+600*1000 < now && (whs.CumulateHeatTime+60 < existsStatus.CumulateHeatTime ||
-		whs.CumulateHotWater+120 < existsStatus.CumulateHotWater || whs.CumulateUsedPower+200 < existsStatus.CumulateUsedPower ||
-		whs.CumulateSavePower+200 < existsStatus.CumulateSavePower) {
-
-		glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push exception.", msg.SerialNumber, seq))
-
-		whException := new(equipment.WaterHeaterException)
-		whException.SerialNumber = whs.SerialNumber
-		whException.MainboardNumber = whs.MainboardNumber
-		whException.Logtime = whs.Logtime
-		if version > 4 {
-			whException.Type = 2
-		} else {
-			whException.Type = 1
-		}
-
-		whs.PushException(whException)
-
-		if version > 4 {
-			msg.setCumulate(existsStatus, seq)
-		}
-
-		// 异常减小后使用redis的值
-		whs.CumulateHeatTime = existsStatus.CumulateHeatTime
-		whs.CumulateHotWater = existsStatus.CumulateHotWater
-		whs.CumulateWorkTime = existsStatus.CumulateWorkTime
-		whs.CumulateUsedPower = existsStatus.CumulateUsedPower
-		whs.CumulateSavePower = existsStatus.CumulateSavePower
-	}
-
-	// 检查数据异常增大
-	if isFull && existsStatus.Fulltime > 0 && existsStatus.Activate == 1 && whs.Activate == 1 && whs.ActivationTime+600*1000 < now {
-
-		// 全上报时间增量 （秒）
-		var logTimeDelta int = int((whs.Fulltime - existsStatus.Fulltime) / 1000)
-		unsualBigger := false
-
-		// 加热时间增量 > logtime增量 +2  (单位分钟)
-		if (whs.CumulateHeatTime-existsStatus.CumulateHeatTime)*60 > logTimeDelta+120 {
-			glog.Write(2, packageName, "whstatus handle logic",
-				fmt.Sprintf("sn: %s, seq: %s. redis val: %d, emq val: %d, full time: %d, exist full: %d. cumulate heat time too big, push exception.",
-					msg.SerialNumber, seq, existsStatus.CumulateHeatTime, whs.CumulateHeatTime, whs.Fulltime, existsStatus.Fulltime))
-			unsualBigger = true
-		}
-
-		// 通电时间增量 > logtime增量 +2
-		if (whs.CumulateWorkTime-existsStatus.CumulateWorkTime)*60 > logTimeDelta+120 {
-			glog.Write(2, packageName, "whstatus handle logic",
-				fmt.Sprintf("sn: %s, seq: %s. redis val: %d, emq val: %d, full time: %d, exist full: %d. cumulate work time too big, push exception.",
-					msg.SerialNumber, seq, existsStatus.CumulateWorkTime, whs.CumulateWorkTime, whs.Fulltime, existsStatus.Fulltime))
-			unsualBigger = true
-		}
-
-		// 使用热水量增量 > (加热时间增量 +1)*10
-		if (whs.CumulateHotWater - existsStatus.CumulateHotWater) > (whs.CumulateWorkTime-existsStatus.CumulateWorkTime+1)*20 {
-			glog.Write(2, packageName, "whstatus handle logic",
-				fmt.Sprintf("sn: %s, seq: %s. redis val: %d, emq val: %d. cumulate hot water too big, push exception.",
-					msg.SerialNumber, seq, existsStatus.CumulateHotWater, whs.CumulateHotWater))
-			unsualBigger = true
-		}
-
-		// 用电量增量 > (加热时间增量+1分)/60)*(6500w/1000)
-		if whs.CumulateUsedPower-existsStatus.CumulateUsedPower > (whs.CumulateWorkTime-existsStatus.CumulateWorkTime+1)*(6500/1000)*100/60 {
-			glog.Write(2, packageName, "whstatus handle logic",
-				fmt.Sprintf("sn: %s, seq: %s. redis val: %d, emq val: %d. cumulate used power too big, push exception.",
-					msg.SerialNumber, seq, existsStatus.CumulateUsedPower, whs.CumulateUsedPower))
-			unsualBigger = true
-		}
-
-		// 节电量增量 > (加热时间增量+1分)/60)*(6500w/1000)
-		if whs.CumulateSavePower-existsStatus.CumulateSavePower > (whs.CumulateWorkTime-existsStatus.CumulateWorkTime+1)*(6500/1000)*100/60 {
-			glog.Write(2, packageName, "whstatus handle logic",
-				fmt.Sprintf("sn: %s, seq: %s. redis val: %d, emq val: %d. cumulate saved power too big, push exception.",
-					msg.SerialNumber, seq, existsStatus.CumulateSavePower, whs.CumulateSavePower))
-			unsualBigger = true
-		}
-
-		if unsualBigger {
-			whException := new(equipment.WaterHeaterException)
-			whException.SerialNumber = whs.SerialNumber
-			whException.MainboardNumber = whs.MainboardNumber
-			whException.Logtime = whs.Logtime
-			whException.Type = 3
-
-			// whs.PushException(whException)
-		}
-	}
-
-
-	// 已有设备从非激活态变为激活态，补零
-	if existsStatus.Activate == 0 && whs.Activate == 1 {
-		msg.saveZeroCumulate(seq)
-	}
-
-	// 更新 hash
-	whs.SaveStatus()
 }
 
-// 补累计数据清零
-func (msg *WHStatusMessage) saveZeroCumulate(seq string) {
-	// 累计数据
-	whCumulate := new(equipment.WaterHeaterCumulate)
-	whCumulate.SerialNumber = msg.SerialNumber
-	whCumulate.MainboardNumber = msg.MainboardNumber
-	whCumulate.Logtime = time.Now().Unix() * 1000
-	whCumulate.CumulateHeatTime = 0
-	whCumulate.CumulateHotWater = 0
-	whCumulate.CumulateWorkTime = 0
-	whCumulate.CumulateUsedPower = 0
-	whCumulate.CumulateSavePower = 0
-	whCumulate.ColdInTemp = 0
-	whCumulate.SetTemp = 0
 
-	whs := new(equipment.WaterHeater)
-	whs.PushCumulate(whCumulate)
-
-	glog.Write(3, packageName, "whstatus handle", fmt.Sprintf("sn: %s, seq: %s, save zero cumulate.", msg.SerialNumber, seq))
-}
-
-// 发送修订累计值
-func (msg *WHStatusMessage) setCumulate(whs *equipment.WaterHeater, seq string) {
-	controlMsg := send.NewWHControlMessage(whs.SerialNumber, whs.MainboardNumber)
-
-	pak := new(base.SendPacket)
-	pak.SerialNumber = whs.SerialNumber
-	pak.Payload = controlMsg.Cumulative(whs.CumulateHeatTime, whs.CumulateHotWater, whs.CumulateWorkTime, whs.CumulateUsedPower, whs.CumulateSavePower)
-
-	glog.Write(2, packageName, "whstatus setting",
-		fmt.Sprintf("sn: %s, seq: %s. send cumulate, MQTT control producer. heat time: %d, hot water: %d, work time: %d, used power: %d, save power: %d",
-			msg.SerialNumber, seq, whs.CumulateHeatTime, whs.CumulateHotWater, whs.CumulateWorkTime, whs.CumulateUsedPower, whs.CumulateSavePower))
-	base.MqttControlCh <- pak
-}
-
-// 处理比较设置数据
-func (msg *WHStatusMessage) handleSetting(seq string) (err error) {
-	whs := new(equipment.WaterHeater)
-
-	exists := whs.LoadStatus(msg.SerialNumber)
-	if !exists {
-		glog.Write(2, packageName, "whstatus setting", fmt.Sprintf("sn: %s. cannot compare setting for new equipment.", msg.SerialNumber))
-		return nil
-	}
-
-	setting := new(equipment.WaterHeaterSetting)
-	exists = setting.LoadSetting(msg.SerialNumber)
-	if !exists {
-		glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s. setting is empty.", msg.SerialNumber))
-		return nil
-	}
-
-	glog.Write(3, packageName, "whstatus setting", fmt.Sprintf("sn: %s, seq: %s. set-active:%d, set-unlock:%d, set activate time: %d. status-active:%d, status-unlock:%d, status activate time: %d.",
-		msg.SerialNumber, seq, setting.Activate, setting.Unlock, setting.SetActivateTime, whs.Activate, whs.Unlock, whs.ActivationTime))
-
-	controlMsg := send.NewWHControlMessage(whs.SerialNumber, whs.MainboardNumber)
-
-	pak := new(base.SendPacket)
-	pak.SerialNumber = whs.SerialNumber
-
-	if setting.Activate != whs.Activate {
-		if setting.Activate == 0 { // whs.Activate == 1
-			pak.Payload = controlMsg.Activate(0)
-
-			glog.Write(2, packageName, "whstatus setting", fmt.Sprintf("sn: %s, seq: %s. send inactivate, MQTT control producer.", msg.SerialNumber, seq))
-			base.MqttControlCh <- pak
-
-		} else { // setting.Activate == 1 && whs.Activate == 0
-			pak.Payload = controlMsg.Activate(1)
-
-			glog.Write(2, packageName, "whstatus setting", fmt.Sprintf("sn: %s, seq: %s. send activate, MQTT control producer.", msg.SerialNumber, seq))
-			base.MqttControlCh <- pak
-		}
-
-		return nil
-	}
-
-	// 比较设备记录时间和设置激活时间，补发注销命令
-	if setting.Activate == 1 && whs.ActivationTime+360*1000 < setting.SetActivateTime {
-		pak.Payload = controlMsg.Activate(0)
-
-		glog.Write(2, packageName, "whstatus setting", fmt.Sprintf("sn: %s, seq: %s. supply inactivate, MQTT control producer.", msg.SerialNumber, seq))
-		base.MqttControlCh <- pak
-
-		return nil
-	}
-
-	if setting.Activate == 0 && whs.Activate == 0 {
-		return nil
-	}
-
-	if whs.Unlock != setting.Unlock {
-		if setting.Unlock == 0 {
-			pak.Payload = controlMsg.Lock()
-
-			glog.Write(2, packageName, "whstatus setting", fmt.Sprintf("sn: %s, seq: %s. lock, MQTT control producer.", msg.SerialNumber, seq))
-			base.MqttControlCh <- pak
-		} else {
-			pak.Payload = controlMsg.Unlock(1, setting.DeadlineTime)
-
-			glog.Write(2, packageName, "whstatus setting", fmt.Sprintf("sn: %s, seq: %s. unlock, MQTT control producer.", msg.SerialNumber, seq))
-			base.MqttControlCh <- pak
-		}
-
-		return nil
-	}
-
-	if whs.DeadlineTime != setting.DeadlineTime {
-		glog.Write(4, packageName, "whstatus setting", fmt.Sprintf("sn: %s, seq: %s. set-deadline:%d, status-deadline:%d.", msg.SerialNumber, seq, setting.DeadlineTime, whs.DeadlineTime))
-
-		if setting.DeadlineTime == 0 {
-			glog.Write(2, packageName, "whstatus setting", fmt.Sprintf("sn: %s, seq: %s. deadline is 0.", msg.SerialNumber, seq))
-			return nil
-		}
-
-		pak.Payload = controlMsg.SetDeadline(setting.DeadlineTime)
-
-		glog.Write(2, packageName, "whstatus setting", fmt.Sprintf("sn: %s, seq: %s. deadline, MQTT control producer.", msg.SerialNumber, seq))
-		base.MqttControlCh <- pak
-
-		return nil
-	}
-
-	glog.Write(4, packageName, "whstatus setting", fmt.Sprintf("sn: %s, seq: %s. setting compare pass.", msg.SerialNumber, seq))
-	return nil
-}
-
-// 下发校时
-func (msg *WHStatusMessage) timing(seq string) {
-	timing := send.NewTimingMessage(msg.SerialNumber, msg.MainboardNumber)
-	payload := timing.Time()
-
-	pak := new(base.SendPacket)
-	pak.SerialNumber = msg.SerialNumber
-	pak.Payload = payload
-
-	glog.Write(4, packageName, "whstatus timing", fmt.Sprintf("sn: %s, seq: %s. send timing, MQTT control producer.", msg.SerialNumber, seq))
-	base.MqttControlCh <- pak
-}

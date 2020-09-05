@@ -49,6 +49,15 @@ type Config struct {
 	// HTTP接口监听地址
 	HttpListenAddress string
 
+	// Influx地址
+	InfluxAddress string
+
+	// Influx Token
+	InfluxToken string
+
+	// Influx Org
+	InfluxOrg string
+
 	// 日志级别
 	LogLevel	int
 
@@ -68,6 +77,9 @@ func InitConfig(channel int) {
 	DefaultConfig.RedisPersisServerAddress = "192.168.1.120:6380"
 	DefaultConfig.RedisPassword = "123456"
 	DefaultConfig.HttpListenAddress = ":8181"
+	DefaultConfig.InfluxAddress = "127.0.0.1"
+	DefaultConfig.InfluxToken = ""
+	DefaultConfig.InfluxOrg = ""
 	DefaultConfig.LogLevel = 3
 	DefaultConfig.LogToConsole = true
 }

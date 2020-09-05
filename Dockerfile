@@ -16,6 +16,4 @@ RUN echo 'Asia/Shanghai' >/etc/timezone
 # COMPILE
 RUN go build .
 
-EXPOSE 8181
-
 ENTRYPOINT ["./Glaucus"]

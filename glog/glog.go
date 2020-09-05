@@ -59,14 +59,14 @@ func Read() {
 
 		now := time.Now()
 		filename := fmt.Sprintf("./log/%d%02d%02d.log", now.Year(), now.Month(), now.Day())
-		path, _ := filepath.Abs(filename)
+		_, _ = filepath.Abs(filename)
 
 		text := fmt.Sprintf("[%s][%s]-[%s]:[%s]\t%s\n",
 			levels[packet.Level], now.Format("2006-01-02 15:04:05.000"), packet.PackageName, packet.Title, packet.Message)
 
-		if err := writeFile(path, []byte(text)); err != nil {
-			fmt.Println(err)
-		}
+		//if err := writeFile(path, []byte(text)); err != nil {
+		//	fmt.Println(err)
+		//}
 		if base.DefaultConfig.LogToConsole {
 			fmt.Print(text)
 		}
@@ -85,7 +85,7 @@ func createDir(path string) {
 
 // 写文件
 func writeFile(filename string, data []byte) error {
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0x644)
+	f, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0x666)
 	if err != nil {
 		return err
 	}

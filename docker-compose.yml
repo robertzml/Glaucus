@@ -1,0 +1,19 @@
+version: "3.7"
+services:
+  glaucus-r1:
+    image: glaucus:2.0.0
+    container_name: glaucus
+    volumes:
+      - type: bind
+        source: /home/zml/project/Glaucus/log
+        target: /home/zml/glaucus/log
+      - type: bind
+        source: /home/zml/config/glaucus.json
+        target: /home/zml/glaucus/conf.json
+        read_only: true
+    networks:
+      glaucus-net:
+
+networks:
+  glaucus-net:
+    name: glaucus-host

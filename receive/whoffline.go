@@ -2,11 +2,9 @@ package receive
 
 import (
 	"fmt"
-	"github.com/robertzml/Glaucus/equipment"
 	"github.com/robertzml/Glaucus/glog"
 	"github.com/robertzml/Glaucus/tlv"
 	"strconv"
-	"time"
 )
 
 // 热水器离线消息报文
@@ -71,34 +69,7 @@ func (msg *WHOfflineMessage) Authorize(seq string) (pass bool) {
 
 // 报文后续处理
 func (msg *WHOfflineMessage) Handle(data interface{}, version float64, seq string) (err error) {
-	whs := new(equipment.WaterHeater)
-
-	if exists := whs.LoadStatus(msg.SerialNumber); !exists {
-		glog.Write(2, packageName, "whoffline handle", "cannot find equipment.")
-		return nil
-	}
-
-	// 更新离线状态和时间
-	whs.Online = 0
-	whs.LineTime = time.Now().Unix() * 1000
-
-	whs.SaveStatus()
-
-	// 关键数据
-	whKey := new(equipment.WaterHeaterKey)
-	whKey.SerialNumber = whs.SerialNumber
-	whKey.MainboardNumber = whs.MainboardNumber
-	whKey.Logtime = whs.Logtime
-	whKey.Activate = whs.Activate
-	whKey.ActivationTime = whs.ActivationTime
-	whKey.Unlock = whs.Unlock
-	whKey.DeadlineTime = whs.DeadlineTime
-	whKey.Online = 0
-	whKey.LineTime = whs.LineTime
-
-	whs.PushKey(whKey)
-
-	glog.Write(3, packageName, "whoffline handle", fmt.Sprintf("sn: %s, seq: %s. save offline will message.", whs.SerialNumber, seq))
+	glog.Write(3, packageName, "whoffline handle", fmt.Sprintf("sn: %s, seq: %s. save offline will message.", msg.SerialNumber, seq))
 	return nil
 }
 

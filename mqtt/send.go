@@ -22,7 +22,7 @@ func StartSend() {
 		fmt.Println("Send mqtt function is close.")
 	}()
 
-	sendClientId = fmt.Sprintf("send-channel-%d", base.DefaultConfig.MqttChannel)
+	sendClientId = fmt.Sprintf("influx-send-test")
 	SendMqtt.Connect(sendClientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttPassword, base.DefaultConfig.MqttServerAddress, sendOnConnect)
 
 	for {

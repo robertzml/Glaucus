@@ -1,16 +1,11 @@
 package equipment
 
-import (
-	"github.com/robertzml/Glaucus/redis"
-)
-
-
 // 热水器实时状态
 type WaterHeater struct {
 	SerialNumber      string
 	MainboardNumber   string
 	Logtime           int64
-	Fulltime	 	  int64	// 全上报时间
+	Fulltime          int64 // 全上报时间
 	DeviceType        string
 	ControllerType    string
 	Power             int8 // 开关状态
@@ -19,7 +14,7 @@ type WaterHeater struct {
 	ColdInTemp        int
 	HotInTemp         int
 	ErrorCode         int
-	ErrorTime		  int64		// 需设定
+	ErrorTime         int64 // 需设定
 	WifiVersion       string
 	CumulateHeatTime  int
 	CumulateHotWater  int
@@ -35,22 +30,22 @@ type WaterHeater struct {
 	DeadlineTime      int64
 	ActivationTime    int64
 	SpecialParameter  string
-	Online            int8		// 需设定
-	LineTime          int64		// 需设定
-	EnergySave		  int
-	IMSI			  string
-	ICCID			  string
-	Coordinate		  string
-	Csq				  string
+	Online            int8  // 需设定
+	LineTime          int64 // 需设定
+	EnergySave        int
+	IMSI              string
+	ICCID             string
+	Coordinate        string
+	Csq               string
 }
 
 // 热水器设置状态
 type WaterHeaterSetting struct {
-	SerialNumber      	string
-	SetActivateTime		int64
-	Activate        	int8
-	Unlock            	int8
-	DeadlineTime    	int64
+	SerialNumber    string
+	SetActivateTime int64
+	Activate        int8
+	Unlock          int8
+	DeadlineTime    int64
 }
 
 // 热水器运行数据
@@ -74,7 +69,7 @@ type WaterHeaterAlarm struct {
 	MainboardNumber string
 	Logtime         int64
 	ErrorCode       int
-	ErrorTime		int64
+	ErrorTime       int64
 }
 
 // 热水器关键数据
@@ -102,156 +97,42 @@ type WaterHeaterCumulate struct {
 	CumulateSavePower int
 	ColdInTemp        int
 	SetTemp           int
-	EnergySave		  int
+	EnergySave        int
 }
 
 // 热水器登录数据
 type WaterHeaterLogin struct {
-	SerialNumber      string
-	MainboardNumber   string
-	Logtime           int64
-	DeviceType        string
-	ControllerType    string
-	WifiVersion       string
-	SoftwareFunction  string
-	ICCID			  string
+	SerialNumber     string
+	MainboardNumber  string
+	Logtime          int64
+	DeviceType       string
+	ControllerType   string
+	WifiVersion      string
+	SoftwareFunction string
+	ICCID            string
 }
 
 // 热水器数据异常
 type WaterHeaterException struct {
-	SerialNumber      string
-	MainboardNumber   string
-	Logtime           int64
-	Type			  int
+	SerialNumber    string
+	MainboardNumber string
+	Logtime         int64
+	Type            int
 }
 
 // 获取redis中设备实时状态
 // serialNumber: 设备序列号
 // 返回 exists: 设备是否存在redis中
 func (equipment *WaterHeater) LoadStatus(serialNumber string) (exists bool) {
-	rc := new(redis.RedisClient)
-	rc.Get(true)
-	defer rc.Close()
-
-	if rc.Exists(WaterHeaterPrefix + serialNumber) == 0 {
-		return false
-	}
-
-	rc.Hgetall(WaterHeaterPrefix + serialNumber, equipment)
-
 	return true
 }
 
 // 整体更新设备实时状态
 func (equipment *WaterHeater) SaveStatus() {
-	rc := new(redis.RedisClient)
-	rc.Get(true)
-	defer rc.Close()
-
-	rc.Hmset(WaterHeaterPrefix+equipment.SerialNumber, equipment)
 }
 
 // 通过设备序列号获取主板序列号
 func (equipment *WaterHeater) GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool) {
-	rc := new(redis.RedisClient)
-	rc.Get(true)
-	defer rc.Close()
 
-	mn := rc.Hget(WaterHeaterPrefix + serialNumber, "MainboardNumber")
-	if len(mn) == 0 {
-		return "",false
-	} else {
-		return mn,true
-	}
+	return "", false
 }
-
-// 推送运行数据
-func (equipment *WaterHeater) PushRunning(running *WaterHeaterRunning) {
-	val := serialize(running)
-
-	rc := new(redis.RedisClient)
-	rc.Get(false)
-	defer rc.Close()
-
-	rc.Rpush(WaterHeaterPrefix + "running", val)
-}
-
-// 推送报警数据
-func (equipment *WaterHeater) PushAlarm(alarm *WaterHeaterAlarm) {
-	val := serialize(alarm)
-
-	rc := new(redis.RedisClient)
-	rc.Get(false)
-	defer rc.Close()
-
-	rc.Rpush(WaterHeaterPrefix + "alarm", val)
-}
-
-// 推送关键数据
-func (equipment *WaterHeater) PushKey(key *WaterHeaterKey) {
-	val := serialize(key)
-
-	rc := new(redis.RedisClient)
-	rc.Get(false)
-	defer rc.Close()
-
-	rc.Rpush(WaterHeaterPrefix + "key", val)
-}
-
-// 推送累计数据
-func (equipment *WaterHeater) PushCumulate(cumulate *WaterHeaterCumulate) {
-	val := serialize(cumulate)
-
-	rc := new(redis.RedisClient)
-	rc.Get(false)
-	defer rc.Close()
-
-	rc.Rpush(WaterHeaterPrefix + "cumulate", val)
-}
-
-// 推送登录数据
-func (equipment *WaterHeater) PushLogin(login *WaterHeaterLogin) {
-	val := serialize(login)
-
-	rc := new(redis.RedisClient)
-	rc.Get(false)
-	defer rc.Close()
-
-	rc.Rpush(WaterHeaterPrefix + "login", val)
-}
-
-// 推送异常数据
-func (equipment *WaterHeater) PushException(ex *WaterHeaterException) {
-	val := serialize(ex)
-
-	rc := new(redis.RedisClient)
-	rc.Get(false)
-	defer rc.Close()
-
-	rc.Rpush(WaterHeaterPrefix + "exception", val)
-}
-
-// 获取设置状态
-func (setting *WaterHeaterSetting) LoadSetting(serialNumber string) (exists bool) {
-	rc := new(redis.RedisClient)
-	rc.Get(true)
-	defer rc.Close()
-
-	if rc.Exists(WaterHeaterPrefix + "setting_" + serialNumber) == 0 {
-		return false
-	}
-
-	rc.Hgetall(WaterHeaterPrefix + "setting_" + serialNumber, setting)
-
-	return true
-}
-
-// 保存设置状态
-func (setting *WaterHeaterSetting) SaveSetting() {
-	rc := new(redis.RedisClient)
-	rc.Get(true)
-	defer rc.Close()
-
-	rc.Hmset(WaterHeaterPrefix + "setting_" + setting.SerialNumber, setting)
-}
-
