@@ -10,6 +10,7 @@ type WaterHeater struct {
 	SerialNumber      string
 	MainboardNumber   string
 	Logtime           int64
+	Fulltime	 	  int64	// 全上报时间
 	DeviceType        string
 	ControllerType    string
 	Power             int8 // 开关状态

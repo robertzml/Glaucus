@@ -293,6 +293,11 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	whs.ControllerType = msg.ControllerType
 	whs.Online = 1
 
+	// 记录全上报时间
+	if isFull {
+		whs.Fulltime = now
+	}
+
 	// 全新设备整体上报
 	if !exists && isFull {
 		whs.LineTime = now
@@ -505,6 +510,65 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whs.CumulateUsedPower = existsStatus.CumulateUsedPower
 		whs.CumulateSavePower = existsStatus.CumulateSavePower
 	}
+
+	// 检查数据异常增大
+	if isFull && existsStatus.Fulltime > 0 && existsStatus.Activate == 1 && whs.Activate == 1 && whs.ActivationTime+600*1000 < now {
+
+		// 全上报时间增量 （秒）
+		var logTimeDelta int = int((whs.Fulltime - existsStatus.Fulltime) / 1000)
+		unsualBigger := false
+
+		// 加热时间增量 > logtime增量 +2  (单位分钟)
+		if (whs.CumulateHeatTime-existsStatus.CumulateHeatTime)*60 > logTimeDelta+120 {
+			glog.Write(2, packageName, "whstatus handle logic",
+				fmt.Sprintf("sn: %s, seq: %s. redis val: %d, emq val: %d, full time: %d, exist full: %d. cumulate heat time too big, push exception.",
+					msg.SerialNumber, seq, existsStatus.CumulateHeatTime, whs.CumulateHeatTime, whs.Fulltime, existsStatus.Fulltime))
+			unsualBigger = true
+		}
+
+		// 通电时间增量 > logtime增量 +2
+		if (whs.CumulateWorkTime-existsStatus.CumulateWorkTime)*60 > logTimeDelta+120 {
+			glog.Write(2, packageName, "whstatus handle logic",
+				fmt.Sprintf("sn: %s, seq: %s. redis val: %d, emq val: %d, full time: %d, exist full: %d. cumulate work time too big, push exception.",
+					msg.SerialNumber, seq, existsStatus.CumulateWorkTime, whs.CumulateWorkTime, whs.Fulltime, existsStatus.Fulltime))
+			unsualBigger = true
+		}
+
+		// 使用热水量增量 > (加热时间增量 +1)*10
+		if (whs.CumulateHotWater - existsStatus.CumulateHotWater) > (whs.CumulateWorkTime-existsStatus.CumulateWorkTime+1)*20 {
+			glog.Write(2, packageName, "whstatus handle logic",
+				fmt.Sprintf("sn: %s, seq: %s. redis val: %d, emq val: %d. cumulate hot water too big, push exception.",
+					msg.SerialNumber, seq, existsStatus.CumulateHotWater, whs.CumulateHotWater))
+			unsualBigger = true
+		}
+
+		// 用电量增量 > (加热时间增量+1分)/60)*(6500w/1000)
+		if whs.CumulateUsedPower-existsStatus.CumulateUsedPower > (whs.CumulateWorkTime-existsStatus.CumulateWorkTime+1)*(6500/1000)*100/60 {
+			glog.Write(2, packageName, "whstatus handle logic",
+				fmt.Sprintf("sn: %s, seq: %s. redis val: %d, emq val: %d. cumulate used power too big, push exception.",
+					msg.SerialNumber, seq, existsStatus.CumulateUsedPower, whs.CumulateUsedPower))
+			unsualBigger = true
+		}
+
+		// 节电量增量 > (加热时间增量+1分)/60)*(6500w/1000)
+		if whs.CumulateSavePower-existsStatus.CumulateSavePower > (whs.CumulateWorkTime-existsStatus.CumulateWorkTime+1)*(6500/1000)*100/60 {
+			glog.Write(2, packageName, "whstatus handle logic",
+				fmt.Sprintf("sn: %s, seq: %s. redis val: %d, emq val: %d. cumulate saved power too big, push exception.",
+					msg.SerialNumber, seq, existsStatus.CumulateSavePower, whs.CumulateSavePower))
+			unsualBigger = true
+		}
+
+		if unsualBigger {
+			whException := new(equipment.WaterHeaterException)
+			whException.SerialNumber = whs.SerialNumber
+			whException.MainboardNumber = whs.MainboardNumber
+			whException.Logtime = whs.Logtime
+			whException.Type = 3
+
+			// whs.PushException(whException)
+		}
+	}
+
 
 	// 已有设备从非激活态变为激活态，补零
 	if existsStatus.Activate == 0 && whs.Activate == 1 {
