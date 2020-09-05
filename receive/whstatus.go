@@ -523,6 +523,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 			glog.Write(2, packageName, "whstatus handle logic",
 				fmt.Sprintf("sn: %s, seq: %s. redis val: %d, emq val: %d, full time: %d, exist full: %d. cumulate heat time too big, push exception.",
 					msg.SerialNumber, seq, existsStatus.CumulateHeatTime, whs.CumulateHeatTime, whs.Fulltime, existsStatus.Fulltime))
+
 			unsualBigger = true
 		}
 
@@ -542,16 +543,16 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 			unsualBigger = true
 		}
 
-		// 用电量增量 > (加热时间增量+1分)/60)*(6500w/1000)
-		if whs.CumulateUsedPower-existsStatus.CumulateUsedPower > (whs.CumulateWorkTime-existsStatus.CumulateWorkTime+1)*(6500/1000)*100/60 {
+		// 用电量增量 > (加热时间增量+1分)/60)*(30000w/1000)
+		if whs.CumulateUsedPower-existsStatus.CumulateUsedPower > (whs.CumulateWorkTime-existsStatus.CumulateWorkTime+1)*(30000/1000)*100/60 {
 			glog.Write(2, packageName, "whstatus handle logic",
 				fmt.Sprintf("sn: %s, seq: %s. redis val: %d, emq val: %d. cumulate used power too big, push exception.",
 					msg.SerialNumber, seq, existsStatus.CumulateUsedPower, whs.CumulateUsedPower))
 			unsualBigger = true
 		}
 
-		// 节电量增量 > (加热时间增量+1分)/60)*(6500w/1000)
-		if whs.CumulateSavePower-existsStatus.CumulateSavePower > (whs.CumulateWorkTime-existsStatus.CumulateWorkTime+1)*(6500/1000)*100/60 {
+		// 节电量增量 > (加热时间增量+1分)/60)*(30000w/1000)
+		if whs.CumulateSavePower-existsStatus.CumulateSavePower > (whs.CumulateWorkTime-existsStatus.CumulateWorkTime+1)*(30000/1000)*100/60 {
 			glog.Write(2, packageName, "whstatus handle logic",
 				fmt.Sprintf("sn: %s, seq: %s. redis val: %d, emq val: %d. cumulate saved power too big, push exception.",
 					msg.SerialNumber, seq, existsStatus.CumulateSavePower, whs.CumulateSavePower))
@@ -565,7 +566,16 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 			whException.Logtime = whs.Logtime
 			whException.Type = 3
 
-			// whs.PushException(whException)
+			whs.PushException(whException)
+
+			// 异常增加后使用redis的值
+			whs.Fulltime = existsStatus.Fulltime
+
+			whs.CumulateHeatTime = existsStatus.CumulateHeatTime
+			whs.CumulateHotWater = existsStatus.CumulateHotWater
+			whs.CumulateWorkTime = existsStatus.CumulateWorkTime
+			whs.CumulateUsedPower = existsStatus.CumulateUsedPower
+			whs.CumulateSavePower = existsStatus.CumulateSavePower
 		}
 	}
 
