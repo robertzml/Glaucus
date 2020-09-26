@@ -17,26 +17,31 @@ func main() {
 		fmt.Println("app is stop.")
 	}()
 
-	base.LoadConfig(1)
+	// 载入配置文件
+	base.LoadConfig()
+
+	// 初始化全局channel
 	base.InitChannel()
 
+	// 启动日志服务
 	glog.InitGlog()
 	go startLog()
 
-	influx.InitFlux()
-	go startInflux()
+	//influx.InitFlux()
+	//go startInflux()
 
+	// 启动 MQTT订阅服务
 	mqtt.InitMQTT()
-
-	// 启动 MQTT订阅，数据处理服务，设备控制服务
 	startMqtt()
-	go startStore()
+
+	// 启动数据处理服务
+	//go startStore()
 
 	for {
 		text := fmt.Sprintf("time is %v.", time.Now())
 		glog.Write(4, "main", "state", text)
 
-		time.Sleep(300 * 1e9)
+		time.Sleep(10 * 60 * 1e9) // 10 min
 	}
 }
 

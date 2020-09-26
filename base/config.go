@@ -34,6 +34,9 @@ type Config struct {
 	// MQTT主题订阅频道
 	MqttChannel int
 
+	// Rabbit MQ 连接字符串
+	RabbitMQAddress string
+
 	// Redis 数据库序号
 	RedisDatabase int
 
@@ -66,12 +69,13 @@ type Config struct {
 }
 
 // 初始化默认配置
-func InitConfig(channel int) {
+func InitConfig() {
 	DefaultConfig.MqttServerAddress = "tcp://192.168.1.120:1883"
 	DefaultConfig.MqttServerHttp = "http://192.168.1.120:18083"
-	DefaultConfig.MqttChannel = channel
+	DefaultConfig.MqttChannel = 1
 	DefaultConfig.MqttUsername = "glaucus"
 	DefaultConfig.MqttPassword = "123456"
+	DefaultConfig.RabbitMQAddress = "amqp://guest:guest@localhost:5672/"
 	DefaultConfig.RedisDatabase = 0
 	DefaultConfig.RedisServerAddress = "192.168.1.120:6379"
 	DefaultConfig.RedisPersisServerAddress = "192.168.1.120:6380"
@@ -85,11 +89,11 @@ func InitConfig(channel int) {
 }
 
 // 载入配置文件
-func LoadConfig(channel int)  {
+func LoadConfig()  {
 	file, err := os.Open("./conf.json")
 	if err != nil {
 		fmt.Printf("cannot open the config file.\n")
-		InitConfig(channel)
+		InitConfig()
 		return
 	}
 
@@ -101,11 +105,9 @@ func LoadConfig(channel int)  {
 	err = decoder.Decode(&DefaultConfig)
 	if err != nil {
 		fmt.Printf("cannot parse the config file.\n")
-		InitConfig(channel)
+		InitConfig()
 		return
 	}
-
-	DefaultConfig.MqttChannel = channel
 }
 
 // 初始化全局 channel
