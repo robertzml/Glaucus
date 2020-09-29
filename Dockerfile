@@ -1,5 +1,5 @@
 # IMAGE
-FROM golang:1.13.0
+FROM golang:1.15.2
 
 # SET FILES
 WORKDIR /home/zml/glaucus
@@ -10,8 +10,8 @@ ADD . /home/zml/glaucus/
 ENV GOPROXY https://goproxy.cn
 
 # SET TIMEZONE
-RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-RUN echo 'Asia/Shanghai' >/etc/timezone
+# RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+# RUN echo 'Asia/Shanghai' >/etc/timezone
 
 # COMPILE
 RUN go build .

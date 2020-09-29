@@ -44,5 +44,5 @@ func InitMQTT() {
 	paho.ERROR = MLogger{1}
 	paho.CRITICAL = MLogger{0}
 	paho.WARN = MLogger{2}
-	paho.DEBUG = MLogger{4}
+	// paho.DEBUG = MLogger{4}
 }

@@ -77,29 +77,29 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 func (msg *WHStatusMessage) Handle(data interface{}, version float64, seq string) (err error) {
 	switch data.(type) {
 	case tlv.TLV:
-		var isFull bool
+		// var isFull bool
 		cell := data.(tlv.TLV)
 		if cell.Tag == 0x128 {
 			// 局部更新
-			isFull = false
+			//isFull = false
 		} else if cell.Tag == 0x12e {
 			// 整体更新
-			isFull = true
+			//isFull = true
 		} else {
 			return errors.New("unknown tlv tag")
 		}
 
-		// 解析状态
-		err, whs := msg.handleParseStatus(cell.Value)
-		if err != nil {
-			return err
-		}
+		//// 解析状态
+		//err, whs := msg.handleParseStatus(cell.Value)
+		//if err != nil {
+		//	return err
+		//}
+		//
+		//// 业务逻辑处理
+		//msg.handleLogic(whs, version, seq, isFull)
 
-		// 业务逻辑处理
-		msg.handleLogic(whs, version, seq, isFull)
 
-
-		glog.Write(4, packageName, "whstatus handle", fmt.Sprintf("sn: %s, seq: %s. handle finish.", msg.SerialNumber, seq))
+		glog.Write(5, packageName, "whstatus handle", fmt.Sprintf("sn: %s, seq: %s. handle finish.", msg.SerialNumber, seq))
 		return nil
 
 	default:

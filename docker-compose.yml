@@ -1,19 +1,22 @@
 version: "3.7"
 services:
-  glaucus-r1:
-    image: glaucus:2.0.0
-    container_name: glaucus
+  glaucus:
+    build:
+      context: .
+    image: glaucus
+    container_name: glaucus-1
     volumes:
       - type: bind
-        source: /home/zml/project/Glaucus/log
-        target: /home/zml/glaucus/log
+        source: /etc/localtime
+        target: /etc/localtime
+        read_only: true
       - type: bind
-        source: /home/zml/config/glaucus.json
+        source: /home/zml/project/glaucus/conf.json
         target: /home/zml/glaucus/conf.json
         read_only: true
     networks:
-      glaucus-net:
+      artemis-net:
 
 networks:
-  glaucus-net:
-    name: glaucus-host
+  artemis-net:
+    name: artemis-network

@@ -40,6 +40,7 @@ func InitGlog() {
 }
 
 // 写日志到channel 中
+// {"exception", "error", "waring", "info", "debug", "verbose"}
 func Write(level int, module string, action string, message string) {
 	packet := Packet{Level: level, System: systemName, Module: module, Action: action, Message: message}
 	logChan <- &packet

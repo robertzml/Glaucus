@@ -7,7 +7,6 @@ import (
 	"github.com/robertzml/Glaucus/influx"
 	"github.com/robertzml/Glaucus/mqtt"
 	"github.com/robertzml/Glaucus/receive"
-	"time"
 )
 
 func main() {
@@ -35,14 +34,10 @@ func main() {
 	startMqtt()
 
 	// 启动数据处理服务
-	//go startStore()
+	go startProcess()
 
-	for {
-		text := fmt.Sprintf("time is %v.", time.Now())
-		glog.Write(4, "main", "state", text)
-
-		time.Sleep(10 * 60 * 1e9) // 10 min
-	}
+	// 阻塞
+	select{}
 }
 
 // 启动日志服务
@@ -63,9 +58,9 @@ func startMqtt() {
 	mqtt.StartReceive()
 }
 
-// 启用数据存储服务
-func startStore() {
-	glog.Write(3, "main", "start", "start data store.")
-	receive.Store()
+// 启用数据处理服务
+func startProcess() {
+	glog.Write(3, "main", "start", "start data process.")
+	receive.Process()
 }
 
