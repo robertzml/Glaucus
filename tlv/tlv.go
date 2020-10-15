@@ -27,7 +27,7 @@ func (tlv *TLV) Size() int {
 }
 
 
-// 解析协议头部
+// 解析Homeconsole协议头部
 // 返回seq和协议内容
 func ParseHead(message string) (version float64, seq string, payload string, err error) {
 	vlen := len(HomeConsoleVersion)

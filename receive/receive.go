@@ -26,30 +26,30 @@ func Process() {
 		glog.Write(5, packageName, "process", fmt.Sprintf("TOPIC: %s. MQTT status consumer.", pak.Topic))
 
 		// 解析报文头部
-		cell, version, seq, msg, err := parseType(pak.ProductType, pak.Payload)
+		cell, version, seq, msg, err := parseHead(pak.ProductType, pak.Payload)
 		if err != nil {
 			glog.Write(1, packageName, "process", "catch error in parseType: " + err.Error())
 			continue
 		}
 
 		// 解析报文内容
-		_ = parseMessage(msg, version, seq, cell)
+		_ = parseBody(msg, version, seq, cell)
 
 		// glog.Write(5, packageName, "process", fmt.Sprintf("seq: %s, process finish.", seq))
 	}
 }
 
 /*
-解析协议
+解析协议头部
 根据收到的报文，解析出协议头部，确定协议类型，返回报文
-@param productType	int		设备产品类型
-@param message		string	报文消息
-@return  cell 		TLV		报文头
-@return  version 	float64	报文版本
-@return  seq 		string	序列号
-@return  msg  		Message	报文对象
+	@param productType	int		设备产品类型
+	@param message		string	报文消息
+	@return  cell 		TLV		报文头
+	@return  version 	float64	报文版本
+	@return  seq 		string	序列号
+	@return  msg  		Message	报文对象
  */
-func parseType(productType int, message string) (cell tlv.TLV, version float64, seq string, msg Message, err error) {
+func parseHead(productType int, message string) (cell tlv.TLV, version float64, seq string, msg Message, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			glog.Write(1, packageName, "process", fmt.Sprintf("catch runtime panic in parse type: %v", r))
@@ -81,7 +81,6 @@ func parseType(productType int, message string) (cell tlv.TLV, version float64, 
 		if productType == 1 {	// 热水器
 			msg = new(WHStatusMessage)
 		} else if productType == 2 {
-			// msg = new(WCStatusMessage)
 			msg = nil
 			err = errors.New("wrong device type")
 		} else {
@@ -100,8 +99,16 @@ func parseType(productType int, message string) (cell tlv.TLV, version float64, 
 	return
 }
 
-// 解析协议内容
-func parseMessage(msg Message, version float64, seq string, cell tlv.TLV) (err error) {
+/*
+解析协议内容
+完成协议内容解析、验证、处理过程
+	@param msg		Message 报文对象
+	@param version	float64	报文版本
+	@param seq		string	消息序号
+	@param cell		TLV		报文头
+	@return err		error	错误消息
+ */
+func parseBody(msg Message, version float64, seq string, cell tlv.TLV) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			glog.Write(1, packageName, "process", fmt.Sprintf("catch runtime panic in parse message: %v", r))
