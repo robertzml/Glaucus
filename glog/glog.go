@@ -18,7 +18,7 @@ const (
 
 // 日志数据包
 type Packet struct {
-	// 日志级别
+	// 日志级别 0-5
 	Level  		int
 
 	// 系统名称

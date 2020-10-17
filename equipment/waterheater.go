@@ -1,5 +1,12 @@
 package equipment
 
+import "github.com/robertzml/Glaucus/redis"
+
+const (
+	// 热水器Redis前缀
+	waterHeaterPrefix = "wh_"
+)
+
 // 热水器实时状态
 type WaterHeater struct {
 	SerialNumber      string
@@ -124,15 +131,38 @@ type WaterHeaterException struct {
 // serialNumber: 设备序列号
 // 返回 exists: 设备是否存在redis中
 func (equipment *WaterHeater) LoadStatus(serialNumber string) (exists bool) {
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
+
+	if !rc.Exists(waterHeaterPrefix + serialNumber) {
+		return false
+	}
+
+	rc.Hgetall(waterHeaterPrefix + serialNumber, equipment)
+
 	return true
 }
 
-// 整体更新设备实时状态
+// 整体更新设备实时状态，保存到redis
 func (equipment *WaterHeater) SaveStatus() {
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
+
+	rc.Hmset(waterHeaterPrefix+equipment.SerialNumber, equipment)
 }
 
 // 通过设备序列号获取主板序列号
 func (equipment *WaterHeater) GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool) {
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
 
-	return "", false
+	mn := rc.Hget(waterHeaterPrefix + serialNumber, "MainboardNumber")
+	if len(mn) == 0 {
+		return "",false
+	} else {
+		return mn,true
+	}
 }

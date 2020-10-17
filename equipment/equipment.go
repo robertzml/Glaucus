@@ -4,11 +4,6 @@ import (
 	"encoding/json"
 )
 
-const (
-	// 热水器Redis前缀
-	WaterHeaterPrefix = "wh_"
-)
-
 // 设备接口
 type Equipment interface {
 	// 从redis中获取设备状态

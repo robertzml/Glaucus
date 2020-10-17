@@ -43,9 +43,6 @@ type Config struct {
 	// Redis 服务器地址
 	RedisServerAddress string
 
-	// 持久化 Redis 服务器地址
-	RedisPersisServerAddress string
-
 	// Redis 密码
 	RedisPassword 	string
 
@@ -78,7 +75,6 @@ func InitConfig() {
 	DefaultConfig.RabbitMQAddress = "amqp://guest:guest@localhost:5672/"
 	DefaultConfig.RedisDatabase = 0
 	DefaultConfig.RedisServerAddress = "192.168.1.120:6379"
-	DefaultConfig.RedisPersisServerAddress = "192.168.1.120:6380"
 	DefaultConfig.RedisPassword = "123456"
 	DefaultConfig.HttpListenAddress = ":8181"
 	DefaultConfig.InfluxAddress = "127.0.0.1"
