@@ -1,10 +1,5 @@
 package equipment
 
-import (
-	"fmt"
-	"testing"
-)
-
 /*
 func TestReadWaterHeater(t *testing.T) {
 	var w WaterHeater
@@ -19,14 +14,3 @@ func TestReadWaterHeater(t *testing.T) {
 	fmt.Printf("%+v\n", w)
 }
 */
-
-func TestSerialize(t *testing.T) {
-	var w WaterHeater
-
-	_, err := w.GetStatus("01100101801100e2")
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	w.Serialize()
-}

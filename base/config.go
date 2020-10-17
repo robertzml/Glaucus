@@ -10,9 +10,6 @@ var (
 	// 默认配置
 	DefaultConfig Config
 
-	// MQTT 发送控制指令 channel
-	MqttControlCh  chan *SendPacket
-
 	// MQTT 状态订阅消息 channel
 	MqttStatusCh  chan *ReceivePacket
 )
@@ -108,6 +105,5 @@ func LoadConfig()  {
 
 // 初始化全局 channel
 func InitChannel() {
-	MqttControlCh = make(chan *SendPacket)
 	MqttStatusCh = make(chan *ReceivePacket, 10)
 }

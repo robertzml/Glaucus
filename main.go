@@ -7,6 +7,8 @@ import (
 	"github.com/robertzml/Glaucus/influx"
 	"github.com/robertzml/Glaucus/mqtt"
 	"github.com/robertzml/Glaucus/receive"
+	"github.com/robertzml/Glaucus/redis"
+	"github.com/robertzml/Glaucus/send"
 )
 
 func main() {
@@ -26,6 +28,9 @@ func main() {
 	glog.InitGlog()
 	go startLog()
 
+	// 初始化redis连接池
+	redis.InitPool(base.DefaultConfig.RedisDatabase)
+
 	//influx.InitFlux()
 	//go startInflux()
 
@@ -33,8 +38,14 @@ func main() {
 	mqtt.InitMQTT()
 	startMqtt()
 
+	// 初始化下发控制channel
+	send.InitSend()
+
 	// 启动数据处理服务
 	go startProcess()
+
+	// 启动控制指令下发服务
+	go startControl()
 
 	// 阻塞
 	select{}
@@ -64,3 +75,8 @@ func startProcess() {
 	receive.Process()
 }
 
+// 启动控制指令下发服务
+func startControl() {
+	glog.Write(3, "main","start","start equipment control")
+	send.Read()
+}

@@ -2,6 +2,7 @@ package equipment
 
 import (
 	"encoding/json"
+	"github.com/robertzml/Glaucus/redis"
 )
 
 // 设备接口
@@ -14,6 +15,29 @@ type Equipment interface {
 
 	// 获取主板序列号
     GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool)
+}
+
+// 设置 Redis {主板序列号 - 设备序列号} string
+func SetMainboardString(mainboardNumber string, serialNumber string) {
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
+
+	rc.Write(mainboardNumber, serialNumber)
+}
+
+// 读取 Redis {主板序列号 - 设备序列号} string
+// 返回: 设备序列号
+func GetMainboardString(mainboardNumber string) (serialNumber string) {
+	rc := new(redis.RedisClient)
+	rc.Get()
+	defer rc.Close()
+
+	if serialNumber, err := rc.Read(mainboardNumber); err != nil {
+		panic(err)
+	} else {
+		return serialNumber
+	}
 }
 
 // 序列化数据

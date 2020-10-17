@@ -8,16 +8,16 @@ import (
 	"time"
 )
 
-// 日志 channel
-var logChan  chan *Packet
-
 const (
 	// 日志显示系统名称
 	systemName = "Glaucus"
 )
 
+// 日志 channel
+var logChan  chan *packet
+
 // 日志数据包
-type Packet struct {
+type packet struct {
 	// 日志级别 0-5
 	Level  		int
 
@@ -36,14 +36,14 @@ type Packet struct {
 
 // 初始化日志
 func InitGlog() {
-	logChan = make(chan *Packet, 10)
+	logChan = make(chan *packet, 10)
 }
 
 // 写日志到channel 中
 // {"exception", "error", "waring", "info", "debug", "verbose"}
 func Write(level int, module string, action string, message string) {
-	packet := Packet{Level: level, System: systemName, Module: module, Action: action, Message: message}
-	logChan <- &packet
+	pak := packet{Level: level, System: systemName, Module: module, Action: action, Message: message}
+	logChan <- &pak
 }
 
 // 从channel 中获取日志并写入到队列
@@ -72,14 +72,14 @@ func Read() {
 	levels := [...]string{"exception", "error", "waring", "info", "debug", "verbose"}
 
 	for {
-		packet := <- logChan
+		pak := <- logChan
 
-		if packet.Level > base.DefaultConfig.LogLevel {
+		if pak.Level > base.DefaultConfig.LogLevel {
 			continue
 		}
 
 		// 获取日志消息内容
-		jsonData, _ := json.Marshal(packet)
+		jsonData, _ := json.Marshal(pak)
 		// fmt.Println(string(jsonData))
 
 		// 推送到 rabbitmq
@@ -96,7 +96,7 @@ func Read() {
 		if base.DefaultConfig.LogToConsole {
 			now := time.Now()
 			text := fmt.Sprintf("[%s][%s]-[%s]:[%s]\t%s\n",
-				levels[packet.Level], now.Format("2006-01-02 15:04:05.000"), packet.Module, packet.Action, packet.Message)
+				levels[pak.Level], now.Format("2006-01-02 15:04:05.000"), pak.Module, pak.Action, pak.Message)
 
 			fmt.Print(text)
 		}
