@@ -26,19 +26,20 @@ func InitPool(db int) {
 	timeout := time.Duration(20)
 
 	redisPool = &redigo.Pool{
-		MaxIdle:     10,
-		MaxActive:   50,
-		IdleTimeout: 10 * time.Second,
-		Wait:        true,
+		MaxIdle:         10,
+		MaxActive:       50,
+		IdleTimeout:     10 * time.Second,
+		Wait:            true,
 		MaxConnLifetime: 60 * time.Second,
 		Dial: func() (redigo.Conn, error) {
 			con, err := redigo.Dial("tcp", base.DefaultConfig.RedisServerAddress,
 				redigo.DialPassword(base.DefaultConfig.RedisPassword),
 				redigo.DialDatabase(db),
-				redigo.DialConnectTimeout(timeout * time.Second),
-				redigo.DialReadTimeout(timeout * time.Second),
-				redigo.DialWriteTimeout(timeout * time.Second))
+				redigo.DialConnectTimeout(timeout*time.Second),
+				redigo.DialReadTimeout(timeout*time.Second),
+				redigo.DialWriteTimeout(timeout*time.Second))
 			if err != nil {
+				glog.Write(1, packageName, "dial", err.Error())
 				return nil, err
 			}
 			return con, nil
