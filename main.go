@@ -29,7 +29,7 @@ func main() {
 	go startLog()
 
 	// 初始化redis连接池
-	redis.InitPool(base.DefaultConfig.RedisDatabase)
+	redis.InitPool()
 
 	//influx.InitFlux()
 	//go startInflux()

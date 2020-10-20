@@ -2,82 +2,80 @@ package redis
 
 import (
 	"fmt"
+	redigo "github.com/gomodule/redigo/redis"
 	"github.com/robertzml/Glaucus/base"
 	"testing"
+	"time"
 )
 
-/*
-func TestSaveStruct(t *testing.T) {
-	var w equipment.WaterHeater
-	w.Power = 1
-	w.OutTemp = 25
-	w.OutFlow = 12
-
-	r := new(Redis)
-	r.Connect()
-
-	r.Hmset("1234567", &w)
-
-	r.Close()
-}*/
-
-//func TestPool(t *testing.T) {
-//
-//	base.InitConfig()
-//	InitPool(0)
-//
-//	for i := 0; i < 3; i++ {
-//
-//		go func(num int) {
-//			rc := new(RedisClient)
-//			rc.Get()
-//
-//			fmt.Printf("time: %s, thread: %d, active: %d, idle: %d\n", time.Now(), num, RedisPool.ActiveCount(), RedisPool.IdleCount())
-//
-//			time.Sleep(10 * 1e9)
-//			defer rc.Close()
-//		}(i)
-//
-//
-//		// fmt.Printf("time: %s, active: %d, idle: %d\n", time.Now(), RedisPool.ActiveCount(), RedisPool.IdleCount())
-//	}
-//
-//	for i := 0; i < 5; i++ {
-//		time.Sleep(10 * 1e9)
-//		fmt.Printf("sleep, time: %s, active: %d, idle: %d\n", time.Now(), RedisPool.ActiveCount(), RedisPool.IdleCount())
-//	}
-//
-//	r1 := new(RedisClient)
-//	r1.Get()
-//
-//	fmt.Printf("time: %s, active: %d, idle: %d\n", time.Now(), RedisPool.ActiveCount(), RedisPool.IdleCount())
-//	time.Sleep(10 * 1e9)
-//
-//	r1.Close()
-//
-//	fmt.Printf("time: %s, active: %d, idle: %d\n", time.Now(), RedisPool.ActiveCount(), RedisPool.IdleCount())
-//
-//	if r := recover(); r != nil {
-//		fmt.Printf("%v", r)
-//	}
-//}
-
-
 func TestDoGet(t *testing.T) {
-	base.InitConfig()
-	InitPool(0)
+	base.LoadConfig()
+	InitPool()
 
 	rc := new(RedisClient)
 	rc.Get()
 	defer rc.Close()
 
+	rc.Write("abc", "hoop")
+
 	if val, err := rc.Read("abc"); err != nil {
-		fmt.Println(err)
+		t.Log(err)
 	} else {
-		fmt.Println(val)
+		t.Log(val)
+	}
+}
+
+func newPool() *redigo.Pool {
+	//return &redigo.Pool{
+	//	MaxIdle: 3,
+	//	IdleTimeout: 240 * time.Second,
+	//	// Dial or DialContext must be set. When both are set, DialContext takes precedence over Dial.
+	//	Dial: func () (redigo.Conn, error) { return redigo.Dial("tcp", "localhost",
+	//		redigo.DialPassword("123"),
+	//		) },
+	//}
+
+	// timeout := time.Duration(20)
+
+	redisPool := &redigo.Pool{
+		MaxIdle:         10,
+		MaxActive:       50,
+		IdleTimeout:     240 * time.Second,
+		Wait:            true,
+		MaxConnLifetime: 60 * time.Second,
+		Dial: func() (redigo.Conn, error) {
+			con, err := redigo.Dial("tcp", "localhost",
+				redigo.DialPassword("123"))
+			return con, err
+		},
+		TestOnBorrow: func(c redigo.Conn, t time.Time) error {
+			if time.Since(t) < time.Minute {
+				return nil
+			}
+			_, err := c.Do("PING")
+			if err != nil {
+				fmt.Println(err)
+			}
+			return err
+		},
 	}
 
+	return redisPool
+}
 
+func TestPool(t *testing.T) {
+	pool := newPool()
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	_, err := conn.Do("SET", "jack", "tik tok")
+
+	if err == nil {
+		t.Log("this is ok")
+	} else {
+		t.Log("this is failed")
+	}
 }
 
 /*
