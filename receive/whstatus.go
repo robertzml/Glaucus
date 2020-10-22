@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/robertzml/Glaucus/equipment"
 	"github.com/robertzml/Glaucus/glog"
-	"github.com/robertzml/Glaucus/influx"
 	"github.com/robertzml/Glaucus/send"
 	"github.com/robertzml/Glaucus/tlv"
 	"strconv"
@@ -21,7 +20,7 @@ type WHStatusMessage struct {
 }
 
 // 解析协议内容
-func (msg *WHStatusMessage) Parse(payload string) (data interface{}, err error) {
+func (msg *WHStatusMessage) Parse(payload string) (data *tlv.TLV, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			glog.Write(1, packageName, "whstatus parse", fmt.Sprintf("catch runtime panic: %v", r))
@@ -52,15 +51,15 @@ func (msg *WHStatusMessage) Parse(payload string) (data interface{}, err error) 
 		}
 
 		if cell.Tag == 0x128 {
-			return cell, nil
+			return &cell, nil
 		} else if cell.Tag == 0x12e {
-			return cell, nil
+			return &cell, nil
 		}
 
 		index += cell.Length + 8
 	}
 
-	return
+	return nil, errors.New("cannot find info tag")
 }
 
 // 打印协议信息
@@ -110,38 +109,29 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 }
 
 // 报文后续处理
-func (msg *WHStatusMessage) Handle(data interface{}, version float64, seq string) (err error) {
-	switch data.(type) {
-	case tlv.TLV:
-		// var isFull bool
-		cell := data.(tlv.TLV)
-		if cell.Tag == 0x128 {
-			// 局部更新
-			//isFull = false
-		} else if cell.Tag == 0x12e {
-			// 整体更新
-			//isFull = true
-		} else {
-			return errors.New("unknown tlv tag")
-		}
-
-		//// 解析状态
-		//err, whs := msg.handleParseStatus(cell.Value)
-		//if err != nil {
-		//	return err
-		//}
-		//
-		//// 业务逻辑处理
-		//msg.handleLogic(whs, version, seq, isFull)
-
-
-		glog.Write(5, packageName, "whstatus handle", fmt.Sprintf("sn: %s, seq: %s. handle finish.", msg.SerialNumber, seq))
-		return nil
-
-	default:
-		// 无法进行后续处理
-		return errors.New("wrong handle type.")
+func (msg *WHStatusMessage) Handle(data *tlv.TLV, version float64, seq string) (err error) {
+	var isFull bool
+	if data.Tag == 0x128 {
+		// 局部更新
+		isFull = false
+	} else if data.Tag == 0x12e {
+		// 整体更新
+		isFull = true
+	} else {
+		return errors.New("unknown tlv tag")
 	}
+
+	// 解析状态
+	err, whs := msg.handleParseStatus(data.Value)
+	if err != nil {
+		return err
+	}
+
+	// 业务逻辑处理
+	msg.handleLogic(whs, version, seq, isFull)
+
+	glog.Write(5, packageName, "whstatus handle", fmt.Sprintf("sn: %s, seq: %s. handle finish.", msg.SerialNumber, seq))
+	return nil
 }
 
 // 解析状态数据
@@ -276,7 +266,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 			fmt.Sprintf("sn: %s, seq: %s. full report, heat time: %d, hot water: %d, work time: %d, used power: %d, saved power: %d.",
 				msg.SerialNumber, seq, whs.CumulateHeatTime, whs.CumulateHotWater, whs.CumulateWorkTime, whs.CumulateUsedPower, whs.CumulateSavePower))
 
-		influx.Write(whs.SerialNumber, whs.CumulateHeatTime, whs.CumulateHotWater, whs.CumulateWorkTime, whs.CumulateUsedPower, whs.CumulateSavePower)
+		// influx.Write(whs.SerialNumber, whs.CumulateHeatTime, whs.CumulateHotWater, whs.CumulateWorkTime, whs.CumulateUsedPower, whs.CumulateSavePower)
 	}
 
 	// 全新设备整体上报
@@ -285,12 +275,16 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 
 		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment find.", msg.SerialNumber, seq))
 
+		whs.SaveStatus()
 		return
 	}
 
 	// 后面开始处理已有设备
 	whs.ErrorTime = existsStatus.ErrorTime
 	whs.LineTime = existsStatus.LineTime
+
+	// 更新 hash
+	whs.SaveStatus()
 }
 
 

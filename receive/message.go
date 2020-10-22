@@ -7,7 +7,7 @@ import "github.com/robertzml/Glaucus/tlv"
 type Message interface {
 	// 报文协议解析
 	// data: 返回的数据
-	Parse(payload string) (data interface{}, err error)
+	Parse(payload string) (data *tlv.TLV, err error)
 
 	// 打印协议内容
 	Print(cell tlv.TLV)
@@ -16,5 +16,5 @@ type Message interface {
 	Authorize(seq string) (pass bool)
 
 	// 报文后续处理
-	Handle(data interface{}, version float64, seq string) (err error)
+	Handle(data *tlv.TLV, version float64, seq string) (err error)
 }

@@ -1,6 +1,7 @@
 package receive
 
 import (
+	"errors"
 	"fmt"
 	"github.com/robertzml/Glaucus/glog"
 	"github.com/robertzml/Glaucus/tlv"
@@ -16,7 +17,7 @@ type WHOfflineMessage struct {
 
 
 // 解析协议内容
-func (msg *WHOfflineMessage) Parse(payload string) (data interface{}, err error) {
+func (msg *WHOfflineMessage) Parse(payload string) (data *tlv.TLV, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			glog.Write(1, packageName, "whoffline parse", fmt.Sprintf("catch runtime panic: %v", r))
@@ -45,15 +46,15 @@ func (msg *WHOfflineMessage) Parse(payload string) (data interface{}, err error)
 		}
 
 		if cell.Tag == 0x128 {
-			return cell, nil
+			return &cell, nil
 		} else if cell.Tag == 0x12e {
-			return cell, nil
+			return &cell, nil
 		}
 
 		index += cell.Length + 8
 	}
 
-	return
+	return nil, errors.New("cannot find info tag")
 }
 
 // 打印协议信息
@@ -68,7 +69,7 @@ func (msg *WHOfflineMessage) Authorize(seq string) (pass bool) {
 }
 
 // 报文后续处理
-func (msg *WHOfflineMessage) Handle(data interface{}, version float64, seq string) (err error) {
+func (msg *WHOfflineMessage) Handle(data *tlv.TLV, version float64, seq string) (err error) {
 	glog.Write(3, packageName, "whoffline handle", fmt.Sprintf("sn: %s, seq: %s. save offline will message.", msg.SerialNumber, seq))
 	return nil
 }

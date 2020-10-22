@@ -100,13 +100,11 @@ func (r *RedisClient) Read(key string) (string string, err error) {
 // key: 键值
 func (r *RedisClient) Exists(key string) bool {
 	exists, err := redigo.Bool(r.client.Do("EXISTS", key))
-	//result, err := r.client.Do("EXISTS", key)
 	if err != nil {
 		glog.Write(0, packageName, "exists", err.Error())
 		panic(err)
 	}
 
-	// return int(result.(int64))
 	return exists
 }
 
