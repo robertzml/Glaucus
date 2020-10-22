@@ -37,3 +37,11 @@ func TestReadWaterHeater(t *testing.T) {
 	fmt.Printf("exists in redis: %v\n", exists)
 	fmt.Printf("%+v\n", whs)
 }
+
+func TestMainBoardNumber(t *testing.T) {
+	base.LoadConfig()
+	redis.InitPool()
+
+	sn := GetMainboardString("1111123")
+	t.Log(sn)
+}

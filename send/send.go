@@ -29,6 +29,9 @@ type packet struct {
 	Parameter2		string 	// 控制参数2
 }
 
+/*
+初始化下发控制channel
+ */
 func InitSend() {
 	sendChan = make(chan *packet, 10)
 }

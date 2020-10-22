@@ -34,8 +34,6 @@ func Process() {
 
 		// 解析报文内容
 		_ = parseBody(msg, version, seq, cell)
-
-		// glog.Write(5, packageName, "process", fmt.Sprintf("seq: %s, process finish.", seq))
 	}
 }
 

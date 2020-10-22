@@ -13,7 +13,7 @@ var receiveClientId string
 func StartReceive() {
 	ReceiveMqtt = new(MQTT)
 
-	receiveClientId = fmt.Sprintf("influx-receive-test")
+	receiveClientId = fmt.Sprintf("glaucs-3-test")
 	ReceiveMqtt.Connect(receiveClientId, base.DefaultConfig.MqttUsername, base.DefaultConfig.MqttPassword, base.DefaultConfig.MqttServerAddress, receiveOnConnect)
 }
 

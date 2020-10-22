@@ -101,6 +101,8 @@ func LoadConfig()  {
 		InitConfig()
 		return
 	}
+
+	fmt.Println("config file load success.")
 }
 
 // 初始化全局 channel

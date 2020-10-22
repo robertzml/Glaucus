@@ -14,7 +14,7 @@ type Equipment interface {
 	SaveStatus()
 
 	// 获取主板序列号
-    GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool)
+	GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool)
 }
 
 // 设置 Redis {主板序列号 - 设备序列号} string
@@ -33,11 +33,8 @@ func GetMainboardString(mainboardNumber string) (serialNumber string) {
 	rc.Get()
 	defer rc.Close()
 
-	if serialNumber, err := rc.Read(mainboardNumber); err != nil {
-		panic(err)
-	} else {
-		return serialNumber
-	}
+	serialNumber, _ = rc.Read(mainboardNumber)
+	return
 }
 
 // 序列化数据
