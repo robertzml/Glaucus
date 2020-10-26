@@ -7,16 +7,16 @@ import (
 )
 
 // influxdb channel
-var influxCh  chan *Packet
+var influxCh  chan *packet
 
 // 初始化
 func InitFlux() {
-	influxCh = make(chan *Packet, 10)
+	influxCh = make(chan *packet, 10)
 }
 
 // 写数据到channel 中
 func Write(sn string, cumulateHeatTime int, cumulateHotWater int, cumulateWorkTime int, cumulateUsedPower int, cumulateSavePower int) {
-	packet := Packet{SerialNumber: sn, CumulateHeatTime: cumulateHeatTime, CumulateHotWater: cumulateHotWater,
+	packet := packet{SerialNumber: sn, CumulateHeatTime: cumulateHeatTime, CumulateHotWater: cumulateHotWater,
 		CumulateWorkTime: cumulateWorkTime, CumulateUsedPower: cumulateUsedPower,CumulateSavePower: cumulateSavePower}
 	influxCh <- &packet
 }
