@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/robertzml/Glaucus/equipment"
 	"github.com/robertzml/Glaucus/glog"
+	"github.com/robertzml/Glaucus/influx"
 	"github.com/robertzml/Glaucus/send"
 	"github.com/robertzml/Glaucus/tlv"
 	"strconv"
@@ -263,10 +264,23 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whs.Fulltime = now
 
 		glog.Write(3, packageName, "whstatus handle logic",
-			fmt.Sprintf("sn: %s, seq: %s. full report, heat time: %d, hot water: %d, work time: %d, used power: %d, saved power: %d.",
-				msg.SerialNumber, seq, whs.CumulateHeatTime, whs.CumulateHotWater, whs.CumulateWorkTime, whs.CumulateUsedPower, whs.CumulateSavePower))
+			fmt.Sprintf("sn: %s, seq: %s. full report.",
+				msg.SerialNumber, seq))
 
-		// influx.Write(whs.SerialNumber, whs.CumulateHeatTime, whs.CumulateHotWater, whs.CumulateWorkTime, whs.CumulateUsedPower, whs.CumulateSavePower)
+		// 推送 cumulate list
+		whCumulate := new(equipment.WaterHeaterCumulate)
+		whCumulate.SerialNumber = whs.SerialNumber
+		whCumulate.MainboardNumber = whs.MainboardNumber
+		whCumulate.Logtime = now
+		whCumulate.CumulateHeatTime = whs.CumulateHeatTime
+		whCumulate.CumulateHotWater = whs.CumulateHotWater
+		whCumulate.CumulateWorkTime = whs.CumulateWorkTime
+		whCumulate.CumulateUsedPower = whs.CumulateUsedPower
+		whCumulate.CumulateSavePower = whs.CumulateSavePower
+		whCumulate.ColdInTemp = whs.ColdInTemp
+		whCumulate.SetTemp = whs.SetTemp
+		whCumulate.EnergySave = whs.EnergySave
+		influx.SaveCumulate(whCumulate)
 	}
 
 	// 全新设备整体上报

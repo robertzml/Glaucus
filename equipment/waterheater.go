@@ -166,3 +166,4 @@ func (equipment *WaterHeater) GetMainboardNumber(serialNumber string) (mainboard
 		return mn,true
 	}
 }
+

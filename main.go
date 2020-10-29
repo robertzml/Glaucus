@@ -31,8 +31,9 @@ func main() {
 	// 初始化redis连接池
 	redis.InitPool()
 
-	//influx.InitFlux()
-	//go startInflux()
+	// 启动 Influxdb 服务
+	influx.InitFlux()
+	go startInflux()
 
 	// 启动 MQTT订阅服务
 	mqtt.InitMQTT()
@@ -60,7 +61,7 @@ func startLog() {
 // 启动influx 服务
 func startInflux() {
 	fmt.Println("start influx service")
-	influx.Read()
+	influx.Process()
 }
 
 // 启动MQTT 服务订阅
@@ -69,7 +70,7 @@ func startMqtt() {
 	mqtt.StartReceive()
 }
 
-// 启用数据处理服务
+// 启用接收数据处理服务
 func startProcess() {
 	glog.Write(3, "main", "start", "start data process.")
 	receive.Process()

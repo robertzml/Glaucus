@@ -55,6 +55,9 @@ type Config struct {
 	// Influx Org
 	InfluxOrg string
 
+	// Influx bucket
+	InfluxBucket string
+
 	// 日志级别
 	LogLevel	int
 
@@ -77,6 +80,7 @@ func InitConfig() {
 	DefaultConfig.InfluxAddress = "127.0.0.1"
 	DefaultConfig.InfluxToken = ""
 	DefaultConfig.InfluxOrg = ""
+	DefaultConfig.InfluxBucket = ""
 	DefaultConfig.LogLevel = 3
 	DefaultConfig.LogToConsole = true
 }
