@@ -17,6 +17,13 @@ type Equipment interface {
 	GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool)
 }
 
+// 设备数据库存储接口
+type Context interface {
+
+	// 连接数据库
+	Connect()
+}
+
 // 设置 Redis {主板序列号 - 设备序列号} string
 func SetMainboardString(mainboardNumber string, serialNumber string) {
 	rc := new(redis.RedisClient)

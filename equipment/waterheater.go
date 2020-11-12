@@ -7,6 +7,25 @@ const (
 	waterHeaterPrefix = "wh_"
 )
 
+// 热水器实时状态存储
+type WaterHeaterSnapshot interface {
+	// 获取热水器实时状态数据
+	LoadStatus(serialNumber string) (data *WaterHeater, exists bool)
+
+	// 保存热水器实时状态
+	SaveStatus(data *WaterHeater)
+
+	// 获取主板序列号
+	GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool)
+}
+
+// 热水器数据存储接口
+type WaterHeaterRepo interface {
+
+	// 保存热水器累计数据
+	SaveCumulate(data *WaterHeaterCumulate)
+}
+
 // 热水器实时状态
 type WaterHeater struct {
 	SerialNumber      string

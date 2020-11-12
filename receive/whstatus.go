@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/robertzml/Glaucus/equipment"
 	"github.com/robertzml/Glaucus/glog"
-	"github.com/robertzml/Glaucus/influx"
 	"github.com/robertzml/Glaucus/send"
 	"github.com/robertzml/Glaucus/tlv"
 	"strconv"
@@ -18,6 +17,20 @@ type WHStatusMessage struct {
 	MainboardNumber string
 	DeviceType      string
 	ControllerType  string
+
+	// 数据存储接口
+	Repo 			equipment.WaterHeaterRepo
+
+	// 实时数据存储接口
+	Snapshot		equipment.WaterHeaterSnapshot
+}
+
+// 生成新热水器状态报文类
+func NewWHStatusMessage(context equipment.Context) *WHStatusMessage{
+	var msg = new(WHStatusMessage)
+	msg.Repo = context.(equipment.WaterHeaterRepo)
+
+	return msg
 }
 
 // 解析协议内容
@@ -239,9 +252,10 @@ func (msg *WHStatusMessage) handleParseStatus(payload string) (err error, whs *e
 // 业务逻辑处理
 // 参数： whs 解析出的新状态，保存whs 到 hash
 func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version float64, seq string, isFull bool) {
-	existsStatus := new(equipment.WaterHeater) // 原状态
+	//existsStatus := new(equipment.WaterHeater) // 原状态
 
-	exists := existsStatus.LoadStatus(msg.SerialNumber)
+	existsStatus, exists := msg.Snapshot.LoadStatus(msg.SerialNumber) // 原状态
+	// exists := existsStatus.LoadStatus(msg.SerialNumber)
 	now := time.Now().Unix() * 1000
 
 	// 全新设备 局部上报不处理
@@ -280,7 +294,8 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whCumulate.ColdInTemp = whs.ColdInTemp
 		whCumulate.SetTemp = whs.SetTemp
 		whCumulate.EnergySave = whs.EnergySave
-		influx.SaveCumulate(whCumulate)
+
+		msg.Repo.SaveCumulate(whCumulate)
 	}
 
 	// 全新设备整体上报
@@ -289,7 +304,8 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 
 		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment find.", msg.SerialNumber, seq))
 
-		whs.SaveStatus()
+		msg.Snapshot.SaveStatus(whs)
+		// whs.SaveStatus()
 		return
 	}
 
@@ -298,7 +314,8 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	whs.LineTime = existsStatus.LineTime
 
 	// 更新 hash
-	whs.SaveStatus()
+	msg.Snapshot.SaveStatus(whs)
+	// whs.SaveStatus()
 }
 
 

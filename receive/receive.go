@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/robertzml/Glaucus/base"
+	"github.com/robertzml/Glaucus/equipment"
 	"github.com/robertzml/Glaucus/glog"
 	"github.com/robertzml/Glaucus/tlv"
 )
@@ -12,14 +13,21 @@ const (
 	packageName = "receive"
 )
 
+var (
+	snapshot equipment.WaterHeaterSnapshot
+	context equipment.Context
+)
+
 // 处理接收的状态消息报文
 // 从 channel 中获取数据，并进行存储
-func Process() {
+func Process(ctx equipment.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			glog.Write(1, packageName, "process", fmt.Sprintf("catch runtime panic in process: %v", r))
 		}
 	}()
+
+	context = ctx
 
 	for {
 		pak := <- base.MqttStatusCh
@@ -77,7 +85,7 @@ func parseHead(productType int, message string) (cell tlv.TLV, version float64, 
 	switch cell.Tag {
 	case 0x14:	// 状态上报
 		if productType == 1 {	// 热水器
-			msg = new(WHStatusMessage)
+			msg = NewWHStatusMessage(context)
 		} else if productType == 2 {
 			msg = nil
 			err = errors.New("wrong device type")

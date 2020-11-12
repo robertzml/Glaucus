@@ -13,25 +13,37 @@ const (
 	packageName = "influx"
 )
 
-// 累积值存储队列
-var cumulateChan chan *equipment.WaterHeaterCumulate
+// InfluxDb 数据存储接口
+type Repository struct {
+
+	// 累积值存储队列
+	cumulateChan chan *equipment.WaterHeaterCumulate
+}
 
 // 初始化Influxdb 相关channel
-func InitFlux() {
-	cumulateChan = make(chan *equipment.WaterHeaterCumulate, 10)
+func InitFlux() *Repository {
+	repo := new(Repository)
+	repo.cumulateChan = make(chan *equipment.WaterHeaterCumulate, 10)
+
+	return repo
+}
+
+// 用于继承equipment.Context
+func (repo *Repository) Connect() {
+
 }
 
 /*
  保存热水器累积数据到channel
  */
-func SaveCumulate(data *equipment.WaterHeaterCumulate) {
-	cumulateChan <- data
+func (repo *Repository) SaveCumulate(data *equipment.WaterHeaterCumulate) {
+	repo.cumulateChan <- data
 }
 
 /*
 存储数据到数据库
  */
-func Process() {
+func (repo *Repository) Process() {
 	client := influxdb2.NewClient(base.DefaultConfig.InfluxAddress, base.DefaultConfig.InfluxToken)
 
 	writeApi := client.WriteAPI(base.DefaultConfig.InfluxOrg, base.DefaultConfig.InfluxBucket)
@@ -52,7 +64,7 @@ func Process() {
 
 	for {
 		select {
-		case packet := <- cumulateChan:
+		case packet := <- repo.cumulateChan:
 			p := influxdb2.NewPointWithMeasurement("cumulative").
 				AddTag("serialNumber", packet.SerialNumber).
 				AddTag("mainboardNumber", packet.MainboardNumber).

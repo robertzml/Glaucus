@@ -1,6 +1,8 @@
 package receive
 
-import "github.com/robertzml/Glaucus/tlv"
+import (
+	"github.com/robertzml/Glaucus/tlv"
+)
 
 // 报文消息接口
 // 所有接收的报文均实现改接口
