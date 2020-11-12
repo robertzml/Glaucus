@@ -7,8 +7,9 @@ const (
 	waterHeaterPrefix = "wh_"
 )
 
+// redis 数据存储类
 type Repository struct {
-
+	client 	*RedisClient
 }
 
 // 获取redis中设备实时状态
@@ -49,4 +50,24 @@ func (repo *Repository) GetMainboardNumber(serialNumber string) (mainboardNumber
 	} else {
 		return mn,true
 	}
+}
+
+// 设置 Redis {主板序列号 - 设备序列号} string
+func SetMainboardString(mainboardNumber string, serialNumber string) {
+	rc := new(RedisClient)
+	rc.Get()
+	defer rc.Close()
+
+	rc.Write(mainboardNumber, serialNumber)
+}
+
+// 读取 Redis {主板序列号 - 设备序列号} string
+// 返回: 设备序列号
+func (repo *Repository) GetMainboardString(mainboardNumber string) (serialNumber string) {
+	rc := new(RedisClient)
+	rc.Get()
+	defer rc.Close()
+
+	serialNumber, _ = rc.Read(mainboardNumber)
+	return
 }

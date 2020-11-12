@@ -42,6 +42,6 @@ func TestMainBoardNumber(t *testing.T) {
 	base.LoadConfig()
 	redis.InitPool()
 
-	sn := GetMainboardString("1111123")
-	t.Log(sn)
+	// sn := GetMainboardString("1111123")
+	// t.Log(sn)
 }

@@ -17,6 +17,9 @@ type WaterHeaterSnapshot interface {
 
 	// 获取主板序列号
 	GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool)
+
+	// 读取 设备序列号
+	GetMainboardString(mainboardNumber string) (serialNumber string)
 }
 
 // 热水器数据存储接口

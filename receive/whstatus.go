@@ -26,9 +26,10 @@ type WHStatusMessage struct {
 }
 
 // 生成新热水器状态报文类
-func NewWHStatusMessage(context equipment.Context) *WHStatusMessage{
+func NewWHStatusMessage(context equipment.Context, snapshot equipment.WaterHeaterSnapshot) *WHStatusMessage{
 	var msg = new(WHStatusMessage)
 	msg.Repo = context.(equipment.WaterHeaterRepo)
+	msg.Snapshot = snapshot
 
 	return msg
 }
@@ -84,9 +85,9 @@ func (msg *WHStatusMessage) Print(cell tlv.TLV) {
 // 安全检查
 // 返回: pass 是否通过
 func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
-	whs := new(equipment.WaterHeater)
+	// whs := new(equipment.WaterHeater)
 
-	if exists := whs.LoadStatus(msg.SerialNumber); exists {
+	if whs, exists := msg.Snapshot.LoadStatus(msg.SerialNumber); exists {
 		if whs.MainboardNumber != msg.MainboardNumber {
 			// 报文与redis缓存主板序列号不一致
 			send.Write(msg.SerialNumber, msg.MainboardNumber, 1, "D8")
@@ -95,7 +96,8 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 			return false
 		}
 
-		sn := equipment.GetMainboardString(whs.MainboardNumber)
+		// sn := equipment.GetMainboardString(whs.MainboardNumber)
+		sn := msg.Snapshot.GetMainboardString(whs.MainboardNumber)
 		if len(sn) > 0 && sn != msg.SerialNumber {
 			// 上报设备序列号与redis主板序列号-设备序列号映射 不一致
 			send.Write(msg.SerialNumber, msg.MainboardNumber, 1, "D7")
@@ -105,7 +107,8 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 		}
 
 	} else { // 新设备
-		sn := equipment.GetMainboardString(msg.MainboardNumber)
+		// sn := equipment.GetMainboardString(msg.MainboardNumber)
+		sn := msg.Snapshot.GetMainboardString(msg.MainboardNumber)
 		if len(sn) > 0 && sn != msg.SerialNumber {
 			// 主板序列号已存在
 			send.Write(msg.SerialNumber, msg.MainboardNumber, 1, "D7")
