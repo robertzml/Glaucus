@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/robertzml/Glaucus/base"
+	"github.com/robertzml/Glaucus/db"
 	"github.com/robertzml/Glaucus/equipment"
 	"github.com/robertzml/Glaucus/glog"
 	"github.com/robertzml/Glaucus/tlv"
@@ -14,13 +15,13 @@ const (
 )
 
 var (
-	snapshot equipment.WaterHeaterSnapshot
+	snapshot db.Snapshot
 	context equipment.Context
 )
 
 // 处理接收的状态消息报文
 // 从 channel 中获取数据，并进行存储
-func Process(ctx equipment.Context, snap equipment.WaterHeaterSnapshot) {
+func Process(ctx equipment.Context, snap db.Snapshot) {
 	defer func() {
 		if r := recover(); r != nil {
 			glog.Write(1, packageName, "process", fmt.Sprintf("catch runtime panic in process: %v", r))

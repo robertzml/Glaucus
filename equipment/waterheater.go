@@ -1,26 +1,14 @@
 package equipment
 
-import "github.com/robertzml/Glaucus/redis"
+import (
+	"github.com/robertzml/Glaucus/db"
+)
 
 const (
 	// 热水器Redis前缀
 	waterHeaterPrefix = "wh_"
 )
 
-// 热水器实时状态存储
-type WaterHeaterSnapshot interface {
-	// 获取热水器实时状态数据
-	LoadStatus(serialNumber string) (data *WaterHeater, exists bool)
-
-	// 保存热水器实时状态
-	SaveStatus(data *WaterHeater)
-
-	// 获取主板序列号
-	GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool)
-
-	// 读取 设备序列号
-	GetMainboardString(mainboardNumber string) (serialNumber string)
-}
 
 // 热水器数据存储接口
 type WaterHeaterRepo interface {
@@ -28,6 +16,7 @@ type WaterHeaterRepo interface {
 	// 保存热水器累计数据
 	SaveCumulate(data *WaterHeaterCumulate)
 }
+
 
 // 热水器实时状态
 type WaterHeater struct {
@@ -149,39 +138,49 @@ type WaterHeaterException struct {
 	Type            int
 }
 
+// 热水器数据处理类
+type WaterHeaterHandler struct {
+	// 实时数据操作接口
+	snapshot db.Snapshot
+}
+
+func NewWaterHeaterHandler(snap db.Snapshot) *WaterHeaterHandler{
+	handler := new(WaterHeaterHandler)
+	handler.snapshot = snap
+
+	return handler
+}
+
 // 获取redis中设备实时状态
 // serialNumber: 设备序列号
 // 返回 exists: 设备是否存在redis中
-func (equipment *WaterHeater) LoadStatus(serialNumber string) (exists bool) {
-	rc := new(redis.RedisClient)
-	rc.Get()
-	defer rc.Close()
+func (handler *WaterHeaterHandler) LoadStatus(serialNumber string) (data *WaterHeater, exists bool) {
+	handler.snapshot.Open()
+	defer handler.snapshot.Close()
 
-	if !rc.Exists(waterHeaterPrefix + serialNumber) {
-		return false
+	if !handler.snapshot.Exists(waterHeaterPrefix + serialNumber) {
+		return nil, false
 	}
 
-	rc.Hgetall(waterHeaterPrefix + serialNumber, equipment)
+	handler.snapshot.Load(waterHeaterPrefix + serialNumber, data)
 
-	return true
+	return data, true
 }
 
-// 整体更新设备实时状态，保存到redis
-func (equipment *WaterHeater) SaveStatus() {
-	rc := new(redis.RedisClient)
-	rc.Get()
-	defer rc.Close()
+// 保存热水器实时状态
+func (handler *WaterHeaterHandler) SaveStatus(data *WaterHeater) {
+	handler.snapshot.Open()
+	defer handler.snapshot.Close()
 
-	rc.Hmset(waterHeaterPrefix+equipment.SerialNumber, equipment)
+	handler.snapshot.Save(waterHeaterPrefix+data.SerialNumber, data)
 }
 
 // 通过设备序列号获取主板序列号
-func (equipment *WaterHeater) GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool) {
-	rc := new(redis.RedisClient)
-	rc.Get()
-	defer rc.Close()
+func (handler *WaterHeaterHandler) GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool) {
+	handler.snapshot.Open()
+	defer handler.snapshot.Close()
 
-	mn := rc.Hget(waterHeaterPrefix + serialNumber, "MainboardNumber")
+	mn := handler.snapshot.LoadField(waterHeaterPrefix + serialNumber, "MainboardNumber")
 	if len(mn) == 0 {
 		return "",false
 	} else {
@@ -189,3 +188,20 @@ func (equipment *WaterHeater) GetMainboardNumber(serialNumber string) (mainboard
 	}
 }
 
+// 读取 Redis {主板序列号 - 设备序列号} string
+// 返回: 设备序列号
+func (handler *WaterHeaterHandler) GetMainboardString(mainboardNumber string) (serialNumber string) {
+	handler.snapshot.Open()
+	defer handler.snapshot.Close()
+
+	serialNumber, _ = handler.snapshot.ReadString(mainboardNumber)
+	return
+}
+
+// 设置 Redis {主板序列号 - 设备序列号} string
+func (handler *WaterHeaterHandler) SetMainboardString(mainboardNumber string, serialNumber string) {
+	handler.snapshot.Open()
+	defer handler.snapshot.Close()
+
+	handler.snapshot.WriteString(mainboardNumber, serialNumber)
+}

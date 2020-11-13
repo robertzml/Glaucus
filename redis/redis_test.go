@@ -12,13 +12,13 @@ func TestDoGet(t *testing.T) {
 	base.LoadConfig()
 	InitPool()
 
-	rc := new(RedisClient)
-	rc.Get()
+	rc := new(Client)
+	rc.Open()
 	defer rc.Close()
 
-	rc.Write("abc", "hoop")
+	rc.WriteString("abc", "hoop")
 
-	if val, err := rc.Read("abc"); err != nil {
+	if val, err := rc.ReadString("abc"); err != nil {
 		t.Log(err)
 	} else {
 		t.Log(val)

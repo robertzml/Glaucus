@@ -3,6 +3,7 @@ package receive
 import (
 	"errors"
 	"fmt"
+	"github.com/robertzml/Glaucus/db"
 	"github.com/robertzml/Glaucus/equipment"
 	"github.com/robertzml/Glaucus/glog"
 	"github.com/robertzml/Glaucus/send"
@@ -18,18 +19,18 @@ type WHStatusMessage struct {
 	DeviceType      string
 	ControllerType  string
 
+	Handler 	*equipment.WaterHeaterHandler
+
 	// 数据存储接口
 	Repo 			equipment.WaterHeaterRepo
-
-	// 实时数据存储接口
-	Snapshot		equipment.WaterHeaterSnapshot
 }
 
 // 生成新热水器状态报文类
-func NewWHStatusMessage(context equipment.Context, snapshot equipment.WaterHeaterSnapshot) *WHStatusMessage{
+func NewWHStatusMessage(context equipment.Context, snapshot db.Snapshot) *WHStatusMessage{
 	var msg = new(WHStatusMessage)
 	msg.Repo = context.(equipment.WaterHeaterRepo)
-	msg.Snapshot = snapshot
+
+	msg.Handler = equipment.NewWaterHeaterHandler(snapshot)
 
 	return msg
 }
