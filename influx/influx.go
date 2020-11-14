@@ -28,16 +28,12 @@ func InitFlux() *Repository {
 	return repo
 }
 
-// 用于继承equipment.Context
-func (repo *Repository) Connect() {
-
-}
 
 /*
  保存热水器累积数据到channel
  */
-func (repo *Repository) SaveCumulate(data *equipment.WaterHeaterCumulate) {
-	repo.cumulateChan <- data
+func (repo *Repository) SaveCumulate(data interface{}) {
+	repo.cumulateChan <- data.(*equipment.WaterHeaterCumulate)
 }
 
 /*

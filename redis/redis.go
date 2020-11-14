@@ -39,7 +39,6 @@ func InitPool() {
 				redigo.DialReadTimeout(timeout * time.Second),
 				redigo.DialWriteTimeout(timeout * time.Second))
 			if err != nil {
-				// glog.Write(1, packageName, "dial", err.Error())
 				fmt.Println("dial redis failed.")
 				return nil, err
 			}
@@ -60,9 +59,13 @@ func InitPool() {
 	fmt.Println("redis pool create success.")
 }
 
-// 生成redis 存储客户端
+// 初始化redis服务
+// 初始化redis连接池，返回redis存储客户端
 func Init() *Client {
+	InitPool()
+
 	client := new(Client)
+
 	return client
 }
 

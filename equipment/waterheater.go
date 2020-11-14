@@ -9,15 +9,6 @@ const (
 	waterHeaterPrefix = "wh_"
 )
 
-
-// 热水器数据存储接口
-type WaterHeaterRepo interface {
-
-	// 保存热水器累计数据
-	SaveCumulate(data *WaterHeaterCumulate)
-}
-
-
 // 热水器实时状态
 type WaterHeater struct {
 	SerialNumber      string
@@ -139,48 +130,53 @@ type WaterHeaterException struct {
 }
 
 // 热水器数据处理类
-type WaterHeaterHandler struct {
+type WaterHeaterContext struct {
 	// 实时数据操作接口
-	snapshot db.Snapshot
+	snapshot 	db.Snapshot
+
+	// 时序数据操作接口
+	series 		db.Series
 }
 
-func NewWaterHeaterHandler(snap db.Snapshot) *WaterHeaterHandler{
-	handler := new(WaterHeaterHandler)
-	handler.snapshot = snap
+func NewWaterHeaterContext(snap db.Snapshot, series db.Series) *WaterHeaterContext {
+	context := new(WaterHeaterContext)
+	context.snapshot = snap
+	context.series = series
 
-	return handler
+	return context
 }
 
 // 获取redis中设备实时状态
 // serialNumber: 设备序列号
 // 返回 exists: 设备是否存在redis中
-func (handler *WaterHeaterHandler) LoadStatus(serialNumber string) (data *WaterHeater, exists bool) {
-	handler.snapshot.Open()
-	defer handler.snapshot.Close()
+func (context *WaterHeaterContext) LoadStatus(serialNumber string) (data *WaterHeater, exists bool) {
+	context.snapshot.Open()
+	defer context.snapshot.Close()
 
-	if !handler.snapshot.Exists(waterHeaterPrefix + serialNumber) {
+	if !context.snapshot.Exists(waterHeaterPrefix + serialNumber) {
 		return nil, false
 	}
 
-	handler.snapshot.Load(waterHeaterPrefix + serialNumber, data)
+	data = new(WaterHeater)
+	context.snapshot.Load(waterHeaterPrefix + serialNumber, data)
 
 	return data, true
 }
 
 // 保存热水器实时状态
-func (handler *WaterHeaterHandler) SaveStatus(data *WaterHeater) {
-	handler.snapshot.Open()
-	defer handler.snapshot.Close()
+func (context *WaterHeaterContext) SaveStatus(data *WaterHeater) {
+	context.snapshot.Open()
+	defer context.snapshot.Close()
 
-	handler.snapshot.Save(waterHeaterPrefix+data.SerialNumber, data)
+	context.snapshot.Save(waterHeaterPrefix+data.SerialNumber, data)
 }
 
 // 通过设备序列号获取主板序列号
-func (handler *WaterHeaterHandler) GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool) {
-	handler.snapshot.Open()
-	defer handler.snapshot.Close()
+func (context *WaterHeaterContext) GetMainboardNumber(serialNumber string) (mainboardNumber string, exists bool) {
+	context.snapshot.Open()
+	defer context.snapshot.Close()
 
-	mn := handler.snapshot.LoadField(waterHeaterPrefix + serialNumber, "MainboardNumber")
+	mn := context.snapshot.LoadField(waterHeaterPrefix + serialNumber, "MainboardNumber")
 	if len(mn) == 0 {
 		return "",false
 	} else {
@@ -190,18 +186,23 @@ func (handler *WaterHeaterHandler) GetMainboardNumber(serialNumber string) (main
 
 // 读取 Redis {主板序列号 - 设备序列号} string
 // 返回: 设备序列号
-func (handler *WaterHeaterHandler) GetMainboardString(mainboardNumber string) (serialNumber string) {
-	handler.snapshot.Open()
-	defer handler.snapshot.Close()
+func (context *WaterHeaterContext) GetMainboardString(mainboardNumber string) (serialNumber string) {
+	context.snapshot.Open()
+	defer context.snapshot.Close()
 
-	serialNumber, _ = handler.snapshot.ReadString(mainboardNumber)
+	serialNumber, _ = context.snapshot.ReadString(mainboardNumber)
 	return
 }
 
 // 设置 Redis {主板序列号 - 设备序列号} string
-func (handler *WaterHeaterHandler) SetMainboardString(mainboardNumber string, serialNumber string) {
-	handler.snapshot.Open()
-	defer handler.snapshot.Close()
+func (context *WaterHeaterContext) SetMainboardString(mainboardNumber string, serialNumber string) {
+	context.snapshot.Open()
+	defer context.snapshot.Close()
 
-	handler.snapshot.WriteString(mainboardNumber, serialNumber)
+	context.snapshot.WriteString(mainboardNumber, serialNumber)
+}
+
+// 保存热水器累积数据
+func (context *WaterHeaterContext) SaveCumulate(data *WaterHeaterCumulate) {
+	context.series.SaveCumulate(data)
 }

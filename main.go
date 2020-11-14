@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/robertzml/Glaucus/base"
 	"github.com/robertzml/Glaucus/db"
-	"github.com/robertzml/Glaucus/equipment"
 	"github.com/robertzml/Glaucus/glog"
 	"github.com/robertzml/Glaucus/influx"
 	"github.com/robertzml/Glaucus/mqtt"
@@ -31,12 +30,11 @@ func main() {
 	go startLog()
 
 	// 初始化redis连接池
-	redis.InitPool()
 	redisClient := redis.Init()
 
 	// 启动 Influxdb 服务
-	repo := influx.InitFlux()
-	go startInflux(repo)
+	influxRepo := influx.InitFlux()
+	go startInflux(influxRepo)
 
 	// 启动 MQTT订阅服务
 	mqtt.InitMQTT()
@@ -46,7 +44,7 @@ func main() {
 	send.InitSend()
 
 	// 启动数据处理服务
-	go startProcess(repo, redisClient)
+	go startProcess(redisClient, influxRepo)
 
 	// 启动控制指令下发服务
 	go startControl()
@@ -74,9 +72,9 @@ func startMqtt() {
 }
 
 // 启用接收数据处理服务
-func startProcess(context equipment.Context, snap db.Snapshot) {
+func startProcess(snap db.Snapshot, ser db.Series) {
 	glog.Write(3, "main", "start", "start data process.")
-	receive.Process(context, snap)
+	receive.Process(snap, ser)
 }
 
 // 启动控制指令下发服务

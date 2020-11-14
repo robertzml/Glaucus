@@ -19,18 +19,14 @@ type WHStatusMessage struct {
 	DeviceType      string
 	ControllerType  string
 
-	Handler 	*equipment.WaterHeaterHandler
-
-	// 数据存储接口
-	Repo 			equipment.WaterHeaterRepo
+	Context 	*equipment.WaterHeaterContext
 }
 
 // 生成新热水器状态报文类
-func NewWHStatusMessage(context equipment.Context, snapshot db.Snapshot) *WHStatusMessage{
+func NewWHStatusMessage(snapshot db.Snapshot, series db.Series) *WHStatusMessage{
 	var msg = new(WHStatusMessage)
-	msg.Repo = context.(equipment.WaterHeaterRepo)
 
-	msg.Handler = equipment.NewWaterHeaterHandler(snapshot)
+	msg.Context = equipment.NewWaterHeaterContext(snapshot, series)
 
 	return msg
 }
@@ -86,9 +82,8 @@ func (msg *WHStatusMessage) Print(cell tlv.TLV) {
 // 安全检查
 // 返回: pass 是否通过
 func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
-	// whs := new(equipment.WaterHeater)
 
-	if whs, exists := msg.Snapshot.LoadStatus(msg.SerialNumber); exists {
+	if whs, exists := msg.Context.LoadStatus(msg.SerialNumber); exists {
 		if whs.MainboardNumber != msg.MainboardNumber {
 			// 报文与redis缓存主板序列号不一致
 			send.Write(msg.SerialNumber, msg.MainboardNumber, 1, "D8")
@@ -97,8 +92,7 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 			return false
 		}
 
-		// sn := equipment.GetMainboardString(whs.MainboardNumber)
-		sn := msg.Snapshot.GetMainboardString(whs.MainboardNumber)
+		sn := msg.Context.GetMainboardString(whs.MainboardNumber)
 		if len(sn) > 0 && sn != msg.SerialNumber {
 			// 上报设备序列号与redis主板序列号-设备序列号映射 不一致
 			send.Write(msg.SerialNumber, msg.MainboardNumber, 1, "D7")
@@ -108,8 +102,7 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 		}
 
 	} else { // 新设备
-		// sn := equipment.GetMainboardString(msg.MainboardNumber)
-		sn := msg.Snapshot.GetMainboardString(msg.MainboardNumber)
+		sn := msg.Context.GetMainboardString(msg.MainboardNumber)
 		if len(sn) > 0 && sn != msg.SerialNumber {
 			// 主板序列号已存在
 			send.Write(msg.SerialNumber, msg.MainboardNumber, 1, "D7")
@@ -256,10 +249,8 @@ func (msg *WHStatusMessage) handleParseStatus(payload string) (err error, whs *e
 // 业务逻辑处理
 // 参数： whs 解析出的新状态，保存whs 到 hash
 func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version float64, seq string, isFull bool) {
-	//existsStatus := new(equipment.WaterHeater) // 原状态
 
-	existsStatus, exists := msg.Snapshot.LoadStatus(msg.SerialNumber) // 原状态
-	// exists := existsStatus.LoadStatus(msg.SerialNumber)
+	existsStatus, exists := msg.Context.LoadStatus(msg.SerialNumber) // 原状态
 	now := time.Now().Unix() * 1000
 
 	// 全新设备 局部上报不处理
@@ -299,7 +290,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whCumulate.SetTemp = whs.SetTemp
 		whCumulate.EnergySave = whs.EnergySave
 
-		msg.Repo.SaveCumulate(whCumulate)
+		// msg.Context.SaveCumulate(whCumulate)
 	}
 
 	// 全新设备整体上报
@@ -308,8 +299,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 
 		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment find.", msg.SerialNumber, seq))
 
-		msg.Snapshot.SaveStatus(whs)
-		// whs.SaveStatus()
+		msg.Context.SaveStatus(whs)
 		return
 	}
 
@@ -318,8 +308,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	whs.LineTime = existsStatus.LineTime
 
 	// 更新 hash
-	msg.Snapshot.SaveStatus(whs)
-	// whs.SaveStatus()
+	msg.Context.SaveStatus(whs)
 }
 
 
