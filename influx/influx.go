@@ -4,7 +4,6 @@ import (
 	"fmt"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/robertzml/Glaucus/base"
-	"github.com/robertzml/Glaucus/equipment"
 	"github.com/robertzml/Glaucus/glog"
 	"time"
 )
@@ -17,23 +16,29 @@ const (
 type Repository struct {
 
 	// 累积值存储队列
-	cumulateChan chan *equipment.WaterHeaterCumulate
+	cumulativeChan		chan *influxPoint
+}
+
+// Influx 数据点
+type influxPoint struct {
+	tags	map[string]string
+	fields 	map[string]interface{}
 }
 
 // 初始化Influxdb 相关channel
 func InitFlux() *Repository {
 	repo := new(Repository)
-	repo.cumulateChan = make(chan *equipment.WaterHeaterCumulate, 10)
+	repo.cumulativeChan = make(chan *influxPoint, 10)
 
 	return repo
 }
 
-
 /*
  保存热水器累积数据到channel
  */
-func (repo *Repository) SaveCumulate(data interface{}) {
-	repo.cumulateChan <- data.(*equipment.WaterHeaterCumulate)
+func (repo *Repository) SaveCumulate(tags map[string]string, fields map[string]interface{}) {
+	point := influxPoint{tags, fields}
+	repo.cumulativeChan <- &point
 }
 
 /*
@@ -60,20 +65,8 @@ func (repo *Repository) Process() {
 
 	for {
 		select {
-		case packet := <- repo.cumulateChan:
-			p := influxdb2.NewPointWithMeasurement("cumulative").
-				AddTag("serialNumber", packet.SerialNumber).
-				AddTag("mainboardNumber", packet.MainboardNumber).
-				AddField("cumulateHeatTime", packet.CumulateHeatTime).
-				AddField("cumulateHotWater", packet.CumulateHotWater).
-				AddField("cumulateWorkTime", packet.CumulateWorkTime).
-				AddField("cumulateUsedPower", packet.CumulateUsedPower).
-				AddField("cumulateSavePower", packet.CumulateSavePower).
-				AddField("coldInTemp", packet.ColdInTemp).
-				AddField("setTemp", packet.SetTemp).
-				AddField("energySave", packet.EnergySave).
-				SetTime(time.Now())
-
+		case packet := <-repo.cumulativeChan:
+			p := influxdb2.NewPoint("cumulative", packet.tags, packet.fields, time.Now())
 			writeApi.WritePoint(p)
 		}
 	}

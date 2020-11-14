@@ -290,7 +290,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whCumulate.SetTemp = whs.SetTemp
 		whCumulate.EnergySave = whs.EnergySave
 
-		// msg.Context.SaveCumulate(whCumulate)
+		msg.Context.SaveCumulate(whCumulate)
 	}
 
 	// 全新设备整体上报

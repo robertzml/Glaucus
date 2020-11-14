@@ -4,5 +4,7 @@ package db
 type Series interface {
 
 	// 保存累积数据
-	SaveCumulate(data interface{})
+	// SaveCumulate(data interface{})
+
+	SaveCumulate(tags map[string]string, fields map[string]interface{})
 }

@@ -204,5 +204,19 @@ func (context *WaterHeaterContext) SetMainboardString(mainboardNumber string, se
 
 // 保存热水器累积数据
 func (context *WaterHeaterContext) SaveCumulate(data *WaterHeaterCumulate) {
-	context.series.SaveCumulate(data)
+	tags := make(map[string]string)
+	tags["serialNumber"] = data.SerialNumber
+	tags["mainboardNumber"] = data.MainboardNumber
+
+	fields := make(map[string]interface{})
+	fields["cumulateHeatTime"] = data.CumulateHeatTime
+	fields["cumulateHotWater"] = data.CumulateHotWater
+	fields["cumulateWorkTime"] = data.CumulateWorkTime
+	fields["cumulateUsedPower"] = data.CumulateUsedPower
+	fields["cumulateSavePower"] = data.CumulateSavePower
+	fields["coldInTemp"] = data.ColdInTemp
+	fields["setTemp"] = data.SetTemp
+	fields["energySave"] = data.EnergySave
+
+	context.series.SaveCumulate(tags, fields)
 }
