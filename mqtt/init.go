@@ -9,9 +9,6 @@ import (
 var (
 	// 全局MQTT 接收连接
 	ReceiveMqtt *MQTT
-
-	// 全局MQTT 发送连接
-	SendMqtt *MQTT
 )
 
 // 当前包名称
