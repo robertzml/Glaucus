@@ -302,6 +302,9 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	if !exists && isFull {
 		whs.LineTime = now
 
+		// 冷水平均温度
+		whs.AvgColdTemp = whs.ColdInTemp
+
 		if whs.ErrorCode != 0 {
 			whs.ErrorTime = now
 
@@ -344,6 +347,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whCumulate.CumulateUsedPower = whs.CumulateUsedPower
 		whCumulate.CumulateSavePower = whs.CumulateSavePower
 		whCumulate.ColdInTemp = whs.ColdInTemp
+		whCumulate.AvgColdTemp = whs.ColdInTemp
 		whCumulate.SetTemp = whs.SetTemp
 		whCumulate.EnergySave = whs.EnergySave
 
@@ -357,6 +361,13 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	// 后面开始处理已有设备
 	whs.ErrorTime = existsStatus.ErrorTime
 	whs.LineTime = existsStatus.LineTime
+
+	// 处理冷水平均进水温度
+	if existsStatus.AvgColdTemp == 0 {
+		whs.AvgColdTemp = whs.ColdInTemp
+	} else {
+		whs.AvgColdTemp = (existsStatus.AvgColdTemp + whs.ColdInTemp) / 2
+	}
 
 	// 设备重新上线，推送 wh_key list
 	if existsStatus.Online == 0 {
@@ -455,6 +466,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whCumulate.CumulateUsedPower = whs.CumulateUsedPower
 		whCumulate.CumulateSavePower = whs.CumulateSavePower
 		whCumulate.ColdInTemp = whs.ColdInTemp
+		whCumulate.AvgColdTemp = whs.AvgColdTemp
 		whCumulate.SetTemp = whs.SetTemp
 		whCumulate.EnergySave = whs.EnergySave
 
