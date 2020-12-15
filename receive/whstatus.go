@@ -393,6 +393,8 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	if existsStatus.ErrorCode != whs.ErrorCode {
 		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push alarm.", msg.SerialNumber, seq))
 
+		whs.ErrorTime = now
+
 		whAlarm := new(equipment.WaterHeaterAlarm)
 		whAlarm.SerialNumber = whs.SerialNumber
 		whAlarm.MainboardNumber = whs.MainboardNumber
