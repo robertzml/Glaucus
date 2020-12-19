@@ -293,9 +293,22 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 			whs.ErrorTime = 0
 		}
 
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, push login and cumulate.", msg.SerialNumber, seq))
+		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, save basic and cumulate.", msg.SerialNumber, seq))
 
-		// 推送 cumulate list
+		// 保存 login list
+		whBasic := new(equipment.WaterHeaterBasic)
+		whBasic.SerialNumber = whs.SerialNumber
+		whBasic.MainboardNumber = whs.MainboardNumber
+		whBasic.Logtime = now
+		whBasic.DeviceType = whs.DeviceType
+		whBasic.ControllerType = whs.ControllerType
+		whBasic.WifiVersion = whs.WifiVersion
+		whBasic.SoftwareFunction = whs.SoftwareFunction
+		whBasic.ICCID = whs.ICCID
+
+		msg.Context.SaveBasic(whBasic)
+
+		// 保存 cumulative list
 		whCumulate := new(equipment.WaterHeaterCumulate)
 		whCumulate.SerialNumber = whs.SerialNumber
 		whCumulate.MainboardNumber = whs.MainboardNumber
@@ -328,7 +341,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whs.AvgColdInTemp = (existsStatus.AvgColdInTemp + whs.ColdInTemp) / 2
 	}
 
-	// 推送 cumulate list
+	// 保存 cumulative list
 	if isFull {
 		glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push cumulate.", msg.SerialNumber, seq))
 
@@ -347,6 +360,25 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whCumulate.EnergySave = whs.EnergySave
 
 		msg.Context.SaveCumulate(whCumulate)
+	}
+
+	// 保存 basic list
+	if existsStatus.SoftwareFunction != whs.SoftwareFunction || existsStatus.WifiVersion != whs.WifiVersion || existsStatus.ICCID != whs.ICCID ||
+		existsStatus.DeviceType != whs.DeviceType || existsStatus.ControllerType != whs.ControllerType {
+
+		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. save basic.", msg.SerialNumber, seq))
+
+		whBasic := new(equipment.WaterHeaterBasic)
+		whBasic.SerialNumber = whs.SerialNumber
+		whBasic.MainboardNumber = whs.MainboardNumber
+		whBasic.Logtime = now
+		whBasic.DeviceType = whs.DeviceType
+		whBasic.ControllerType = whs.ControllerType
+		whBasic.WifiVersion = whs.WifiVersion
+		whBasic.SoftwareFunction = whs.SoftwareFunction
+		whBasic.ICCID = whs.ICCID
+
+		msg.Context.SaveBasic(whBasic)
 	}
 
 	// 更新 hash

@@ -111,8 +111,8 @@ type WaterHeaterCumulate struct {
 	EnergySave          int
 }
 
-// 热水器登录数据
-type WaterHeaterLogin struct {
+// 热水器基础数据
+type WaterHeaterBasic struct {
 	SerialNumber     string
 	MainboardNumber  string
 	Logtime          int64
@@ -222,4 +222,21 @@ func (context *WaterHeaterContext) SaveCumulate(data *WaterHeaterCumulate) {
 	fields["energySave"] = data.EnergySave
 
 	context.series.SaveCumulate(tags, fields)
+}
+
+// 保存热水器基础数据
+func (context *WaterHeaterContext) SaveBasic(data *WaterHeaterBasic) {
+	tags := make(map[string]string)
+	tags["serialNumber"] = data.SerialNumber
+	tags["mainboardNumber"] = data.MainboardNumber
+
+	fields := make(map[string]interface{})
+	fields["logTime"] = data.Logtime
+	fields["deviceType"] = data.DeviceType
+	fields["controllerType"] = data.ControllerType
+	fields["wifiVersion"] = data.WifiVersion
+	fields["softwareFunction"] = data.SoftwareFunction
+	fields["ICCID"] = data.ICCID
+
+	context.series.SaveBasic(tags, fields)
 }

@@ -17,6 +17,9 @@ type Repository struct {
 
 	// 累积值存储队列
 	cumulativeChan		chan *influxPoint
+
+	// 基础数据存储队列
+	basicChan			chan *influxPoint
 }
 
 // Influx 数据点
@@ -29,6 +32,7 @@ type influxPoint struct {
 func InitFlux() *Repository {
 	repo := new(Repository)
 	repo.cumulativeChan = make(chan *influxPoint, 10)
+	repo.basicChan = make(chan *influxPoint, 5)
 
 	return repo
 }
@@ -39,6 +43,14 @@ func InitFlux() *Repository {
 func (repo *Repository) SaveCumulate(tags map[string]string, fields map[string]interface{}) {
 	point := influxPoint{tags, fields}
 	repo.cumulativeChan <- &point
+}
+
+/*
+ 保存基础数据到channel
+ */
+func (repo *Repository) SaveBasic(tags map[string]string, fields map[string]interface{}) {
+	point := influxPoint{tags, fields}
+	repo.basicChan <- &point
 }
 
 /*
@@ -67,6 +79,9 @@ func (repo *Repository) Process() {
 		select {
 		case packet := <-repo.cumulativeChan:
 			p := influxdb2.NewPoint("cumulative", packet.tags, packet.fields, time.Now())
+			writeApi.WritePoint(p)
+		case packet := <-repo.basicChan:
+			p := influxdb2.NewPoint("basic", packet.tags, packet.fields, time.Now())
 			writeApi.WritePoint(p)
 		}
 	}
