@@ -341,8 +341,9 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whs.AvgColdInTemp = (existsStatus.AvgColdInTemp + whs.ColdInTemp) / 2
 	}
 
-	// 保存 cumulative list
+	// 整体上报
 	if isFull {
+		// 保存 cumulative list
 		glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push cumulate.", msg.SerialNumber, seq))
 
 		whCumulate := new(equipment.WaterHeaterCumulate)
@@ -360,25 +361,25 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whCumulate.EnergySave = whs.EnergySave
 
 		msg.Context.SaveCumulate(whCumulate)
-	}
 
-	// 保存 basic list
-	if existsStatus.SoftwareFunction != whs.SoftwareFunction || existsStatus.WifiVersion != whs.WifiVersion || existsStatus.ICCID != whs.ICCID ||
-		existsStatus.DeviceType != whs.DeviceType || existsStatus.ControllerType != whs.ControllerType {
+		// 保存 basic list
+		if existsStatus.SoftwareFunction != whs.SoftwareFunction || existsStatus.WifiVersion != whs.WifiVersion || existsStatus.ICCID != whs.ICCID ||
+			existsStatus.DeviceType != whs.DeviceType || existsStatus.ControllerType != whs.ControllerType {
 
-		glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. save basic.", msg.SerialNumber, seq))
+			glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. save basic.", msg.SerialNumber, seq))
 
-		whBasic := new(equipment.WaterHeaterBasic)
-		whBasic.SerialNumber = whs.SerialNumber
-		whBasic.MainboardNumber = whs.MainboardNumber
-		whBasic.Logtime = now
-		whBasic.DeviceType = whs.DeviceType
-		whBasic.ControllerType = whs.ControllerType
-		whBasic.WifiVersion = whs.WifiVersion
-		whBasic.SoftwareFunction = whs.SoftwareFunction
-		whBasic.ICCID = whs.ICCID
+			whBasic := new(equipment.WaterHeaterBasic)
+			whBasic.SerialNumber = whs.SerialNumber
+			whBasic.MainboardNumber = whs.MainboardNumber
+			whBasic.Logtime = now
+			whBasic.DeviceType = whs.DeviceType
+			whBasic.ControllerType = whs.ControllerType
+			whBasic.WifiVersion = whs.WifiVersion
+			whBasic.SoftwareFunction = whs.SoftwareFunction
+			whBasic.ICCID = whs.ICCID
 
-		msg.Context.SaveBasic(whBasic)
+			msg.Context.SaveBasic(whBasic)
+		}
 	}
 
 	// 更新 hash
