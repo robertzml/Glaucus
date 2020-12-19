@@ -11,41 +11,42 @@ const (
 
 // 热水器实时状态
 type WaterHeater struct {
-	SerialNumber      string
-	MainboardNumber   string
-	Logtime           int64
-	Fulltime          int64 // 全上报时间
-	DeviceType        string
-	ControllerType    string
-	Power             int8 // 开关状态
-	OutTemp           int  // 出水温度
-	OutFlow           int  // 出水流量
-	ColdInTemp        int
-	HotInTemp         int
-	ErrorCode         int
-	ErrorTime         int64 // 需设定
-	WifiVersion       string
-	CumulateHeatTime  int
-	CumulateHotWater  int
-	CumulateWorkTime  int // 累计通电时间
-	CumulateUsedPower int
-	CumulateSavePower int
-	Unlock            int8 // 解锁/加锁状态
-	Activate          int8
-	SetTemp           int
-	SoftwareFunction  string
-	OutputPower       int
-	ManualClean       int8
-	DeadlineTime      int64
-	ActivationTime    int64
-	SpecialParameter  string
-	Online            int8  // 需设定
-	LineTime          int64 // 需设定
-	EnergySave        int
-	IMSI              string
-	ICCID             string
-	Coordinate        string
-	Csq               string
+	SerialNumber        string
+	MainboardNumber     string
+	Logtime             int64
+	Fulltime            int64 // 全上报时间
+	DeviceType          string
+	ControllerType      string
+	Power               int8 // 开关状态
+	OutTemp             int  // 出水温度
+	OutFlow             int  // 出水流量
+	ColdInTemp          int
+	HotInTemp           int
+	AvgColdInTemp       int // 平均冷水温度 单位0.1度
+	ErrorCode           int
+	ErrorTime           int64 // 需设定
+	WifiVersion         string
+	CumulativeHeatTime  int
+	CumulativeHotWater  int
+	CumulativeWorkTime  int // 累计通电时间
+	CumulativeUsedPower int
+	CumulativeSavePower int
+	Unlock              int8 // 解锁/加锁状态
+	Activate            int8
+	SetTemp             int
+	SoftwareFunction    string
+	OutputPower         int
+	ManualClean         int8
+	DeadlineTime        int64
+	ActivationTime      int64
+	SpecialParameter    string
+	Online              int8  // 需设定
+	LineTime            int64 // 需设定
+	EnergySave          int
+	IMSI                string
+	ICCID               string
+	Coordinate          string
+	Csq                 string
 }
 
 // 热水器设置状态
@@ -96,17 +97,18 @@ type WaterHeaterKey struct {
 
 // 热水器累计数据
 type WaterHeaterCumulate struct {
-	SerialNumber      string
-	MainboardNumber   string
-	Logtime           int64
-	CumulateHeatTime  int
-	CumulateHotWater  int
-	CumulateWorkTime  int
-	CumulateUsedPower int
-	CumulateSavePower int
-	ColdInTemp        int
-	SetTemp           int
-	EnergySave        int
+	SerialNumber        string
+	MainboardNumber     string
+	Logtime             int64
+	CumulativeHeatTime  int
+	CumulativeHotWater  int
+	CumulativeWorkTime  int
+	CumulativeUsedPower int
+	CumulativeSavePower int
+	ColdInTemp          int
+	AvgColdInTemp       int // 平均冷水温度 单位0.1度
+	SetTemp             int
+	EnergySave          int
 }
 
 // 热水器登录数据
@@ -132,10 +134,10 @@ type WaterHeaterException struct {
 // 热水器数据处理类
 type WaterHeaterContext struct {
 	// 实时数据操作接口
-	snapshot 	db.Snapshot
+	snapshot db.Snapshot
 
 	// 时序数据操作接口
-	series 		db.Series
+	series db.Series
 }
 
 func NewWaterHeaterContext(snap db.Snapshot, series db.Series) *WaterHeaterContext {
@@ -158,7 +160,7 @@ func (context *WaterHeaterContext) LoadStatus(serialNumber string) (data *WaterH
 	}
 
 	data = new(WaterHeater)
-	context.snapshot.Load(waterHeaterPrefix + serialNumber, data)
+	context.snapshot.Load(waterHeaterPrefix+serialNumber, data)
 
 	return data, true
 }
@@ -176,11 +178,11 @@ func (context *WaterHeaterContext) GetMainboardNumber(serialNumber string) (main
 	context.snapshot.Open()
 	defer context.snapshot.Close()
 
-	mn := context.snapshot.LoadField(waterHeaterPrefix + serialNumber, "MainboardNumber")
+	mn := context.snapshot.LoadField(waterHeaterPrefix+serialNumber, "MainboardNumber")
 	if len(mn) == 0 {
-		return "",false
+		return "", false
 	} else {
-		return mn,true
+		return mn, true
 	}
 }
 
@@ -209,12 +211,13 @@ func (context *WaterHeaterContext) SaveCumulate(data *WaterHeaterCumulate) {
 	tags["mainboardNumber"] = data.MainboardNumber
 
 	fields := make(map[string]interface{})
-	fields["cumulateHeatTime"] = data.CumulateHeatTime
-	fields["cumulateHotWater"] = data.CumulateHotWater
-	fields["cumulateWorkTime"] = data.CumulateWorkTime
-	fields["cumulateUsedPower"] = data.CumulateUsedPower
-	fields["cumulateSavePower"] = data.CumulateSavePower
+	fields["cumulativeHeatTime"] = data.CumulativeHeatTime
+	fields["cumulativeHotWater"] = data.CumulativeHotWater
+	fields["cumulativeWorkTime"] = data.CumulativeWorkTime
+	fields["cumulativeUsedPower"] = data.CumulativeUsedPower
+	fields["cumulativeSavePower"] = data.CumulativeSavePower
 	fields["coldInTemp"] = data.ColdInTemp
+	fields["avgColdInTemp"] = data.AvgColdInTemp
 	fields["setTemp"] = data.SetTemp
 	fields["energySave"] = data.EnergySave
 

@@ -183,19 +183,19 @@ func (msg *WHStatusMessage) handleParseStatus(payload string) (err error, whs *e
 			whs.WifiVersion = cell.Value
 		case 0x09:
 			v, _ := tlv.ParseTime(cell.Value)
-			whs.CumulateHeatTime = v
+			whs.CumulativeHeatTime = v
 		case 0x0a:
 			v, _ := tlv.ParseCumulate(cell.Value, 8)
-			whs.CumulateHotWater = v
+			whs.CumulativeHotWater = v
 		case 0x0b:
 			v, _ := tlv.ParseTime(cell.Value)
-			whs.CumulateWorkTime = v
+			whs.CumulativeWorkTime = v
 		case 0x0c:
 			v, _ := tlv.ParseCumulate(cell.Value, 8)
-			whs.CumulateUsedPower = v
+			whs.CumulativeUsedPower = v
 		case 0x0d:
 			v, _ := tlv.ParseCumulate(cell.Value, 8)
-			whs.CumulateSavePower = v
+			whs.CumulativeSavePower = v
 		case 0x1a:
 			v, _ := strconv.Atoi(cell.Value)
 			whs.Unlock = int8(v)
@@ -281,11 +281,11 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whCumulate.SerialNumber = whs.SerialNumber
 		whCumulate.MainboardNumber = whs.MainboardNumber
 		whCumulate.Logtime = now
-		whCumulate.CumulateHeatTime = whs.CumulateHeatTime
-		whCumulate.CumulateHotWater = whs.CumulateHotWater
-		whCumulate.CumulateWorkTime = whs.CumulateWorkTime
-		whCumulate.CumulateUsedPower = whs.CumulateUsedPower
-		whCumulate.CumulateSavePower = whs.CumulateSavePower
+		whCumulate.CumulativeHeatTime = whs.CumulativeHeatTime
+		whCumulate.CumulativeHotWater = whs.CumulativeHotWater
+		whCumulate.CumulativeWorkTime = whs.CumulativeWorkTime
+		whCumulate.CumulativeUsedPower = whs.CumulativeUsedPower
+		whCumulate.CumulativeSavePower = whs.CumulativeSavePower
 		whCumulate.ColdInTemp = whs.ColdInTemp
 		whCumulate.SetTemp = whs.SetTemp
 		whCumulate.EnergySave = whs.EnergySave
@@ -306,6 +306,8 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	// 后面开始处理已有设备
 	whs.ErrorTime = existsStatus.ErrorTime
 	whs.LineTime = existsStatus.LineTime
+
+
 
 	// 更新 hash
 	msg.Context.SaveStatus(whs)
