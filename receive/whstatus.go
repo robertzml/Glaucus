@@ -259,6 +259,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		return
 	}
 
+	// 设置当前基础信息
 	whs.SerialNumber = msg.SerialNumber
 	whs.MainboardNumber = msg.MainboardNumber
 	whs.Logtime = now
@@ -268,13 +269,31 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 
 	// 整体上报
 	if isFull {
-
 		// 记录全上报时间
 		whs.Fulltime = now
+	}
 
-		glog.Write(3, packageName, "whstatus handle logic",
-			fmt.Sprintf("sn: %s, seq: %s. full report.",
-				msg.SerialNumber, seq))
+	// 全新设备整体上报
+	if !exists && isFull {
+		whs.LineTime = now
+
+		// 冷水平均温度
+		whs.AvgColdInTemp = whs.ColdInTemp
+
+		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment find.", msg.SerialNumber, seq))
+
+		// 处理错误状态
+		if whs.ErrorCode != 0 {
+			whs.ErrorTime = now
+
+			glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, push alarm.", msg.SerialNumber, seq))
+
+
+		} else {
+			whs.ErrorTime = 0
+		}
+
+		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, push login and cumulate.", msg.SerialNumber, seq))
 
 		// 推送 cumulate list
 		whCumulate := new(equipment.WaterHeaterCumulate)
@@ -287,18 +306,13 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whCumulate.CumulativeUsedPower = whs.CumulativeUsedPower
 		whCumulate.CumulativeSavePower = whs.CumulativeSavePower
 		whCumulate.ColdInTemp = whs.ColdInTemp
+		whCumulate.AvgColdInTemp = whs.ColdInTemp
 		whCumulate.SetTemp = whs.SetTemp
 		whCumulate.EnergySave = whs.EnergySave
 
 		msg.Context.SaveCumulate(whCumulate)
-	}
 
-	// 全新设备整体上报
-	if !exists && isFull {
-		whs.LineTime = now
-
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment find.", msg.SerialNumber, seq))
-
+		// 保存实时状态
 		msg.Context.SaveStatus(whs)
 		return
 	}
@@ -307,7 +321,33 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	whs.ErrorTime = existsStatus.ErrorTime
 	whs.LineTime = existsStatus.LineTime
 
+	// 处理冷水平均进水温度
+	if existsStatus.AvgColdInTemp == 0 {
+		whs.AvgColdInTemp = whs.ColdInTemp
+	} else {
+		whs.AvgColdInTemp = (existsStatus.AvgColdInTemp + whs.ColdInTemp) / 2
+	}
 
+	// 推送 cumulate list
+	if isFull {
+		glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push cumulate.", msg.SerialNumber, seq))
+
+		whCumulate := new(equipment.WaterHeaterCumulate)
+		whCumulate.SerialNumber = whs.SerialNumber
+		whCumulate.MainboardNumber = whs.MainboardNumber
+		whCumulate.Logtime = now
+		whCumulate.CumulativeHeatTime = whs.CumulativeHeatTime
+		whCumulate.CumulativeHotWater = whs.CumulativeHotWater
+		whCumulate.CumulativeWorkTime = whs.CumulativeWorkTime
+		whCumulate.CumulativeUsedPower = whs.CumulativeUsedPower
+		whCumulate.CumulativeSavePower = whs.CumulativeSavePower
+		whCumulate.ColdInTemp = whs.ColdInTemp
+		whCumulate.AvgColdInTemp = whs.ColdInTemp
+		whCumulate.SetTemp = whs.SetTemp
+		whCumulate.EnergySave = whs.EnergySave
+
+		msg.Context.SaveCumulate(whCumulate)
+	}
 
 	// 更新 hash
 	msg.Context.SaveStatus(whs)

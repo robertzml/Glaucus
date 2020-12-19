@@ -87,7 +87,7 @@ func InitConfig() {
 
 // 载入配置文件
 func LoadConfig()  {
-	file, err := os.Open("./conf.json")
+	file, err := os.Open("./config.json")
 	if err != nil {
 		fmt.Printf("cannot open the config file.\n")
 		InitConfig()

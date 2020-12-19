@@ -11,8 +11,8 @@ services:
         target: /etc/localtime
         read_only: true
       - type: bind
-        source: /home/zml/project/glaucus/conf.json
-        target: /home/zml/glaucus/conf.json
+        source: /home/zml/project/glaucus/config.json
+        target: /home/zml/glaucus/config.json
         read_only: true
     networks:
       artemis-net:
