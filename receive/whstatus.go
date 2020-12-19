@@ -255,7 +255,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 
 	// 全新设备 局部上报不处理
 	if !exists && !isFull {
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. cannot handle partial for new equipment.", msg.SerialNumber, seq))
+		glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. cannot handle partial for new equipment.", msg.SerialNumber, seq))
 		return
 	}
 
@@ -280,7 +280,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		// 冷水平均温度
 		whs.AvgColdInTemp = whs.ColdInTemp
 
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment find.", msg.SerialNumber, seq))
+		glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment find.", msg.SerialNumber, seq))
 
 		// 处理错误状态
 		if whs.ErrorCode != 0 {
@@ -293,7 +293,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 			whs.ErrorTime = 0
 		}
 
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, save basic and cumulate.", msg.SerialNumber, seq))
+		glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, save basic and cumulate.", msg.SerialNumber, seq))
 
 		// 保存 login list
 		whBasic := new(equipment.WaterHeaterBasic)
@@ -366,7 +366,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	if existsStatus.SoftwareFunction != whs.SoftwareFunction || existsStatus.WifiVersion != whs.WifiVersion || existsStatus.ICCID != whs.ICCID ||
 		existsStatus.DeviceType != whs.DeviceType || existsStatus.ControllerType != whs.ControllerType {
 
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. save basic.", msg.SerialNumber, seq))
+		glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. save basic.", msg.SerialNumber, seq))
 
 		whBasic := new(equipment.WaterHeaterBasic)
 		whBasic.SerialNumber = whs.SerialNumber
