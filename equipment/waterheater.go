@@ -22,7 +22,6 @@ type WaterHeater struct {
 	OutFlow             int  // 出水流量
 	ColdInTemp          int
 	HotInTemp           int
-	AvgColdInTemp       int // 平均冷水温度 单位0.1度
 	ErrorCode           int
 	ErrorTime           int64 // 需设定
 	WifiVersion         string
@@ -106,7 +105,6 @@ type WaterHeaterCumulate struct {
 	CumulativeUsedPower int
 	CumulativeSavePower int
 	ColdInTemp          int
-	AvgColdInTemp       int // 平均冷水温度 单位0.1度
 	SetTemp             int
 	EnergySave          int
 }
@@ -217,7 +215,6 @@ func (context *WaterHeaterContext) SaveCumulate(data *WaterHeaterCumulate) {
 	fields["cumulativeUsedPower"] = data.CumulativeUsedPower
 	fields["cumulativeSavePower"] = data.CumulativeSavePower
 	fields["coldInTemp"] = data.ColdInTemp
-	fields["avgColdInTemp"] = data.AvgColdInTemp
 	fields["setTemp"] = data.SetTemp
 	fields["energySave"] = data.EnergySave
 
@@ -236,7 +233,21 @@ func (context *WaterHeaterContext) SaveBasic(data *WaterHeaterBasic) {
 	fields["controllerType"] = data.ControllerType
 	fields["wifiVersion"] = data.WifiVersion
 	fields["softwareFunction"] = data.SoftwareFunction
-	fields["ICCID"] = data.ICCID
+	fields["iccid"] = data.ICCID
 
 	context.series.SaveBasic(tags, fields)
+}
+
+// 保存热水器报警数据
+func (context *WaterHeaterContext) SaveAlarm(data *WaterHeaterAlarm) {
+	tags := make(map[string]string)
+	tags["serialNumber"] = data.SerialNumber
+	tags["mainboardNumber"] = data.MainboardNumber
+
+	fields := make(map[string]interface{})
+	fields["logtime"] = data.Logtime
+	fields["errorCode"] = data.ErrorCode
+	fields["errorTime"] = data.ErrorTime
+
+	context.series.SaveAlarm(tags, fields)
 }

@@ -19,11 +19,11 @@ type WHStatusMessage struct {
 	DeviceType      string
 	ControllerType  string
 
-	Context 	*equipment.WaterHeaterContext
+	Context *equipment.WaterHeaterContext
 }
 
 // 生成新热水器状态报文类
-func NewWHStatusMessage(snapshot db.Snapshot, series db.Series) *WHStatusMessage{
+func NewWHStatusMessage(snapshot db.Snapshot, series db.Series) *WHStatusMessage {
 	var msg = new(WHStatusMessage)
 
 	msg.Context = equipment.NewWaterHeaterContext(snapshot, series)
@@ -277,18 +277,23 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	if !exists && isFull {
 		whs.LineTime = now
 
-		// 冷水平均温度
-		whs.AvgColdInTemp = whs.ColdInTemp
-
 		glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment find.", msg.SerialNumber, seq))
 
 		// 处理错误状态
 		if whs.ErrorCode != 0 {
 			whs.ErrorTime = now
 
-			glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, push alarm.", msg.SerialNumber, seq))
+			glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, save alarm.", msg.SerialNumber, seq))
 
+			// 报警数据 推送 alarm list
+			whAlarm := new(equipment.WaterHeaterAlarm)
+			whAlarm.SerialNumber = whs.SerialNumber
+			whAlarm.MainboardNumber = whs.MainboardNumber
+			whAlarm.Logtime = whs.Logtime
+			whAlarm.ErrorCode = whs.ErrorCode
+			whAlarm.ErrorTime = whs.ErrorTime
 
+			msg.Context.SaveAlarm(whAlarm)
 		} else {
 			whs.ErrorTime = 0
 		}
@@ -319,7 +324,6 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whCumulate.CumulativeUsedPower = whs.CumulativeUsedPower
 		whCumulate.CumulativeSavePower = whs.CumulativeSavePower
 		whCumulate.ColdInTemp = whs.ColdInTemp
-		whCumulate.AvgColdInTemp = whs.ColdInTemp
 		whCumulate.SetTemp = whs.SetTemp
 		whCumulate.EnergySave = whs.EnergySave
 
@@ -334,16 +338,25 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	whs.ErrorTime = existsStatus.ErrorTime
 	whs.LineTime = existsStatus.LineTime
 
-	// 处理冷水平均进水温度
-	if existsStatus.AvgColdInTemp == 0 {
-		whs.AvgColdInTemp = whs.ColdInTemp
-	} else {
-		whs.AvgColdInTemp = (existsStatus.AvgColdInTemp + whs.ColdInTemp) / 2
+	// 保存 wh_alarm
+	if existsStatus.ErrorCode != whs.ErrorCode {
+		glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. save alarm.", msg.SerialNumber, seq))
+
+		whs.ErrorTime = now
+
+		whAlarm := new(equipment.WaterHeaterAlarm)
+		whAlarm.SerialNumber = whs.SerialNumber
+		whAlarm.MainboardNumber = whs.MainboardNumber
+		whAlarm.Logtime = whs.Logtime
+		whAlarm.ErrorCode = whs.ErrorCode
+		whAlarm.ErrorTime = now
+
+		msg.Context.SaveAlarm(whAlarm)
 	}
 
 	// 整体上报
 	if isFull {
-		// 保存 cumulative list
+		// 保存 cumulative
 		glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push cumulate.", msg.SerialNumber, seq))
 
 		whCumulate := new(equipment.WaterHeaterCumulate)
@@ -356,13 +369,12 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whCumulate.CumulativeUsedPower = whs.CumulativeUsedPower
 		whCumulate.CumulativeSavePower = whs.CumulativeSavePower
 		whCumulate.ColdInTemp = whs.ColdInTemp
-		whCumulate.AvgColdInTemp = whs.ColdInTemp
 		whCumulate.SetTemp = whs.SetTemp
 		whCumulate.EnergySave = whs.EnergySave
 
 		msg.Context.SaveCumulate(whCumulate)
 
-		// 保存 basic list
+		// 保存 basic
 		if existsStatus.SoftwareFunction != whs.SoftwareFunction || existsStatus.WifiVersion != whs.WifiVersion || existsStatus.ICCID != whs.ICCID ||
 			existsStatus.DeviceType != whs.DeviceType || existsStatus.ControllerType != whs.ControllerType {
 
@@ -385,5 +397,3 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	// 更新 hash
 	msg.Context.SaveStatus(whs)
 }
-
-

@@ -16,16 +16,19 @@ const (
 type Repository struct {
 
 	// 累积值存储队列
-	cumulativeChan		chan *influxPoint
+	cumulativeChan chan *influxPoint
 
 	// 基础数据存储队列
-	basicChan			chan *influxPoint
+	basicChan chan *influxPoint
+
+	// 报警数据存储队列
+	alarmChan chan *influxPoint
 }
 
 // Influx 数据点
 type influxPoint struct {
-	tags	map[string]string
-	fields 	map[string]interface{}
+	tags   map[string]string
+	fields map[string]interface{}
 }
 
 // 初始化Influxdb 相关channel
@@ -33,29 +36,38 @@ func InitFlux() *Repository {
 	repo := new(Repository)
 	repo.cumulativeChan = make(chan *influxPoint, 10)
 	repo.basicChan = make(chan *influxPoint, 5)
+	repo.alarmChan = make(chan *influxPoint, 5)
 
 	return repo
 }
 
-/*
- 保存热水器累积数据到channel
- */
+/**
+保存热水器累积数据到channel
+*/
 func (repo *Repository) SaveCumulate(tags map[string]string, fields map[string]interface{}) {
 	point := influxPoint{tags, fields}
 	repo.cumulativeChan <- &point
 }
 
-/*
- 保存基础数据到channel
- */
+/**
+保存基础数据到channel
+*/
 func (repo *Repository) SaveBasic(tags map[string]string, fields map[string]interface{}) {
 	point := influxPoint{tags, fields}
 	repo.basicChan <- &point
 }
 
+/**
+保存报警数据到channel
+*/
+func (repo *Repository) SaveAlarm(tags map[string]string, fields map[string]interface{}) {
+	point := influxPoint{tags, fields}
+	repo.alarmChan <- &point
+}
+
 /*
 存储数据到数据库
- */
+*/
 func (repo *Repository) Process() {
 	client := influxdb2.NewClient(base.DefaultConfig.InfluxAddress, base.DefaultConfig.InfluxToken)
 
@@ -82,6 +94,9 @@ func (repo *Repository) Process() {
 			writeApi.WritePoint(p)
 		case packet := <-repo.basicChan:
 			p := influxdb2.NewPoint("basic", packet.tags, packet.fields, time.Now())
+			writeApi.WritePoint(p)
+		case packet := <-repo.alarmChan:
+			p := influxdb2.NewPoint("alarm", packet.tags, packet.fields, time.Now())
 			writeApi.WritePoint(p)
 		}
 	}
