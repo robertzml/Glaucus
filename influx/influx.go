@@ -23,6 +23,9 @@ type Repository struct {
 
 	// 报警数据存储队列
 	alarmChan chan *influxPoint
+
+	// 关键数据存储队列
+	keyChan chan *influxPoint
 }
 
 // Influx 数据点
@@ -37,6 +40,7 @@ func InitFlux() *Repository {
 	repo.cumulativeChan = make(chan *influxPoint, 10)
 	repo.basicChan = make(chan *influxPoint, 5)
 	repo.alarmChan = make(chan *influxPoint, 5)
+	repo.keyChan = make(chan *influxPoint, 5)
 
 	return repo
 }
@@ -63,6 +67,14 @@ func (repo *Repository) SaveBasic(tags map[string]string, fields map[string]inte
 func (repo *Repository) SaveAlarm(tags map[string]string, fields map[string]interface{}) {
 	point := influxPoint{tags, fields}
 	repo.alarmChan <- &point
+}
+
+/**
+ 保存关键数据到channel
+ */
+func (repo *Repository) SaveKey(tags map[string]string, fields map[string]interface{}) {
+	point := influxPoint{tags, fields}
+	repo.keyChan <- &point
 }
 
 /*
@@ -97,6 +109,9 @@ func (repo *Repository) Process() {
 			writeApi.WritePoint(p)
 		case packet := <-repo.alarmChan:
 			p := influxdb2.NewPoint("alarm", packet.tags, packet.fields, time.Now())
+			writeApi.WritePoint(p)
+		case packet := <-repo.keyChan:
+			p := influxdb2.NewPoint("key_status", packet.tags, packet.fields, time.Now())
 			writeApi.WritePoint(p)
 		}
 	}

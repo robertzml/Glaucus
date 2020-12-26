@@ -251,3 +251,21 @@ func (context *WaterHeaterContext) SaveAlarm(data *WaterHeaterAlarm) {
 
 	context.series.SaveAlarm(tags, fields)
 }
+
+// 保存热水器关键状态数据
+func (context *WaterHeaterContext) SaveKey(data *WaterHeaterKey) {
+	tags := make(map[string]string)
+	tags["serialNumber"] = data.SerialNumber
+	tags["mainboardNumber"] = data.MainboardNumber
+
+	fields := make(map[string]interface{})
+	fields["logtime"] = data.Logtime
+	fields["activate"] = data.Activate
+	fields["activationTime"] = data.ActivationTime
+	fields["unlock"] = data.Unlock
+	fields["deadlineTime"] = data.DeadlineTime
+	fields["online"] = data.Online
+	fields["lineTime"] = data.LineTime
+
+	context.series.SaveKey(tags, fields)
+}

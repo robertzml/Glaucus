@@ -141,6 +141,14 @@ func (msg *WHStatusMessage) Handle(data *tlv.TLV, version float64, seq string) (
 	// 业务逻辑处理
 	msg.handleLogic(whs, version, seq, isFull)
 
+	if isFull {
+		// 设置 {主板序列号 - 设备序列号}
+		msg.Context.SetMainboardString(msg.MainboardNumber, msg.SerialNumber)
+
+		//校时
+		// msg.timing(seq)
+	}
+
 	glog.Write(5, packageName, "whstatus handle", fmt.Sprintf("sn: %s, seq: %s. handle finish.", msg.SerialNumber, seq))
 	return nil
 }
@@ -338,6 +346,26 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	whs.ErrorTime = existsStatus.ErrorTime
 	whs.LineTime = existsStatus.LineTime
 
+	// 设备重新上线，推送 wh_key list
+	if existsStatus.Online == 0 {
+		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. online, save key status.", msg.SerialNumber, seq))
+
+		whs.LineTime = now
+
+		whKey := new(equipment.WaterHeaterKey)
+		whKey.SerialNumber = whs.SerialNumber
+		whKey.MainboardNumber = whs.MainboardNumber
+		whKey.Logtime = whs.Logtime
+		whKey.Activate = whs.Activate
+		whKey.ActivationTime = whs.ActivationTime
+		whKey.Unlock = whs.Unlock
+		whKey.DeadlineTime = whs.DeadlineTime
+		whKey.Online = 1
+		whKey.LineTime = whs.LineTime
+
+		msg.Context.SaveKey(whKey)
+	}
+
 	// 保存 wh_alarm
 	if existsStatus.ErrorCode != whs.ErrorCode {
 		glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. save alarm.", msg.SerialNumber, seq))
@@ -352,6 +380,24 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		whAlarm.ErrorTime = now
 
 		msg.Context.SaveAlarm(whAlarm)
+	}
+
+	// 保存 key list
+	if existsStatus.Unlock != whs.Unlock || existsStatus.Activate != whs.Activate || existsStatus.ActivationTime != whs.ActivationTime || existsStatus.DeadlineTime != whs.DeadlineTime {
+		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. save key.", msg.SerialNumber, seq))
+
+		whKey := new(equipment.WaterHeaterKey)
+		whKey.SerialNumber = whs.SerialNumber
+		whKey.MainboardNumber = whs.MainboardNumber
+		whKey.Logtime = whs.Logtime
+		whKey.Activate = whs.Activate
+		whKey.ActivationTime = whs.ActivationTime
+		whKey.Unlock = whs.Unlock
+		whKey.DeadlineTime = whs.DeadlineTime
+		whKey.Online = whs.Online
+		whKey.LineTime = whs.LineTime
+
+		msg.Context.SaveKey(whKey)
 	}
 
 	// 整体上报
