@@ -18,7 +18,6 @@ type WaterHeater struct {
 	OutFlow           int  // 出水流量
 	ColdInTemp        int
 	HotInTemp         int
-	AvgColdTemp		  int  // 平均冷水温度 单位0.1度
 	ErrorCode         int
 	ErrorTime		  int64		// 需设定
 	WifiVersion       string
@@ -102,7 +101,6 @@ type WaterHeaterCumulate struct {
 	CumulateUsedPower int
 	CumulateSavePower int
 	ColdInTemp        int
-	AvgColdTemp		  int  // 平均冷水温度 单位0.1度
 	SetTemp           int
 	EnergySave		  int
 }
