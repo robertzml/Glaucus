@@ -86,7 +86,7 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 	if whs, exists := msg.Context.LoadStatus(msg.SerialNumber); exists {
 		if whs.MainboardNumber != msg.MainboardNumber {
 			// 报文与redis缓存主板序列号不一致
-			send.Write(msg.SerialNumber, msg.MainboardNumber, 1, "D8")
+			send.WrteSpecial(msg.SerialNumber, 4, "D8")
 
 			glog.Write(2, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d8.", msg.SerialNumber, seq))
 			return false
@@ -95,7 +95,7 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 		sn := msg.Context.GetMainboardString(whs.MainboardNumber)
 		if len(sn) > 0 && sn != msg.SerialNumber {
 			// 上报设备序列号与redis主板序列号-设备序列号映射 不一致
-			send.Write(msg.SerialNumber, msg.MainboardNumber, 1, "D7")
+			send.WrteSpecial(msg.SerialNumber, 4, "D7")
 
 			glog.Write(2, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d7.", msg.SerialNumber, seq))
 			return false
@@ -105,7 +105,7 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 		sn := msg.Context.GetMainboardString(msg.MainboardNumber)
 		if len(sn) > 0 && sn != msg.SerialNumber {
 			// 主板序列号已存在
-			send.Write(msg.SerialNumber, msg.MainboardNumber, 1, "D7")
+			send.WrteSpecial(msg.SerialNumber, 4, "D7")
 
 			glog.Write(2, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d7 for new equipment.", msg.SerialNumber, seq))
 			return false
