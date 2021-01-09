@@ -156,7 +156,10 @@ func (msg *WHStatusMessage) Handle(data *tlv.TLV, version float64, seq string) (
 // 解析状态数据
 // 返回：热水器状态
 func (msg *WHStatusMessage) handleParseStatus(payload string) (err error, whs *equipment.WaterHeater) {
-	whs = new(equipment.WaterHeater)
+	whs, exists := msg.Context.LoadStatus(msg.SerialNumber)
+	if !exists {
+		whs = new(equipment.WaterHeater)
+	}
 
 	index := 0
 	length := len(payload)

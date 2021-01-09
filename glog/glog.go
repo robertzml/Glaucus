@@ -130,8 +130,8 @@ func Read() {
 		filename := fmt.Sprintf("./log/%d%02d%02d.log", now.Year(), now.Month(), now.Day())
 		path, _ := filepath.Abs(filename)
 
-		text := fmt.Sprintf("[%s][%s]-[%s]:[%s]\t%s\n",
-			levels[pak.Level], now.Format("2006-01-02 15:04:05.000"), pak.System, pak.Module, pak.Message)
+		text := fmt.Sprintf("[%s][%s]-[%s]:[%s][%s]\t%s\n",
+			levels[pak.Level], now.Format("2006-01-02 15:04:05.000"), pak.System, pak.Module, pak.Action, pak.Message)
 
 		if err := writeFile(path, []byte(text)); err != nil {
 			fmt.Println(err)
