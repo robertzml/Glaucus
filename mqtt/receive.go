@@ -19,12 +19,12 @@ func StartReceive() {
 
 // 接收自动订阅
 var receiveOnConnect paho.OnConnectHandler = func(client paho.Client) {
-	glog.Write(4, packageName, "onConnect", fmt.Sprintf("%s connect to mqtt.", receiveClientId))
+	glog.WriteDebug(packageName, "onConnect", fmt.Sprintf("%s connect to mqtt.", receiveClientId))
 
 	// 订阅热水器状态
 	var whStatusTopic = fmt.Sprintf("equipment/%d/1/+/status_info", base.DefaultConfig.MqttChannel)
 	if err := ReceiveMqtt.Subscribe(whStatusTopic, 0, WaterHeaterStatusHandler); err != nil {
-		glog.Write(1, packageName, "OnConnect", err.Error())
+		glog.WriteError(packageName, "OnConnect", err.Error())
 		return
 	}
 }

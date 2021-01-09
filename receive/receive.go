@@ -23,7 +23,7 @@ var (
 func Process(snap db.Snapshot, ser db.Series) {
 	defer func() {
 		if r := recover(); r != nil {
-			glog.Write(1, packageName, "process", fmt.Sprintf("catch runtime panic in process: %v", r))
+			glog.WriteError(packageName, "process", fmt.Sprintf("catch runtime panic in process: %v", r))
 		}
 	}()
 
@@ -32,12 +32,12 @@ func Process(snap db.Snapshot, ser db.Series) {
 
 	for {
 		pak := <- base.MqttStatusCh
-		glog.Write(5, packageName, "process", fmt.Sprintf("TOPIC: %s. MQTT status consumer.", pak.Topic))
+		glog.WriteVerbose(packageName, "process", fmt.Sprintf("TOPIC: %s. MQTT status consumer.", pak.Topic))
 
 		// 解析报文头部
 		cell, version, seq, msg, err := parseHead(pak.ProductType, pak.Payload)
 		if err != nil {
-			glog.Write(1, packageName, "process", "catch error in parseType: " + err.Error())
+			glog.WriteError(packageName, "process", "catch error in parseType: " + err.Error())
 			continue
 		}
 
@@ -59,7 +59,7 @@ func Process(snap db.Snapshot, ser db.Series) {
 func parseHead(productType int, message string) (cell tlv.TLV, version float64, seq string, msg Message, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			glog.Write(1, packageName, "process", fmt.Sprintf("catch runtime panic in parse type: %v", r))
+			glog.WriteError(packageName, "process", fmt.Sprintf("catch runtime panic in parse type: %v", r))
 			err = errors.New("parse type error")
 		}
 	}()
@@ -118,26 +118,26 @@ func parseHead(productType int, message string) (cell tlv.TLV, version float64, 
 func parseBody(msg Message, version float64, seq string, cell tlv.TLV) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			glog.Write(1, packageName, "process", fmt.Sprintf("catch runtime panic in parse message: %v", r))
+			glog.WriteError(packageName, "process", fmt.Sprintf("catch runtime panic in parse message: %v", r))
 			err = errors.New("parse message error")
 		}
 	}()
 
 	data, err := msg.Parse(cell.Value)
 	if err != nil {
-		glog.Write(1, packageName, "process", "catch error in parse: " + err.Error())
+		glog.WriteError(packageName, "process", "catch error in parse: " + err.Error())
 		return err
 	}
 
 	pass := msg.Authorize(seq)
 	if !pass {
-		glog.Write(2, packageName, "process", "authorize failed.")
+		glog.WriteWarning(packageName, "process", "authorize failed.")
 		return nil
 	}
 
 	err = msg.Handle(data, version, seq)
 	if err != nil {
-		glog.Write(1, packageName, "process", "catch error in handle: " + err.Error())
+		glog.WriteError(packageName, "process", "catch error in handle: " + err.Error())
 		return err
 	}
 

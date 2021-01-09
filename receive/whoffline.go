@@ -20,7 +20,7 @@ type WHOfflineMessage struct {
 func (msg *WHOfflineMessage) Parse(payload string) (data *tlv.TLV, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			glog.Write(1, packageName, "whoffline parse", fmt.Sprintf("catch runtime panic: %v", r))
+			glog.WriteError(packageName, "whoffline parse", fmt.Sprintf("catch runtime panic: %v", r))
 			err = fmt.Errorf("%v", r)
 		}
 	}()
@@ -31,7 +31,7 @@ func (msg *WHOfflineMessage) Parse(payload string) (data *tlv.TLV, err error) {
 	for index < length {
 		cell, err := tlv.ParseTLV(payload, index)
 		if err != nil {
-			glog.Write(1, packageName, "whoffline parse", fmt.Sprintf("error occur: %s", err.Error()))
+			glog.WriteError(packageName, "whoffline parse", fmt.Sprintf("error occur: %s", err.Error()))
 			return nil, err
 		}
 
@@ -70,7 +70,7 @@ func (msg *WHOfflineMessage) Authorize(seq string) (pass bool) {
 
 // 报文后续处理
 func (msg *WHOfflineMessage) Handle(data *tlv.TLV, version float64, seq string) (err error) {
-	glog.Write(3, packageName, "whoffline handle", fmt.Sprintf("sn: %s, seq: %s. save offline will message.", msg.SerialNumber, seq))
+	glog.WriteInfo(packageName, "whoffline handle", fmt.Sprintf("sn: %s, seq: %s. save offline will message.", msg.SerialNumber, seq))
 	return nil
 }
 

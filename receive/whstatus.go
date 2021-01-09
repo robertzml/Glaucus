@@ -35,7 +35,7 @@ func NewWHStatusMessage(snapshot db.Snapshot, series db.Series) *WHStatusMessage
 func (msg *WHStatusMessage) Parse(payload string) (data *tlv.TLV, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			glog.Write(1, packageName, "whstatus parse", fmt.Sprintf("catch runtime panic: %v", r))
+			glog.WriteError(packageName, "whstatus parse", fmt.Sprintf("catch runtime panic: %v", r))
 			err = fmt.Errorf("%v", r)
 		}
 	}()
@@ -46,7 +46,7 @@ func (msg *WHStatusMessage) Parse(payload string) (data *tlv.TLV, err error) {
 	for index < length {
 		cell, err := tlv.ParseTLV(payload, index)
 		if err != nil {
-			glog.Write(1, packageName, "whstatus parse", fmt.Sprintf("error occur: %s", err.Error()))
+			glog.WriteError(packageName, "whstatus parse", fmt.Sprintf("error occur: %s", err.Error()))
 			return nil, err
 		}
 
@@ -88,7 +88,7 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 			// 报文与redis缓存主板序列号不一致
 			send.WrteSpecial(msg.SerialNumber, 4, "D8")
 
-			glog.Write(2, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d8.", msg.SerialNumber, seq))
+			glog.WriteWarning(packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d8.", msg.SerialNumber, seq))
 			return false
 		}
 
@@ -97,7 +97,7 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 			// 上报设备序列号与redis主板序列号-设备序列号映射 不一致
 			send.WrteSpecial(msg.SerialNumber, 4, "D7")
 
-			glog.Write(2, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d7.", msg.SerialNumber, seq))
+			glog.WriteWarning(packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d7.", msg.SerialNumber, seq))
 			return false
 		}
 
@@ -107,15 +107,15 @@ func (msg *WHStatusMessage) Authorize(seq string) (pass bool) {
 			// 主板序列号已存在
 			send.WrteSpecial(msg.SerialNumber, 4, "D7")
 
-			glog.Write(2, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d7 for new equipment.", msg.SerialNumber, seq))
+			glog.WriteWarning(packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. d7 for new equipment.", msg.SerialNumber, seq))
 			return false
 		}
 
-		glog.Write(3, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. new equipment found.", msg.SerialNumber, seq))
+		glog.WriteInfo(packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. new equipment found.", msg.SerialNumber, seq))
 		return true
 	}
 
-	glog.Write(4, packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. pass.", msg.SerialNumber, seq))
+	glog.WriteDebug(packageName, "whstatus authorize", fmt.Sprintf("sn: %s, seq: %s. pass.", msg.SerialNumber, seq))
 	return true
 }
 
@@ -149,7 +149,7 @@ func (msg *WHStatusMessage) Handle(data *tlv.TLV, version float64, seq string) (
 		// msg.timing(seq)
 	}
 
-	glog.Write(5, packageName, "whstatus handle", fmt.Sprintf("sn: %s, seq: %s. handle finish.", msg.SerialNumber, seq))
+	glog.WriteVerbose(packageName, "whstatus handle", fmt.Sprintf("sn: %s, seq: %s. handle finish.", msg.SerialNumber, seq))
 	return nil
 }
 
@@ -164,7 +164,7 @@ func (msg *WHStatusMessage) handleParseStatus(payload string) (err error, whs *e
 	for index < length {
 		cell, err := tlv.ParseTLV(payload, index)
 		if err != nil {
-			glog.Write(1, packageName, "whstatus parse status", fmt.Sprintf("sn: %s. error in parse tlv: %s", msg.SerialNumber, err.Error()))
+			glog.WriteError(packageName, "whstatus parse status", fmt.Sprintf("sn: %s. error in parse tlv: %s", msg.SerialNumber, err.Error()))
 			return err, nil
 		}
 
@@ -263,7 +263,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 
 	// 全新设备 局部上报不处理
 	if !exists && !isFull {
-		glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. cannot handle partial for new equipment.", msg.SerialNumber, seq))
+		glog.WriteDebug(packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. cannot handle partial for new equipment.", msg.SerialNumber, seq))
 		return
 	}
 
@@ -285,13 +285,13 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	if !exists && isFull {
 		whs.LineTime = now
 
-		glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment find.", msg.SerialNumber, seq))
+		glog.WriteDebug(packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment find.", msg.SerialNumber, seq))
 
 		// 处理错误状态
 		if whs.ErrorCode != 0 {
 			whs.ErrorTime = now
 
-			glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, save alarm.", msg.SerialNumber, seq))
+			glog.WriteWarning(packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, save alarm.", msg.SerialNumber, seq))
 
 			// 报警数据 推送 alarm list
 			whAlarm := new(equipment.WaterHeaterAlarm)
@@ -306,7 +306,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 			whs.ErrorTime = 0
 		}
 
-		glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, save basic and cumulate.", msg.SerialNumber, seq))
+		glog.WriteInfo(packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. new equipment, save basic and cumulate.", msg.SerialNumber, seq))
 
 		// 保存 login list
 		whBasic := new(equipment.WaterHeaterBasic)
@@ -348,7 +348,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 
 	// 设备重新上线，推送 wh_key list
 	if existsStatus.Online == 0 {
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. online, save key status.", msg.SerialNumber, seq))
+		glog.WriteInfo(packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. online, save key status.", msg.SerialNumber, seq))
 
 		whs.LineTime = now
 
@@ -368,7 +368,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 
 	// 保存 wh_alarm
 	if existsStatus.ErrorCode != whs.ErrorCode {
-		glog.Write(2, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. save alarm.", msg.SerialNumber, seq))
+		glog.WriteWarning(packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. save alarm.", msg.SerialNumber, seq))
 
 		whs.ErrorTime = now
 
@@ -384,7 +384,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 
 	// 保存 key list
 	if existsStatus.Unlock != whs.Unlock || existsStatus.Activate != whs.Activate || existsStatus.ActivationTime != whs.ActivationTime || existsStatus.DeadlineTime != whs.DeadlineTime {
-		glog.Write(3, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. save key.", msg.SerialNumber, seq))
+		glog.WriteInfo(packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. save key.", msg.SerialNumber, seq))
 
 		whKey := new(equipment.WaterHeaterKey)
 		whKey.SerialNumber = whs.SerialNumber
@@ -403,7 +403,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 	// 整体上报
 	if isFull {
 		// 保存 cumulative
-		glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push cumulate.", msg.SerialNumber, seq))
+		glog.WriteDebug(packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. push cumulate.", msg.SerialNumber, seq))
 
 		whCumulate := new(equipment.WaterHeaterCumulate)
 		whCumulate.SerialNumber = whs.SerialNumber
@@ -424,7 +424,7 @@ func (msg *WHStatusMessage) handleLogic(whs *equipment.WaterHeater, version floa
 		if existsStatus.SoftwareFunction != whs.SoftwareFunction || existsStatus.WifiVersion != whs.WifiVersion || existsStatus.ICCID != whs.ICCID ||
 			existsStatus.DeviceType != whs.DeviceType || existsStatus.ControllerType != whs.ControllerType {
 
-			glog.Write(4, packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. save basic.", msg.SerialNumber, seq))
+			glog.WriteDebug(packageName, "whstatus handle logic", fmt.Sprintf("sn: %s, seq: %s. save basic.", msg.SerialNumber, seq))
 
 			whBasic := new(equipment.WaterHeaterBasic)
 			whBasic.SerialNumber = whs.SerialNumber

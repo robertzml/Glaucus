@@ -21,7 +21,7 @@ func (m *MQTT) Connect(clientId string, username string, password string, addres
 
 	//create and start a client using the above ClientOptions
 	if token := m.client.Connect(); token.Wait() && token.Error() != nil {
-		glog.Write(0, packageName, "Connect", token.Error().Error())
+		glog.WriteException(packageName, "Connect", token.Error().Error())
 		panic(token.Error())
 	}
 }
@@ -45,7 +45,7 @@ func (m *MQTT) Subscribe(topic string, qos byte, callback paho.MessageHandler) (
 	if token := m.client.Subscribe(topic, qos, callback); token.Wait() && token.Error() != nil {
 		err = token.Error()
 	} else {
-		glog.Write(3, packageName, "subscribe", "Topic:"+topic)
+		glog.WriteInfo(packageName, "subscribe", "Topic:"+topic)
 		err = nil
 	}
 	return
