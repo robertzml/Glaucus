@@ -64,7 +64,7 @@ func Read(){
 		fmt.Println("send service is close.")
 	}()
 
-	queue, err := rbChannel.QueueDeclare("ControlQueue", true, false, false, false, nil)
+	queue, err := rbChannel.QueueDeclare("SpecialQueue", true, false, false, false, nil)
 	if err != nil {
 		panic(err)
 	}
